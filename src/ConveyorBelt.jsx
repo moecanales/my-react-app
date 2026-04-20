@@ -61,6 +61,9 @@ const ConveyorBelt = () => {
   const animatingCards = useGameStore(state => state.animatingCards);
   const targetedCardIndices = useGameStore(state => state.targetedCardIndices);
   
+  const hoveredCardFinancials = useGameStore(state => state.hoveredCardFinancials) || [];
+  console.log("Hover Data:", hoveredCardFinancials);
+  
   const toggleDiscard = toggleDiscardAction || (() => console.log('Discard inspector not wired yet'));
   
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -184,12 +187,10 @@ const ConveyorBelt = () => {
             100% { box-shadow: 0 0 5px #ffd700, inset 0 0 5px #ffd700; filter: brightness(1); }
           }
           
-          @keyframes anticipationJitter {
-              0% { transform: rotate(0deg); }
-              25% { transform: rotate(-2deg); }
-              50% { transform: rotate(0deg); }
-              75% { transform: rotate(2deg); }
-              100% { transform: rotate(0deg); }
+          @keyframes energyPulse {
+              0% { filter: brightness(1.1); }
+              50% { filter: brightness(1.4); }
+              100% { filter: brightness(1.1); }
           }
           @keyframes errorFlash {
               0% { border-color: #ff4444; background-color: rgba(255, 68, 68, 0.4); box-shadow: inset 0 0 20px rgba(255, 68, 68, 0.8); }
@@ -280,7 +281,10 @@ const ConveyorBelt = () => {
                 const slotNumber = index + 1;
                 const uniqueAnimKey = item ? `card-instance-${item.id}` : `empty-slot-${index}`;
                 const isFlying = animatingCards?.some(ac => ac.stepIndex === index);
-                const isTargeted = targetedCardIndices && targetedCardIndices.includes(index);
+                
+                const financialData = hoveredCardFinancials.find(d => d.index === index);
+                const isTargeted = !!financialData;
+                const currentGlow = financialData ? financialData.glowColor : '#ffd700';
 
                 return (
                   <div key={uniqueAnimKey} id={`belt-slot-container-${index}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -303,15 +307,106 @@ const ConveyorBelt = () => {
                             >
                                 {/* THE FIX: Separated the Filter from the Animation to protect complex SVGs from tearing */}
                                 <div style={{
-                                    filter: selectedIndex === index ? 'drop-shadow(0 0 20px #ffd700) brightness(1.15)' : (isTargeted ? 'drop-shadow(0 0 15px #ffd700) brightness(1.2)' : (hoverIndex === index ? 'drop-shadow(0 0 8px #ffd700)' : 'none')),
+                                    filter: selectedIndex === index ? `drop-shadow(0 0 20px ${currentGlow}) brightness(1.15)` : (isTargeted ? `drop-shadow(0 0 15px ${currentGlow}) brightness(1.2)` : (hoverIndex === index ? `drop-shadow(0 0 8px #ffd700)` : 'none')),
                                     transform: 'translateZ(0)',
-                                    willChange: 'filter'
+                                    willChange: 'filter',
+                                    position: 'relative' // REQUIRED HUD ANCHOR
                                 }}>
+                                    
+                                    {/* --- FLOATING MENU HUD --- */}
+                                    <div style={{ 
+                                        position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', 
+                                        marginBottom: '15px', zIndex: 1000, pointerEvents: 'none', 
+                                        opacity: financialData ? 1 : 0, transition: 'opacity 0.2s', 
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center' 
+                                    }}>
+                                        {financialData && (
+                                            financialData.type === 'red' ? (
+                                                <div style={{ fontSize: '2.5em', fontWeight: '900', color: '#c084fc', textShadow: '0 0 15px #c084fc, 2px 2px 4px #000', borderBottom: '3px solid #94a3b8', paddingBottom: '4px' }}>
+                                                    -${financialData.value}
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(0,0,0,0.85)', padding: '12px 16px', borderRadius: '8px', border: '2px solid #555', boxShadow: '0 5px 15px rgba(0,0,0,0.9)', minWidth: '180px' }}>
+                                                    
+                                                    {/* --- TRACK REVENUE (I-BEAMS) --- */}
+                                                    {financialData.trackStacks && financialData.trackStacks.length > 0 && (
+                                                        <div style={{ fontSize: '0.75em', color: '#94a3b8', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase', borderBottom: '1px solid #333', paddingBottom: '4px', marginBottom: '2px' }}>
+                                                            Track Steel
+                                                        </div>
+                                                    )}
+                                                    {financialData.trackStacks && financialData.trackStacks.map((stack, i) => (
+                                                        <React.Fragment key={`track-${i}`}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    {stack.isUniversal ? (
+                                                                        <svg width="16" height="16" viewBox="0 0 16 16" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.8))' }}>
+                                                                            <path d="M2 2h12v3H10v6h4v3H2v-3h4V5H2V2z" fill="#fff" stroke="#aaa" strokeWidth="1" strokeLinejoin="round" />
+                                                                        </svg>
+                                                                    ) : (
+                                                                        stack.colors.map((color, cIdx) => (
+                                                                            <React.Fragment key={cIdx}>
+                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                                    <svg width="16" height="16" viewBox="0 0 16 16" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.8))' }}>
+                                                                                        <path d="M2 2h12v3H10v6h4v3H2v-3h4V5H2V2z" fill={color} stroke="#fff" strokeWidth="1" strokeLinejoin="round" />
+                                                                                    </svg>
+                                                                                    <span style={{ color: '#fff', fontSize: '1.2em', fontWeight: 'bold', textShadow: '1px 1px 2px #000' }}>{stack.shortNames[cIdx]}</span>
+                                                                                </div>
+                                                                                {cIdx < stack.colors.length - 1 && <span style={{ color: '#888', fontWeight: '900', fontSize: '1.2em', margin: '0 2px' }}>/</span>}
+                                                                            </React.Fragment>
+                                                                        ))
+                                                                    )}
+                                                                </div>
+                                                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: '#cbd5e1', textShadow: '0 0 12px rgba(203, 213, 225, 0.8), 2px 2px 4px #000' }}>
+                                                                    +${stack.value}
+                                                                </div>
+                                                            </div>
+                                                            {i < financialData.trackStacks.length - 1 && <div style={{ color: '#888', fontWeight: 'bold', textAlign: 'center', fontSize: '0.9em', margin: '2px 0' }}>OR</div>}
+                                                        </React.Fragment>
+                                                    ))}
+
+                                                    {/* --- CARD EFFECTS (CIRCLES) --- */}
+                                                    {financialData.cardStacks && financialData.cardStacks.length > 0 && (
+                                                        <div style={{ fontSize: '0.75em', color: '#94a3b8', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase', borderBottom: '1px solid #333', paddingBottom: '4px', marginBottom: '2px', marginTop: '4px' }}>
+                                                            Card Effect
+                                                        </div>
+                                                    )}
+                                                    {financialData.cardStacks && financialData.cardStacks.map((stack, i) => (
+                                                        <React.Fragment key={`card-${i}`}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', width: '100%' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                    {stack.isUniversal ? (
+                                                                        <div style={{ width: '14px', height: '14px', borderRadius: '50%', backgroundColor: '#fff', border: '1px solid #aaa', boxShadow: '0 2px 4px rgba(0,0,0,0.8)' }} />
+                                                                    ) : (
+                                                                        stack.colors.map((color, cIdx) => (
+                                                                            <React.Fragment key={cIdx}>
+                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                                    <div style={{ width: '14px', height: '14px', borderRadius: '50%', backgroundColor: color, border: '1px solid #fff', boxShadow: '0 2px 4px rgba(0,0,0,0.8)' }} />
+                                                                                    <span style={{ color: '#fff', fontSize: '1.2em', fontWeight: 'bold', textShadow: '1px 1px 2px #000' }}>{stack.shortNames[cIdx]}</span>
+                                                                                </div>
+                                                                                {cIdx < stack.colors.length - 1 && <span style={{ color: '#888', fontWeight: '900', fontSize: '1.2em', margin: '0 2px' }}>/</span>}
+                                                                            </React.Fragment>
+                                                                        ))
+                                                                    )}
+                                                                </div>
+                                                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: stack.isPositive ? '#cbd5e1' : '#c084fc', textShadow: stack.isPositive ? '0 0 12px rgba(203, 213, 225, 0.8), 2px 2px 4px #000' : '0 0 12px rgba(192, 132, 252, 0.8), 2px 2px 4px #000' }}>
+                                                                    {stack.isPositive ? '+' : '-'}${stack.value}
+                                                                </div>
+                                                            </div>
+                                                            {i < financialData.cardStacks.length - 1 && <div style={{ color: '#888', fontWeight: 'bold', textAlign: 'center', fontSize: '0.9em', margin: '2px 0' }}>OR</div>}
+                                                        </React.Fragment>
+                                                    ))}
+                                                    
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                    {/* --- END FLOATING MENU HUD --- */}
+
                                     <div style={{
-                                        animation: isTargeted ? 'anticipationJitter 0.15s infinite' : 'none',
+                                        animation: isTargeted ? 'energyPulse 1.2s ease-in-out infinite' : 'none',
                                         transformOrigin: 'center center',
                                         transform: 'translateZ(0)',
-                                        willChange: 'transform'
+                                        willChange: 'filter'
                                     }}>
                                         <GameCard 
                                             type={item.type} 
@@ -330,15 +425,15 @@ const ConveyorBelt = () => {
                             transform: 'scale(0.65)', transformOrigin: 'top center', 
                             margin: '0 -30px -60px -30px', width: '219px', height: '216px', 
                             borderRadius: '16.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                            border: isTargeted ? '4px solid #ff4444' : '4px dashed #555',
-                            backgroundColor: isTargeted ? 'rgba(255, 68, 68, 0.2)' : 'rgba(0,0,0,0.3)',
-                            boxShadow: isTargeted ? 'inset 0 0 20px rgba(255, 68, 68, 0.8)' : 'inset 0 5px 15px rgba(0,0,0,0.8)',
+                            border: isTargeted ? `4px solid ${currentGlow}` : '4px dashed #555',
+                            backgroundColor: isTargeted ? `${currentGlow}33` : 'rgba(0,0,0,0.3)',
+                            boxShadow: isTargeted ? `inset 0 0 20px ${currentGlow}cc` : 'inset 0 5px 15px rgba(0,0,0,0.8)',
                             animation: isTargeted ? 'errorFlash 0.5s infinite' : 'none'
                         }}>
-                            <span style={{ color: isTargeted ? '#ff4444' : '#555', fontWeight: '900', fontSize: '1.8em', letterSpacing: '2px' }}>EMPTY</span>
+                            <span style={{ color: isTargeted ? currentGlow : '#555', fontWeight: '900', fontSize: '1.8em', letterSpacing: '2px' }}>EMPTY</span>
                         </div>
                     )}
-                    <div className="slot-number" style={{ color: isTargeted ? (item ? '#ffd700' : '#ff4444') : '#888' }}>{slotNumber}</div>
+                    <div className="slot-number" style={{ color: isTargeted ? (item ? currentGlow : '#ff4444') : '#888' }}>{slotNumber}</div>
                   </div>
                 );
             })}

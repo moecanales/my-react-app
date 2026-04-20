@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Voice Companion</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 24px;
+            color: #61dafb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            background: #2a2a2a;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #f44336;
+            transition: background-color 0.3s;
+        }
+        .indicator.connected {
+            background-color: #4caf50;
+            box-shadow: 0 0 8px #4caf50;
+        }
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+        }
+        select:focus, button:focus {
+            border-color: #61dafb;
+        }
+        button {
+            background: #61dafb;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #4fa8c7;
+        }
+        .log-box {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Antigravity Voice</h1>
+        <div class="status">
+            <div class="indicator" id="connection-indicator"></div>
+            <span id="connection-text">Connecting...</span>
+        </div>
+        
+        <label for="voice-select" style="display:block; margin-bottom: 5px; font-size: 14px; color: #aaa;">Select Voice:</label>
+        <select id="voice-select">
+            <option value="">Loading voices...</option>
+        </select>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label for="rate-input" style="display:block; margin-bottom: 5px; font-size: 14px; color: #aaa;">Speed (<span id="rate-value">1</span>x)</label>
+                <input type="range" id="rate-input" min="0.5" max="2" value="1" step="0.1" style="width: 100%;">
+            </div>
+            <div style="flex: 1;">
+                <label for="pitch-input" style="display:block; margin-bottom: 5px; font-size: 14px; color: #aaa;">Pitch (<span id="pitch-value">1</span>)</label>
+                <input type="range" id="pitch-input" min="0" max="2" value="1" step="0.1" style="width: 100%;">
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button id="pause-btn" style="background: #ffb74d; color: #000;">⏸️ Pause</button>
+            <button id="resume-btn" style="background: #81c784; color: #000;">▶️ Resume</button>
+            <button id="cancel-btn" style="background: #e57373; color: #000;">⏹️ Skip</button>
+            <button id="repeat-btn" style="background: #ba68c8; color: #000;">🔁 Repeat</button>
+        </div>
+        
+        <button id="test-btn">Test Audio</button>
+        
+        <label style="display:block; margin-bottom: 5px; font-size: 14px; color: #aaa;">Latest Message:</label>
+        <div class="log-box" id="log">Waiting for messages...</div>
+    </div>
+
+    <script>
+        const indicator = document.getElementById('connection-indicator');
+        const connectionText = document.getElementById('connection-text');
+        const voiceSelect = document.getElementById('voice-select');
+        const rateInput = document.getElementById('rate-input');
+        const rateValue = document.getElementById('rate-value');
+        const pitchInput = document.getElementById('pitch-input');
+        const pitchValue = document.getElementById('pitch-value');
+        const logBox = document.getElementById('log');
+        const testBtn = document.getElementById('test-btn');
+        
+        const pauseBtn = document.getElementById('pause-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+        
+        let lastSpokenText = "";
+        
+        rateInput.addEventListener('input', () => rateValue.textContent = rateInput.value);
+        pitchInput.addEventListener('input', () => pitchValue.textContent = pitchInput.value);
+        
+        let voices = [];
+        
+        function populateVoices() {
+            voices = speechSynthesis.getVoices();
+            voiceSelect.innerHTML = '';
+            
+            // Prioritize high quality voices (Edge Natural, Google, etc)
+            const preferredVoices = voices.sort((a, b) => {
+                const aIsGood = a.name.includes('Natural') || a.name.includes('Online') || a.name.includes('Google');
+                const bIsGood = b.name.includes('Natural') || b.name.includes('Online') || b.name.includes('Google');
+                if (aIsGood && !bIsGood) return -1;
+                if (!aIsGood && bIsGood) return 1;
+                return 0;
+            });
+            
+            preferredVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = voice.name;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        populateVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
+
+        function speak(text) {
+            lastSpokenText = text;
+            logBox.textContent = text;
+            
+            // Auto-scroll to bottom of log (though it just replaces right now)
+            logBox.scrollTop = logBox.scrollHeight;
+            
+            // Cancel any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            const selectedVoiceName = voiceSelect.value;
+            const selectedVoice = voices.find(v => v.name === selectedVoiceName);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+            
+            utterance.rate = parseFloat(rateInput.value);
+            utterance.pitch = parseFloat(pitchInput.value);
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        testBtn.addEventListener('click', () => {
+            speak("Hello! I am ready to read Antigravity's responses to you.");
+        });
+
+        pauseBtn.addEventListener('click', () => speechSynthesis.pause());
+        resumeBtn.addEventListener('click', () => speechSynthesis.resume());
+        cancelBtn.addEventListener('click', () => {
+            speechSynthesis.cancel();
+            logBox.textContent = "Skipped playback.";
+        });
+        repeatBtn.addEventListener('click', () => {
+            if (lastSpokenText) speak(lastSpokenText);
+        });
+
+        // SSE Connection
+        function connect() {
+            const evtSource = new EventSource('/stream');
+            
+            evtSource.onopen = () => {
+                indicator.classList.add('connected');
+                connectionText.textContent = 'Connected & Listening';
+            };
+            
+            evtSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.text) {
+                    speak(data.text);
+                }
+            };
+            
+            evtSource.onerror = () => {
+                indicator.classList.remove('connected');
+                connectionText.textContent = 'Disconnected. Reconnecting...';
+                evtSource.close();
+                setTimeout(connect, 3000);
+            };
+        }
+        
+        connect();
+    </script>
+</body>
+</html>

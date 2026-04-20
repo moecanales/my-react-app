@@ -121,6 +121,10 @@ const LedgerLineItem = ({ name, type, level, label, count, locationTag, coColor,
                 <span style={{ color: '#aaa', fontSize: '13px', opacity: 0.8 }}>
                     ({label} - Lvl {level})
                 </span>
+                
+                <span style={{ color: '#94a3b8', fontSize: '13px', fontStyle: 'italic', marginLeft: '10px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={nativeInfo.desc}>
+                    - {nativeInfo.desc}
+                </span>
             </div>
             
             <span style={{ fontSize: '16px', fontWeight: '900', color: theme.accent, textShadow: `0 0 8px ${theme.main}` }}>
@@ -532,9 +536,9 @@ export const AuditModal = () => {
                     <button 
                         onClick={() => setIsDenseView(!isDenseView)}
                         style={{ padding: '10px', backgroundColor: isDenseView ? '#facc15' : '#1e293b', color: isDenseView ? '#000' : '#facc15', border: '1px solid #facc15', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}
-                        title={isDenseView ? "Switch to Normal View" : "Switch to Dense Grid View"}
+                        title={isDenseView ? "Switch to Large Thumbnail" : "Switch to Small Thumbnail"}
                     >
-                        [::: DENSE {isDenseView ? 'ON' : 'OFF'}]
+                        {isDenseView ? '[::: SMALL THUMBNAIL]' : '[::: LARGE THUMBNAIL]'}
                     </button>
                 )}
 
@@ -1552,9 +1556,9 @@ export const DiscardModal = () => {
                     <button 
                         onClick={() => setIsDenseView(!isDenseView)}
                         style={{ padding: '10px', backgroundColor: isDenseView ? '#facc15' : '#1e293b', color: isDenseView ? '#000' : '#facc15', border: '1px solid #facc15', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}
-                        title={isDenseView ? "Switch to Normal View" : "Switch to Dense Grid View"}
+                        title={isDenseView ? "Switch to Large Thumbnail" : "Switch to Small Thumbnail"}
                     >
-                        [::: DENSE {isDenseView ? 'ON' : 'OFF'}]
+                        {isDenseView ? '[::: SMALL THUMBNAIL]' : '[::: LARGE THUMBNAIL]'}
                     </button>
                 )}
 

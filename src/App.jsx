@@ -122,6 +122,13 @@ export const useGameStore = create((set, get) => ({
       return { targetedCardIndices: indices };
   }),
 
+  hoveredCardFinancials: [],
+  setHoveredCardFinancials: (data) => set(state => {
+      // Deep compare stringify to prevent WebGL tearing from 60fps re-renders
+      if (JSON.stringify(state.hoveredCardFinancials) === JSON.stringify(data)) return {};
+      return { hoveredCardFinancials: data };
+  }),
+
   telegramQueue: [],
   queueTelegram: (msg) => set(state => ({ telegramQueue: [...state.telegramQueue, msg] })),
   dequeueTelegram: () => set(state => ({ telegramQueue: state.telegramQueue.slice(1) })),
@@ -309,6 +316,7 @@ export const useGameStore = create((set, get) => ({
 
     if (comp.treasury >= b.total) {
         set({ isAnimatingPlay: true, selectedNodeId: null, targetedCardIndices: [] });
+        get().setHoveredCardFinancials([]);
 
         const cost = b.units;
         const availableCards = gameInstance.abacus.belt;
@@ -452,6 +460,7 @@ export const useGameStore = create((set, get) => ({
     }
     syncState(set);
     set({ showLedger: false, showAudit: false, showLiquidation: false, selectedNodeId: null, showGameOver: false, gameOverData: null, showTrashModal: false, showProxyModal: false, telegramQueue: [], targetedCardIndices: [] });
+    get().setHoveredCardFinancials([]);
   }
 }));
 

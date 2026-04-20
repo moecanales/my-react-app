@@ -58,7 +58,7 @@ export const IBeamUpgraded = () => {
   const cInnerTop = '#475569'; 
 
   return (
-    <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible', flexShrink: 0 }}>
+    <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible', flexShrink: 0, transform: 'translateZ(0)', willChange: 'transform' }}>
        <div style={{
          position: 'relative',
          width: '40px', height: '80px',
@@ -74,7 +74,7 @@ export const IBeamUpgraded = () => {
 };
 
 export const MasterRebateUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '112px', height: '80px', transform: 'scale(0.68) rotate(-15deg)', filter: 'drop-shadow(2px 6px 4px rgba(0,0,0,0.4))' }}>
       
       <svg style={{ position: 'absolute', zIndex: 0, width: '96px', height: '96px', left: '-25px', top: '-35px', filter: 'drop-shadow(1px 2px 2px rgba(0,0,0,0.3))' }} viewBox="0 0 100 100">
@@ -107,7 +107,7 @@ export const MasterRebateUpgraded = () => (
 );
 
 export const SubsidyUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes cityLightOn { 0%, 25% { opacity: 0.9; fill: #1e293b; } 75%, 100% { opacity: 1; fill: #fde047; } }
@@ -189,7 +189,7 @@ export const TagIcon = () => (
 // --- BLUE DECK ARTWORK ---
 
 export const ShareUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', overflow: 'hidden', borderRadius: '2px', width: '88px', height: '64px', background: 'linear-gradient(135deg, #f0f9ff 0%, #cbd5e1 100%)', border: '2px solid #0284c7', transform: 'rotate(-5deg)' }}>
         <div style={{ position: 'absolute', inset: '4px', border: '1px solid #38bdf8', opacity: 0.7, outline: '1px solid #38bdf8', outlineOffset: '-2px' }}></div>
@@ -215,7 +215,7 @@ export const ShareUpgraded = () => (
 );
 
 export const CityUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes cityLightOn { 0%, 25% { opacity: 0.9; fill: #1e293b; } 75%, 100% { opacity: 1; fill: #fde047; } }
@@ -288,7 +288,7 @@ export const CityUpgraded = () => (
 );
 
 export const MountainUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes floatCloud { 0% { transform: translate(-10px, -5px); opacity: 0; } 20% { opacity: 0.9; } 80% { opacity: 0.9; } 100% { transform: translate(15px, 7.5px); opacity: 0; } }
@@ -350,7 +350,7 @@ export const MountainUpgraded = () => (
 );
 
 export const MaintenanceUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '80px', height: '36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transform: 'rotate(-20deg) scale(1.4)' }}>
         {[1, 2, 3, 4, 5, 6].map((tie) => (
@@ -367,7 +367,7 @@ export const MaintenanceUpgraded = () => (
 );
 
 export const ParlorUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '8px', filter: 'drop-shadow(2px 0px 0px #1a1a1a) drop-shadow(-2px 0px 0px #1a1a1a) drop-shadow(0px 2px 0px #1a1a1a) drop-shadow(0px -2px 0px #1a1a1a) drop-shadow(4px 6px 4px rgba(0,0,0,0.6))' }}>
         <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
@@ -419,7 +419,7 @@ export const ParlorUpgraded = () => (
 );
 
 export const TaxUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '80px', height: '96px', borderRadius: '2px', boxShadow: '0 5px 10px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(to bottom, #92400e, #713f12)', border: '1px solid #451a03' }}>
         <div style={{ position: 'absolute', bottom: '4px', width: '72px', height: '80px', backgroundColor: '#f8fafc', boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '12px', paddingBottom: '4px', paddingLeft: '8px', paddingRight: '8px', border: '1px solid #e2e8f0' }}>
@@ -445,7 +445,7 @@ export const TaxUpgraded = () => (
 );
 
 export const SignalUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible', filter: 'drop-shadow(1px 2px 2px rgba(0,0,0,0.5))' }}>
         <g transform="scale(0.85) translate(8, 8)">
@@ -490,7 +490,7 @@ export const SignalUpgraded = () => (
 );
 
 export const ExpansionUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.4))' }} viewBox="0 0 100 100">
          <defs>
@@ -524,7 +524,7 @@ export const ExpansionUpgraded = () => (
 );
 
 export const DepotUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '8px', filter: 'drop-shadow(2px 0px 0px #1a1a1a) drop-shadow(-2px 0px 0px #1a1a1a) drop-shadow(0px 2px 0px #1a1a1a) drop-shadow(0px -2px 0px #1a1a1a) drop-shadow(4px 6px 4px rgba(0,0,0,0.6))' }}>
         <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
@@ -566,7 +566,7 @@ export const DepotUpgraded = () => (
 );
 
 export const FedExciseUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '8px', filter: 'drop-shadow(2px 0px 0px #1a1a1a) drop-shadow(-2px 0px 0px #1a1a1a) drop-shadow(0px 2px 0px #1a1a1a) drop-shadow(0px -2px 0px #1a1a1a) drop-shadow(4px 6px 4px rgba(0,0,0,0.6))' }}>
         <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
@@ -617,7 +617,7 @@ export const FedExciseUpgraded = () => (
 );
 
 export const TrustUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
          <defs>
@@ -654,7 +654,7 @@ export const TrustUpgraded = () => (
 );
 
 export const HubUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
          <g transform="translate(50, 15)"><TrackSegment /></g>
@@ -675,7 +675,7 @@ export const HubUpgraded = () => (
 );
 
 export const InventoryUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
          <g transform="translate(30, 75) scale(0.65) rotate(-45)"><TrackSegment /></g>
@@ -690,7 +690,7 @@ export const InventoryUpgraded = () => (
 );
 
 export const AssetUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
          <g transform="translate(35, 55) rotate(-25) translate(-25, -35)">
@@ -715,7 +715,7 @@ export const AssetUpgraded = () => (
 );
 
 export const TreasuryUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
          <g transform="translate(5, 35)">
@@ -744,7 +744,7 @@ export const TreasuryUpgraded = () => (
 );
 
 export const SpecialtyUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,0.8)) drop-shadow(0 0 10px rgba(250,204,21,0.5))' }} viewBox="0 0 100 100">
          <defs>
@@ -769,7 +769,7 @@ export const SpecialtyUpgraded = () => (
 );
 
 export const GNUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#0f172a', border: '3px solid #334155', boxShadow: 'inset 0 0 10px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '6px' }}>
          <span style={{ position: 'absolute', color: '#334155', fontSize: '24px', fontWeight: 900, letterSpacing: '-0.05em' }}>GN</span>
@@ -783,7 +783,7 @@ export const GNUpgraded = () => (
 );
 
 export const ORNUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#0f172a', border: '3px solid #334155', boxShadow: 'inset 0 0 10px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '6px' }}>
          <span style={{ position: 'absolute', color: '#334155', fontSize: '20px', fontWeight: 900, letterSpacing: '-0.05em' }}>OR&N</span>
@@ -797,7 +797,7 @@ export const ORNUpgraded = () => (
 );
 
 export const CPUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#0f172a', border: '3px solid #334155', boxShadow: 'inset 0 0 10px rgba(0,0,0,1), 0 5px 15px rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '6px' }}>
          <span style={{ position: 'absolute', color: '#334155', fontSize: '24px', fontWeight: 900, letterSpacing: '-0.05em' }}>CP</span>
@@ -813,7 +813,7 @@ export const CPUpgraded = () => (
 const mapStrokeFilter = "drop-shadow(2px 0px 0px #1a1a1a) drop-shadow(-2px 0px 0px #1a1a1a) drop-shadow(0px 2px 0px #1a1a1a) drop-shadow(0px -2px 0px #1a1a1a) drop-shadow(4px 6px 4px rgba(0,0,0,0.6))";
 
 export const RustUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{
       flexShrink: 0,
       width: '100px', 
@@ -904,7 +904,7 @@ export const RustUpgraded = () => (
 );
 
 export const RegionalLevyUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes warmLightOn { 0%, 25% { opacity: 0.9; fill: #4c1d95; } 75%, 100% { opacity: 1; fill: #fde047; } }
@@ -1002,7 +1002,7 @@ export const RegionalLevyUpgraded = () => (
 // --- RED DECK ARTWORK (PURPLE PALETTE) ---
 
 export const AuditUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes shred { 0% { transform: translateY(-10px); } 100% { transform: translateY(20px); opacity: 0; } }
@@ -1040,7 +1040,7 @@ export const AuditUpgraded = () => (
 );
 
 export const SpyUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes scan { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -1067,7 +1067,7 @@ export const SpyUpgraded = () => (
 );
 
 export const ReformUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
         <rect x="25" y="15" width="50" height="10" fill="#94a3b8" />
@@ -1090,7 +1090,7 @@ export const ReformUpgraded = () => (
 );
 
 export const VerticalUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10 }} viewBox="0 0 100 100">
         <rect x="20" y="65" width="60" height="20" rx="2" fill="#78350f" stroke="#451a03" strokeWidth="2" />
@@ -1111,7 +1111,7 @@ export const VerticalUpgraded = () => (
 );
 
 export const PanicUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
         @keyframes crash { 0% { stroke-dashoffset: 200; } 100% { stroke-dashoffset: 0; } }
@@ -1130,7 +1130,7 @@ export const PanicUpgraded = () => (
 );
 
 export const ProxyUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
         <rect x="40" y="30" width="20" height="40" fill="#cbd5e1" stroke="#475569" strokeWidth="2" />
@@ -1149,7 +1149,7 @@ export const ProxyUpgraded = () => (
 );
 
 export const CharterUpgraded = () => (
-  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 10, filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.6))' }} viewBox="0 0 100 100">
          <defs>

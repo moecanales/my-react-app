@@ -110,6 +110,96 @@ const GameBoard = () => {
       return Math.sqrt(Math.pow(p.x - (v.x + t * (w.x - v.x)), 2) + Math.pow(p.y - (v.y + t * (w.y - v.y)), 2));
   };
 
+  const generateTargetedCardData = (builderData) => {
+      if (!builderData || builderData.length === 0) return [];
+      let data = [];
+      const belt = useGameStore.getState().gameState?.belt || [];
+      const maxUnits = Math.max(...builderData.map(b => b.units));
+
+      for (let i = 0; i < maxUnits; i++) {
+          const card = belt[i];
+          if (!card) break;
+          const effectCard = card.proxy ? card.proxy : card;
+
+          // Only include companies whose track distance reaches this specific card slot
+          const activeBuilders = builderData.filter(b => i < b.units);
+          if (activeBuilders.length === 0) continue;
+
+          // Determine Glow: White if multiple companies use this slot, otherwise the company's specific color
+          const isMulti = activeBuilders.length > 1;
+          const glowColor = isMulti ? '#ffffff' : (activeBuilders[0].comp.id === 'nyc' ? '#34B3D1' : (activeBuilders[0].comp.colorStr || '#ffffff'));
+
+          if (effectCard.type === 'red') {
+              const price = window.game ? window.game.calculateSlotPrice(i) : 15;
+              data.push({ index: i, type: 'red', value: price, glowColor });
+          } else {
+              let trackGroups = {};
+              let cardGroups = {};
+
+              activeBuilders.forEach(b => {
+                  const comp = b.comp;
+                  const dotColor = comp.id === 'nyc' ? '#34B3D1' : (comp.colorStr || '#fff');
+
+                  // 1. Calculate Track Revenue (I-Beam)
+                  const trackRev = b.units * 10;
+                  const trackKey = `+${trackRev}`;
+                  if (!trackGroups[trackKey]) trackGroups[trackKey] = { colors: [], shortNames: [], value: trackRev, isPositive: true };
+                  trackGroups[trackKey].colors.push(dotColor);
+                  trackGroups[trackKey].shortNames.push(comp.short);
+
+                  // 2. Calculate Card Effect (Circle)
+                  let value = 0;
+                  let isPositive = true;
+
+                  if (effectCard.type === 'blue') {
+                      const kickback = window.game ? window.game.calculateBaronKickback(effectCard.label, comp.id, b.targetNodeId, effectCard.level || 1) : 0;
+                      value = Math.abs(kickback);
+                      isPositive = kickback <= 0; 
+                  } else if (effectCard.type === 'green') {
+                      const char = effectCard.label.charAt(0);
+                      const lvl = effectCard.level || 1;
+                      if (char === 'A') { 
+                          const isValid = comp.activeLines.some(id => {
+                              const n = nodes.find(x => x.id === id);
+                              return n && (n.type === 'start' || n.subType === 'union_yard');
+                          });
+                          value = isValid ? (lvl === 3 ? 75 : (lvl === 2 ? 50 : 25)) : 0;
+                      } else if (char === 'B') { 
+                          value = lvl === 3 ? 60 : (lvl === 2 ? 30 : 15);
+                      } else if (char === 'C') { 
+                          value = (window.game?.currentContractPrice || 15) * lvl; 
+                      } else if (char === 'D') { 
+                          let cities = comp.builtNodes.filter(nId => nodes.find(n => n.id === nId)?.subType === 'standard').length;
+                          const targetN = nodes.find(n => n.id === b.targetNodeId);
+                          if (targetN && targetN.subType === 'standard' && !comp.builtNodes.includes(b.targetNodeId)) cities++;
+                          value = (lvl === 3 ? 15 : (lvl === 2 ? 10 : 5)) * Math.max(0, cities);
+                      }
+                  }
+
+                  const cardKey = `${isPositive ? '+' : '-'}${value}`;
+                  if (!cardGroups[cardKey]) cardGroups[cardKey] = { colors: [], shortNames: [], value, isPositive };
+                  cardGroups[cardKey].colors.push(dotColor);
+                  cardGroups[cardKey].shortNames.push(comp.short);
+              });
+
+              const processGroups = (groupsObj) => {
+                  const arr = Object.values(groupsObj);
+                  if (arr.length === 1 && activeBuilders.length > 1) arr[0].isUniversal = true;
+                  return arr;
+              };
+
+              data.push({ 
+                  index: i, 
+                  type: effectCard.type, 
+                  trackStacks: processGroups(trackGroups), 
+                  cardStacks: processGroups(cardGroups),
+                  glowColor
+              });
+          }
+      }
+      return data;
+  };
+
   const handlePointerDown = (e) => {
     if (!containerRef.current) return;
     setIsDragging(true);
@@ -191,6 +281,7 @@ const GameBoard = () => {
     
     if (e.type === 'pointerleave' || e.type === 'pointerup') {
         setTargetedCardIndices([]);
+        useGameStore.getState().setHoveredCardFinancials([]);
         if (e.type === 'pointerleave') setTooltip(null);
     }
 
@@ -279,7 +370,6 @@ const GameBoard = () => {
     
     if (hitNode) {
         
-        // THE FIX: Check if the hovered node is adjacent to ANY active railhead in the network
         const isAlreadyBuiltNode = activeNetwork.has(hitNode.id) || hitNode.type === 'start';
         const adjacentConn = connections.find(c => 
             (activeRailheadsForCities.has(c.from) && c.to === hitNode.id) || 
@@ -287,11 +377,41 @@ const GameBoard = () => {
         );
 
         if (adjacentConn && !isAlreadyBuiltNode && window.game) {
-            const sourceNodeId = activeRailheadsForCities.has(adjacentConn.from) ? adjacentConn.from : adjacentConn.to;
-            const units = window.game.calculateUnits(sourceNodeId, hitNode.id);
-            setTargetedCardIndices(Array.from({length: units}, (_, i) => i));
+            let builderData = [];
+            const currentBuilder = window.game?.activeCompanyForBuild;
+
+            if (currentBuilder && companies[currentBuilder]) {
+                const comp = companies[currentBuilder];
+                const conn = connections.find(c =>
+                    (comp.activeLines.includes(c.from) && c.to === hitNode.id) ||
+                    (comp.activeLines.includes(c.to) && c.from === hitNode.id)
+                );
+                if (conn) {
+                    const sourceNodeId = comp.activeLines.includes(conn.from) ? conn.from : conn.to;
+                    const units = window.game.calculateUnits(sourceNodeId, hitNode.id);
+                    builderData.push({ comp, units, targetNodeId: hitNode.id });
+                }
+            } else {
+                connections.forEach(conn => {
+                    if (conn.to === hitNode.id || conn.from === hitNode.id) {
+                        const sourceNodeId = conn.to === hitNode.id ? conn.from : conn.to;
+                        Object.values(companies).forEach(comp => {
+                            if (comp.activeLines.includes(sourceNodeId)) {
+                                const units = window.game.calculateUnits(sourceNodeId, hitNode.id);
+                                builderData.push({ comp, units, targetNodeId: hitNode.id });
+                            }
+                        });
+                    }
+                });
+            }
+
+            const maxUnits = builderData.length > 0 ? Math.max(...builderData.map(b => b.units)) : 0;
+            setTargetedCardIndices(Array.from({length: maxUnits}, (_, i) => i));
+            useGameStore.getState().setHoveredCardFinancials(generateTargetedCardData(builderData));
+
         } else {
             setTargetedCardIndices([]);
+            useGameStore.getState().setHoveredCardFinancials([]); 
         }
 
         const fallbackDescriptions = {
@@ -391,21 +511,44 @@ const GameBoard = () => {
     }
 
     if (hitConn && window.game) {
-         const units = window.game.calculateUnits(hitConn.from, hitConn.to);
-         const breakdown = window.game.getSegmentCostBreakdown(null, hitConn.from, hitConn.to);
-         
-         // THE FIX: Check if the hovered connection touches ANY active railhead
          const connStr1 = `${hitConn.from}-${hitConn.to}`;
          const connStr2 = `${hitConn.to}-${hitConn.from}`;
          const isAlreadyBuiltConn = builtConnSet.has(connStr1) || builtConnSet.has(connStr2);
          const touchesRailhead = activeRailheadsForCities.has(hitConn.from) || activeRailheadsForCities.has(hitConn.to);
 
          if (touchesRailhead && !isAlreadyBuiltConn) {
-             setTargetedCardIndices(Array.from({length: units}, (_, i) => i));
+             let builderData = [];
+             const currentBuilder = window.game?.activeCompanyForBuild;
+
+             if (currentBuilder && companies[currentBuilder]) {
+                 const comp = companies[currentBuilder];
+                 if (comp.activeLines.includes(hitConn.from) || comp.activeLines.includes(hitConn.to)) {
+                     const sourceNodeId = comp.activeLines.includes(hitConn.from) ? hitConn.from : hitConn.to;
+                     const targetNodeId = sourceNodeId === hitConn.from ? hitConn.to : hitConn.from;
+                     const units = window.game.calculateUnits(sourceNodeId, targetNodeId);
+                     builderData.push({ comp, units, targetNodeId });
+                 }
+             } else {
+                 Object.values(companies).forEach(comp => {
+                     if (comp.activeLines.includes(hitConn.from) || comp.activeLines.includes(hitConn.to)) {
+                         const sourceNodeId = comp.activeLines.includes(hitConn.from) ? hitConn.from : hitConn.to;
+                         const targetNodeId = sourceNodeId === hitConn.from ? hitConn.to : hitConn.from;
+                         const units = window.game.calculateUnits(sourceNodeId, targetNodeId);
+                         builderData.push({ comp, units, targetNodeId });
+                     }
+                 });
+             }
+
+             const maxUnits = builderData.length > 0 ? Math.max(...builderData.map(b => b.units)) : 0;
+             setTargetedCardIndices(Array.from({length: maxUnits}, (_, i) => i));
+             useGameStore.getState().setHoveredCardFinancials(generateTargetedCardData(builderData));
+
          } else {
              setTargetedCardIndices([]);
+             useGameStore.getState().setHoveredCardFinancials([]); 
          }
-
+         
+         const breakdown = window.game.getSegmentCostBreakdown(null, hitConn.from, hitConn.to);
          const frontCardType = gameState?.belt?.[0]?.type || 'green';
          const themeMap = {
              'green': { bg: '#4ade80', text: '#064e3b', label: 'GREEN' },
@@ -414,14 +557,14 @@ const GameBoard = () => {
          };
          const theme = themeMap[frontCardType] || themeMap['green'];
 
-         const cardCount = breakdown.cardCount || units;
+         const cardCount = breakdown.cardCount || 1;
          const playerBonus = breakdown.playerBonus || 20;
          const totalCost = breakdown.total || 26;
 
          const html = `
           <div style="font-family: 'Courier New', Courier, monospace; min-width: 280px; padding: 4px;">
             <div style="font-size: 18px; font-weight: bold; color: #ffffff; letter-spacing: 1px; margin-bottom: 10px;">
-              ${units} TRACK SEGMENTS
+              TRACK SEGMENT
             </div>
             <div style="margin-bottom: 20px;">
               <span style="background-color: ${theme.bg}; color: ${theme.text}; padding: 4px 8px; border-radius: 4px; font-size: 16px; font-weight: bold;">
@@ -446,6 +589,7 @@ const GameBoard = () => {
 
     setTargetedCardIndices([]);
     setTooltip(null);
+    useGameStore.getState().setHoveredCardFinancials([]); 
   };
 
   let cursorStyle = isDragging ? 'grabbing' : 'grab';
