@@ -2,7 +2,7 @@
 
 const NODE_TYPES = {
     start: {
-        name: "Headquarters", color: "#fff", shape: "circle", radius: 12, onBuild: null, 
+        name: "Starting Hub", color: "#fff", shape: "circle", radius: 12, onBuild: null, 
         getDescription: (game, node) => {
             let ownerName = "";
             Object.keys(game.companies).forEach(k => {
@@ -10,7 +10,7 @@ const NODE_TYPES = {
                     ownerName = game.companies[k].name;
                 }
             });
-            return `Headquarters: ${ownerName}`;
+            return `Starting Network Hub (S.N.H.): ${ownerName}`;
         }
     },
     chicago: {
@@ -115,15 +115,15 @@ const NODE_TYPES = {
 // 1. GREEN IDENTITY (Active Effects)
 const GREEN_IDENTITY_DATA = {
     'A': { 
-        name: "Legacy Plate", short: "LEGACY\nPLATE", 
+        name: "Legacy Plate", 
         levels: {
-            1: "You gain <strong>$25</strong> if this company builds from Headquarters or Union Yard.",
-            2: "You gain <strong>$50</strong> if this company builds from Headquarters or Union Yard.",
-            3: "You gain <strong>$75</strong> if this company builds from Headquarters or Union Yard."
+            1: "Gain $25 if built from [S.N.H. or Union Yard|Starting Network Hub or Union Yard].",
+            2: "Gain $50 if built from [S.N.H. or Union Yard|Starting Network Hub or Union Yard].",
+            3: "Gain $75 if built from [S.N.H. or Union Yard|Starting Network Hub or Union Yard]."
         }
     },
     'B': { 
-        name: "Refined I-Beam", short: "I-BEAM\nSTEEL", 
+        name: "Refined I-Beam", 
         levels: {
             1: "+$15 directly to this company's Treasury.",
             2: "+$30 directly to this company's Treasury.",
@@ -131,67 +131,59 @@ const GREEN_IDENTITY_DATA = {
         }
     },
     'C': { 
-        name: "The Master Rebate", short: "MASTER\nREBATE", 
+        name: "The Master Rebate", 
         levels: {
-            1: "Coupon: Waives the cost of 1 Blue Contract for You. (-$[P])",
-            2: "Coupon: Waives the cost of 2 Blue Contracts for You. (-$[P] x2)",
-            3: "Coupon: Waives the cost of 3 Blue Contracts for You. (-$[P] x3)"
+            1: "Coupon: Waives the cost of 1 Blue Contract for You.",
+            2: "Coupon: Waives the cost of 2 Blue Contracts for You.",
+            3: "Coupon: Waives the cost of 3 Blue Contracts for You."
         }
     },
     'D': { 
-        name: "Townsite Subsidy", short: "TOWN\nSUBSIDY", 
+        name: "Townsite Subsidy", 
         levels: {
-            1: "You gain +$5 per Standard City in this company's network.",
-            2: "You gain +$10 per Standard City in this company's network.",
-            3: "You gain +$15 per Standard City in this company's network."
+            1: "You gain +$5 per Standard City in this network [incl. target|including the current destination].",
+            2: "You gain +$10 per Standard City in this network [incl. target|including the current destination].",
+            3: "You gain +$15 per Standard City in this network [incl. target|including the current destination]."
         }
     }
 };
 
 // 2. BLUE IDENTITY (Contract Fulfillment)
 const BLUE_IDENTITY_DATA = {
-    'A': { name: "Signal Rent", short: "SIGNAL\nRENT", levels: { 1: "Baron gains +$50 for every Signal Tower in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Signal Tower in this company's network." } },
-    'B': { name: "Shareholder Tribute", short: "SHARE\nTRIBUTE", levels: { 1: "Baron gains +$40 for every Share Node (Reg HQ/Fed Ex) in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$40 per Share Node in this company's network." } },
-    'C': { name: "Parlor Patronage", short: "PARLOR\nPATRON", levels: { 1: "Baron gains +$15 for every Parlor Node in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Parlor Node in this company's network." } },
-    'D': { name: "City Surcharge", short: "CITY\nCHARGE", levels: { 1: "Baron gains +$15 for every Standard City in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Standard City in this company's network." } },
-    'E': { name: "Maintenance Fee", short: "MAINT.\nFEE", levels: { 1: "Baron gains +$5 for every Built Track Segment owned by this company.", 2: "Clause Negated.", 3: "Rebate: You gain +$5 per Track Segment owned by this company." } },
-    'F': { name: "Rust Tariff", short: "RUST\nTARIFF", levels: { 1: "Baron gains +$150 if this company builds into the Rust Belt.", 2: "Clause Negated.", 3: "Rebate: You gain +$150 if this company builds into the Rust Belt." } },
-    'G': { name: "Mountain Toll", short: "MTN\nTOLL", levels: { 1: "Baron gains +$100 for every Mountain Node in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$100 per Mountain Node in this company's network." } },
-    'H': { name: "Shareholder Tax", short: "SHARE\nTAX", levels: { 1: "Baron gains +$15 for every share issued (You + Baron).", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Share issued." } },
-    'I': { name: "Depot Ground Rent", short: "DEPOT\nRENT", levels: { 1: "Baron gains +$50 for every Depot in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Depot in this company's network." } },
-    'J': { name: "Federal Excise", short: "FED\nEXCISE", levels: { 1: "Baron gains +$50 for every Fed. Exchange in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Fed. Exchange in this company's network." } },
-    'K': { name: "Regional Levy", short: "REGIONAL\nLEVY", levels: { 1: "Baron gains +$50 for every Regional HQ in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Regional HQ in this company's network." } },
-    'L': { name: "Shared Hub Fee", short: "HUB\nFEE", levels: { 1: "Bank pays Baron +$50 for every node shared by this company and others.", 2: "Clause Negated.", 3: "Rebate: Bank pays You +$50 per Shared Hub." } },
-    'M': { name: "Specialty Surcharge", short: "SPECIAL\nFEE", levels: { 1: "Baron gains +$15 for every Special Node in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Special Node in this company's network." } },
-    'N': { name: "Expansion Penalty", short: "EXPAND\nPENALTY", levels: { 1: "Baron gains +$10 for every total node in this company's network.", 2: "Clause Negated.", 3: "Rebate: You gain +$10 per Node in this company's network." } },
-    'O': { name: "GN Acquisition", short: "GN\nBUY", levels: { 1: "The Baron buys a share of The Great Northern.", 2: "Acquisition Clause Negated.", 3: "Hostile Takeover: You gain a free GN share." } },
-    'P': { name: "Treasury Match", short: "TREASURY\nMATCH", levels: { 1: "Bank pays Baron an amount equal to 75% of this company's Treasury.", 2: "Clause Negated.", 3: "Rebate: Bank pays You equal to 75% of this company's Treasury." } },
-    'Q': { name: "OR&N Acquisition", short: "OR&N\nBUY", levels: { 1: "The Baron buys a share of The OR&N.", 2: "Acquisition Clause Negated.", 3: "Hostile Takeover: You gain a free OR&N share." } },
-    'R': { name: "Inventory Holding", short: "STOCK\nHOLD", levels: { 1: "Baron gains +$20 for every unbuilt track segment held by this company.", 2: "Clause Negated.", 3: "Rebate: You gain +$20 per unbuilt track segment held by this company." } },
-    'S': { name: "CP Acquisition", short: "CP\nBUY", levels: { 1: "The Baron buys a share of The Central Pacific.", 2: "Acquisition Clause Negated.", 3: "Hostile Takeover: You gain a free CP share." } },
-    'T': { name: "Asset Surcharge", short: "ASSET\nFEE", levels: { 1: "Baron gains +$10 for every card in the Discard Piles.", 2: "Clause Negated.", 3: "Rebate: You gain +$10 per Discarded Card." } },
-    'U': { name: "Trust Syndicate", short: "TRUST\nSYNC", levels: { 1: "Baron acquires the most expensive available Private Company.", 2: "Clause Negated.", 3: "Rebate: You acquire a random Private Company for FREE." } }
+    'A': { name: "Signal Rent", levels: { 1: "Baron gains +$50 per Signal Tower in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Signal Tower in this network [incl. target|including the current destination]." } },
+    'B': { name: "Shareholder Tribute", levels: { 1: "Baron gains +$40 per Share Node in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$40 per Share Node in this network [incl. target|including the current destination]." } },
+    'C': { name: "Parlor Patronage", levels: { 1: "Baron gains +$15 per Parlor Node in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Parlor Node in this network [incl. target|including the current destination]." } },
+    'D': { name: "City Surcharge", levels: { 1: "Baron gains +$15 per Standard City in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Standard City in this network [incl. target|including the current destination]." } },
+    'E': { name: "Maintenance Fee", levels: { 1: "[Baron taxes +$5|Prior to building, the Baron taxes +$5] per established track segment in this network.", 2: "Clause Negated.", 3: "[Rebate: You gain +$5|Prior to building, you gain +$5] per established track segment in this network." } },
+    'F': { name: "Rust Tariff", levels: { 1: "[Toll: Baron taxes +$150|Toll: The Baron taxes +$150] if your destination is in the Rust Belt.", 2: "Clause Negated.", 3: "Rebate: You gain +$150 if your destination is in the Rust Belt." } },
+    'G': { name: "Mountain Toll", levels: { 1: "Baron gains +$100 per Mountain Node in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$100 per Mountain Node in this network [incl. target|including the current destination]." } },
+    'H': { name: "Shareholder Tax", levels: { 1: "[Baron taxes +$15|Prior to building, the Baron taxes +$15] per share currently issued (Player + Baron).", 2: "Clause Negated.", 3: "[Rebate: You gain +$15|Prior to building, you gain +$15] per share currently issued (Player + Baron)." } },
+    'I': { name: "Depot Ground Rent", levels: { 1: "Baron gains +$50 per Depot in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Depot in this network [incl. target|including the current destination]." } },
+    'J': { name: "Federal Excise", levels: { 1: "Baron gains +$50 per Fed. Exchange in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Fed. Exchange in this network [incl. target|including the current destination]." } },
+    'K': { name: "Regional Levy", levels: { 1: "Baron gains +$50 per Regional HQ in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$50 per Regional HQ in this network [incl. target|including the current destination]." } },
+    'L': { name: "Shared Hub Fee", levels: { 1: "[Baron taxes +$50|Prior to building, the Baron taxes +$50] per Shared Hub already in this network.", 2: "Clause Negated.", 3: "[Rebate: Bank pays You +$50|Prior to building, the Bank pays You +$50] per Shared Hub already in this network." } },
+    'M': { name: "Specialty Surcharge", levels: { 1: "Baron gains +$15 per Special Node in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$15 per Special Node in this network [incl. target|including the current destination]." } },
+    'N': { name: "Expansion Penalty", levels: { 1: "Baron gains +$10 per total node in this network [incl. target|including the current destination].", 2: "Clause Negated.", 3: "Rebate: You gain +$10 per Node in this network [incl. target|including the current destination]." } },
+    'O': { name: "GN Acquisition", levels: { 1: "The Baron buys a share of The Great Northern.", 2: "Acquisition Clause Negated.", 3: "Hostile Takeover: You gain a free GN share." } },
+    'P': { name: "Treasury Match", levels: { 1: "[Baron taxes 75%|Prior to paying track costs, the Baron taxes an amount equal to 75%] of this company's current Treasury.", 2: "Clause Negated.", 3: "[Rebate: Bank pays You 75%|Prior to paying track costs, the Bank pays You an amount equal to 75%] of this company's current Treasury." } },
+    'Q': { name: "OR&N Acquisition", levels: { 1: "The Baron buys a share of The OR&N.", 2: "Acquisition Clause Negated.", 3: "Hostile Takeover: You gain a free OR&N share." } },
+    'R': { name: "Inventory Holding", levels: { 1: "[Baron taxes +$20|Prior to consuming steel for this build, the Baron taxes +$20] per unbuilt track held.", 2: "Clause Negated.", 3: "[Rebate: You gain +$20|Prior to consuming steel for this build, you gain +$20] per unbuilt track held." } },
+    'S': { name: "CP Acquisition", levels: { 1: "The Baron buys a share of The Central Pacific.", 2: "Acquisition Clause Negated.", 3: "Hostile Takeover: You gain a free CP share." } },
+    'T': { name: "Asset Surcharge", levels: { 1: "[Baron taxes +$10|Prior to this build, the Baron taxes +$10] per card in the Discard Piles.", 2: "Clause Negated.", 3: "[Rebate: You gain +$10|Prior to this build, you gain +$10] per card in the Discard Piles." } },
+    'U': { name: "Trust Syndicate", levels: { 1: "Baron acquires the most expensive available Private Company.", 2: "Clause Negated.", 3: "Rebate: You acquire a random Private Company for FREE." } }
 };
 
 // 3. RED IDENTITY (Market Imports)
 const RED_IDENTITY_DATA = {
-    'A': { name: "Audit Purge", short: "AUDIT\nPURGE", levels: { 1: "Trash Card: Select 1 card in the Audit Ledger to permanently remove.", 2: "Trash Card: Select 2 cards to remove.", 3: "Trash Card: Select 4 cards to remove." } },
-    'B': { name: "Industrial Espionage", short: "IND.\nSPY", levels: { 1: "Cash Grab: You instantly steal $50 from the Baron's wallet.", 2: "Cash Grab: You instantly steal $100 from the Baron.", 3: "Cash Grab: You instantly steal $200 from the Baron." } },
-    'C': { name: "Structural Reform", short: "PRICE\nFIX", levels: { 1: "Price Fix: Permanently reduce base price of Blue cards by $1.", 2: "Price Fix: Permanently reduce base price of Blue cards by $2.", 3: "Price Fix: Permanently reduce base price of Blue cards by $4." } },
-    'D': { name: "Vertical Integration", short: "MASS\nSUPPLY", levels: { 1: "This company receives 7 track segments instantly.", 2: "This company receives 14 track segments instantly.", 3: "This company receives 28 track segments instantly." } },
-    'E': { name: "Panic on the Floor", short: "PANIC\nFLOOR", levels: { 1: "Hyper-Inflation: Double this company's Treasury.", 2: "Hyper-Inflation: Double 2 companies' Treasuries.", 3: "Hyper-Inflation: Double all companies' Treasuries." } },
-    'F': { name: "Proxy Fight", short: "PROXY\nFIGHT", levels: { 1: "Hostile Liquidation: Baron sells all shares of his largest holding.", 2: "Hostile Liquidation: Baron sells top 2 holdings.", 3: "Hostile Liquidation: Baron sells all holdings." } },
-    'G': { 
-        name: "Charter Acquisition", short: "CHARTER\nBUY", 
-        levels: { 
-            1: "Action: Purchase an unowned Private Company from the map.", 
-            2: "Action: Purchase a Private Company at a 20% discount.", 
-            3: "Action: Purchase a Private Company. The Time Tax is waived." 
-        } 
-    }
+    'A': { name: "Audit Purge", levels: { 1: "Trash Card: Select 1 card in the Audit Ledger to permanently remove.", 2: "Trash Card: Select 2 cards to remove.", 3: "Trash Card: Select 4 cards to remove." } },
+    'B': { name: "Industrial Espionage", levels: { 1: "Cash Grab: You instantly steal $50 from the Baron's wallet.", 2: "Cash Grab: You instantly steal $100 from the Baron.", 3: "Cash Grab: You instantly steal $200 from the Baron." } },
+    'C': { name: "Structural Reform", levels: { 1: "Price Fix: Permanently reduce base price of Blue cards by $1.", 2: "Price Fix: Permanently reduce base price of Blue cards by $2.", 3: "Price Fix: Permanently reduce base price of Blue cards by $4." } },
+    'D': { name: "Vertical Integration", levels: { 1: "This company receives 7 track segments instantly.", 2: "This company receives 14 track segments instantly.", 3: "This company receives 28 track segments instantly." } },
+    'E': { name: "Panic on the Floor", levels: { 1: "[Double this Treasury|After paying the track construction costs, instantly double this company's remaining Treasury].", 2: "[Double 2 Treasuries|After paying the track construction costs, instantly double 2 companies' remaining Treasuries].", 3: "[Double all Treasuries|After paying the track construction costs, instantly double all companies' remaining Treasuries]." } },
+    'F': { name: "Proxy Fight", levels: { 1: "Hostile Liquidation: Baron sells all shares of his largest holding.", 2: "Hostile Liquidation: Baron sells top 2 holdings.", 3: "Hostile Liquidation: Baron sells all holdings." } },
+    'G': { name: "Charter Acquisition", levels: { 1: "Action: Purchase an unowned Private Company from the map.", 2: "Action: Purchase a Private Company at a 20% discount.", 3: "Action: Purchase a Private Company. The Time Tax is waived." } }
 };
 
-// --- DATA: TYCOON PROFILES & CONTRACT TIERS ---
 const TYCOON_PROFILES = [
     { 
         id: 'heavy', 

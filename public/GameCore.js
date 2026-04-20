@@ -405,18 +405,14 @@ class Game {
         if (card.type === 'green') return 0;
         
         if (card.type === 'blue') {
-            let activeWaivers = this.turnStats.blueWaiversAvailable || 0;
-            // Calculate dynamic waivers up to this index
+            let activeWaivers = this.turnStats?.blueWaiversAvailable || 0;
+            // Subtract waivers for preceding blue cards, but DO NOT look ahead for new waivers on the belt.
             for (let i = 0; i < index; i++) {
                 let c = this.abacus.belt[i];
-                let proxy = c.proxy ? c.proxy : c;
                 if (c.type === 'blue') activeWaivers--;
-                else if (proxy.type === 'green' && proxy.label.charAt(0) === 'C') {
-                    activeWaivers += (proxy.level || 1);
-                }
             }
             if (activeWaivers > 0) return 0; // Waived
-            return Math.max(1, this.currentContractPrice - (this.priceModifiers.blue || 0));
+            return Math.max(1, (this.currentContractPrice || 15) - (this.priceModifiers?.blue || 0));
         }
         
         if (card.type === 'red') {
@@ -909,28 +905,78 @@ class Game {
         
         let toll = isBaronOwned ? laborCost : 0;
         let finalLabor = isBaronOwned ? 0 : laborCost;
-        let predSourcing = 0; 
         
+        let predSourcing = 0;
         let kickbackTotal = 0;
-        if (this.abacus && this.abacus.belt) {
-            const cardsToConsume = Math.min(units, this.abacus.belt.length);
-            for (let i = 0; i < cardsToConsume; i++) {
-                const card = this.abacus.belt[i];
-                const effectCard = card.proxy ? card.proxy : card;
-                
-                if (effectCard.type === 'blue') {
-                    kickbackTotal += this.calculateBaronKickback(effectCard.label, companyId, toId, effectCard.level || 1);
+        let playerBonus = 0;
+        let simWaivers = this.turnStats?.blueWaiversAvailable || 0;
+        let simRedCount = (this.abacus && this.abacus.ledger.redCount) ? this.abacus.ledger.redCount : 0;
+
+        for (let i = 0; i < units; i++) {
+            if (!this.abacus || !this.abacus.belt || !this.abacus.belt[i]) {
+                predSourcing += Math.max(1, (this.currentContractPrice || 15) - (this.priceModifiers?.blue || 0));
+                continue;
+            }
+
+            const card = this.abacus.belt[i];
+            const effectCard = card.proxy ? card.proxy : card;
+
+            // Simulate Card Consumption (Base Cost)
+            if (card.type === 'green') {
+                // Cost is 0
+            } else if (card.type === 'blue') {
+                if (simWaivers > 0) {
+                    simWaivers--;
+                } else {
+                    predSourcing += Math.max(1, (this.currentContractPrice || 15) - (this.priceModifiers?.blue || 0));
+                }
+            } else if (card.type === 'red') {
+                predSourcing += Math.ceil((simRedCount + 1) / 4) * 15;
+                simRedCount++;
+            }
+
+            // Simulate Proxy Effects (Bonuses/Tolls)
+            if (effectCard.type === 'blue') {
+                kickbackTotal += this.calculateBaronKickback(effectCard.label, companyId, toId, effectCard.level || 1);
+            } else if (effectCard.type === 'green') {
+                const char = effectCard.label.charAt(0);
+                const level = effectCard.level || 1;
+                if (char === 'C') {
+                    simWaivers += level;
+                } else if (char === 'A') {
+                    const builderId = companyId || this.activeCompanyForBuild;
+                    const builder = builderId ? this.companies[builderId] : null;
+                    let validCondition = false;
+                    if (builder && builder.activeLines) {
+                        validCondition = builder.activeLines.some(id => {
+                            const head = this.nodes.find(n => n.id === id);
+                            return head && (head.type === 'start' || head.subType === 'union_yard');
+                        });
+                    }
+                    if (validCondition) {
+                        playerBonus += level === 3 ? 75 : (level === 2 ? 50 : 25);
+                    }
+                } else if (char === 'D') {
+                    const builderId = companyId || this.activeCompanyForBuild;
+                    const builder = builderId ? this.companies[builderId] : null;
+                    let cityCount = 0;
+                    if (builder && builder.builtNodes) {
+                        cityCount = builder.builtNodes.filter(nId => {
+                            const n = this.nodes.find(node => node.id === nId);
+                            return n && n.subType === 'standard';
+                        }).length;
+                        if (toId && !builder.builtNodes.includes(toId)) {
+                            const targetN = this.nodes.find(n => n.id === toId);
+                            if (targetN && targetN.subType === 'standard') cityCount++;
+                        }
+                    }
+                    playerBonus += (level === 3 ? 15 : (level === 2 ? 10 : 5)) * Math.max(0, cityCount);
                 }
             }
         }
         
-        for (let i = 0; i < units; i++) {
-             let cost = (this.abacus && this.abacus.ledger.blue > 0) ? this.currentContractPrice : 15;
-             predSourcing += Math.max(1, cost - this.priceModifiers.blue);
-        }
-        
         return { 
-            total: steelRevenue + finalLabor + toll + mountainTax, 
+            total: steelRevenue + finalLabor + toll + mountainTax + predSourcing, 
             labor: finalLabor, 
             toll: toll, 
             variance: variance, 
@@ -939,7 +985,9 @@ class Game {
             units: units, 
             isBaronOwned: isBaronOwned, 
             sourcingCost: predSourcing, 
-            baronConditionCost: kickbackTotal 
+            baronConditionCost: kickbackTotal,
+            cardCount: units,
+            playerBonus: playerBonus
         };
     }
 

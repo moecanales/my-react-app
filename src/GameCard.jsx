@@ -59,7 +59,9 @@ export default function GameCard({
 
   const formatCardText = (text, isDarkBg) => {
     if (!text) return null;
-    const parts = text.split(/(<strong>.*?<\/strong>)/g);
+    // Split by either <strong> tags OR our custom [short|long] syntax
+    const parts = text.split(/(<strong>.*?<\/strong>|\[[^|]+\|[^\]]+\])/g);
+    
     return parts.map((part, i) => {
         if (part.startsWith('<strong>') && part.endsWith('</strong>')) {
             const innerText = part.replace(/<\/?strong>/g, '');
@@ -70,6 +72,34 @@ export default function GameCard({
                     fontSize: '1.05em' 
                 }}>
                     {innerText}
+                </span>
+            );
+        }
+        // Parse the hoverable abbreviation syntax and trigger custom tooltip
+        if (part.startsWith('[') && part.endsWith(']')) {
+            const content = part.slice(1, -1); // Remove the brackets
+            const [shortText, longText] = content.split('|');
+            return (
+                <span 
+                    key={i} 
+                    onMouseEnter={(e) => {
+                        e.stopPropagation();
+                        setTooltip({
+                            x: e.clientX,
+                            y: e.clientY,
+                            html: `<div style="font-size: 14px; font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #ffffff; letter-spacing: 0.5px;">${longText}</div>`
+                        });
+                    }}
+                    onMouseLeave={(e) => {
+                        e.stopPropagation();
+                        setTooltip(null);
+                    }}
+                    style={{ 
+                        borderBottom: isDarkBg ? '2px dotted rgba(255,255,255,0.6)' : '2px dotted rgba(0,0,0,0.6)', 
+                        cursor: 'help',
+                        fontWeight: 'bold'
+                    }}>
+                    {shortText}
                 </span>
             );
         }

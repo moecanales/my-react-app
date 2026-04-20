@@ -356,8 +356,11 @@ const ConveyorBelt = () => {
                                                                         ))
                                                                     )}
                                                                 </div>
-                                                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: '#cbd5e1', textShadow: '0 0 12px rgba(203, 213, 225, 0.8), 2px 2px 4px #000' }}>
-                                                                    +${stack.value}
+                                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                                                    <div style={{ fontSize: '0.65em', color: stack.recipientColor, fontWeight: 'bold', letterSpacing: '0.5px', marginBottom: '-2px', whiteSpace: 'nowrap' }}>{stack.recipientTag}</div>
+                                                                    <div style={{ fontSize: '2.2em', fontWeight: '900', color: stack.recipientColor, textShadow: `0 0 12px ${stack.recipientColor}80, 2px 2px 4px #000`, whiteSpace: 'nowrap' }}>
+                                                                        +${stack.value}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             {i < financialData.trackStacks.length - 1 && <div style={{ color: '#888', fontWeight: 'bold', textAlign: 'center', fontSize: '0.9em', margin: '2px 0' }}>OR</div>}
@@ -388,8 +391,11 @@ const ConveyorBelt = () => {
                                                                         ))
                                                                     )}
                                                                 </div>
-                                                                <div style={{ fontSize: '2.2em', fontWeight: '900', color: stack.isPositive ? '#cbd5e1' : '#c084fc', textShadow: stack.isPositive ? '0 0 12px rgba(203, 213, 225, 0.8), 2px 2px 4px #000' : '0 0 12px rgba(192, 132, 252, 0.8), 2px 2px 4px #000' }}>
-                                                                    {stack.isPositive ? '+' : '-'}${stack.value}
+                                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                                                    <div style={{ fontSize: '0.65em', color: stack.recipientColor, fontWeight: 'bold', letterSpacing: '0.5px', marginBottom: '-2px', whiteSpace: 'nowrap' }}>{stack.recipientTag}</div>
+                                                                    <div style={{ fontSize: '2.2em', fontWeight: '900', color: stack.recipientColor, textShadow: `0 0 12px ${stack.recipientColor}80, 2px 2px 4px #000`, whiteSpace: 'nowrap' }}>
+                                                                        {stack.isPositive ? '+' : '-'}${stack.value}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             {i < financialData.cardStacks.length - 1 && <div style={{ color: '#888', fontWeight: 'bold', textAlign: 'center', fontSize: '0.9em', margin: '2px 0' }}>OR</div>}

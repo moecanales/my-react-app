@@ -121,11 +121,9 @@ const GameBoard = () => {
           if (!card) break;
           const effectCard = card.proxy ? card.proxy : card;
 
-          // Only include companies whose track distance reaches this specific card slot
           const activeBuilders = builderData.filter(b => i < b.units);
           if (activeBuilders.length === 0) continue;
 
-          // Determine Glow: White if multiple companies use this slot, otherwise the company's specific color
           const isMulti = activeBuilders.length > 1;
           const glowColor = isMulti ? '#ffffff' : (activeBuilders[0].comp.id === 'nyc' ? '#34B3D1' : (activeBuilders[0].comp.colorStr || '#ffffff'));
 
@@ -140,21 +138,25 @@ const GameBoard = () => {
                   const comp = b.comp;
                   const dotColor = comp.id === 'nyc' ? '#34B3D1' : (comp.colorStr || '#fff');
 
-                  // 1. Calculate Track Revenue (I-Beam)
-                  const trackRev = b.units * 10;
+                  // 1. Calculate Track Revenue (I-Beam) - GOES TO PLAYER (GOLD)
+                  const trackRev = 10;
                   const trackKey = `+${trackRev}`;
-                  if (!trackGroups[trackKey]) trackGroups[trackKey] = { colors: [], shortNames: [], value: trackRev, isPositive: true };
+                  if (!trackGroups[trackKey]) trackGroups[trackKey] = { colors: [], shortNames: [], value: trackRev, isPositive: true, recipientColor: '#fde047', recipientTag: '[ TO YOU ]' };
                   trackGroups[trackKey].colors.push(dotColor);
                   trackGroups[trackKey].shortNames.push(comp.short);
 
                   // 2. Calculate Card Effect (Circle)
                   let value = 0;
                   let isPositive = true;
+                  let recipientColor = '#ffffff';
+                  let recipientTag = '[ TO TREASURY ]';
 
                   if (effectCard.type === 'blue') {
                       const kickback = window.game ? window.game.calculateBaronKickback(effectCard.label, comp.id, b.targetNodeId, effectCard.level || 1) : 0;
                       value = Math.abs(kickback);
                       isPositive = kickback <= 0; 
+                      recipientColor = isPositive ? '#fde047' : '#c084fc'; 
+                      recipientTag = isPositive ? '[ TO YOU ]' : '[ TO BARON ]';
                   } else if (effectCard.type === 'green') {
                       const char = effectCard.label.charAt(0);
                       const lvl = effectCard.level || 1;
@@ -164,22 +166,32 @@ const GameBoard = () => {
                               return n && (n.type === 'start' || n.subType === 'union_yard');
                           });
                           value = isValid ? (lvl === 3 ? 75 : (lvl === 2 ? 50 : 25)) : 0;
+                          recipientColor = '#fde047';
+                          recipientTag = '[ TO YOU ]';
                       } else if (char === 'B') { 
                           value = lvl === 3 ? 60 : (lvl === 2 ? 30 : 15);
+                          recipientColor = '#ffffff';
+                          recipientTag = '[ TO TREASURY ]';
                       } else if (char === 'C') { 
-                          value = (window.game?.currentContractPrice || 15) * lvl; 
+                          value = 0; // Master Rebate grants waivers, not cash. Hide the bubble.
+                          recipientColor = '#ffffff';
+                          recipientTag = '[ TO TREASURY ]';
                       } else if (char === 'D') { 
                           let cities = comp.builtNodes.filter(nId => nodes.find(n => n.id === nId)?.subType === 'standard').length;
                           const targetN = nodes.find(n => n.id === b.targetNodeId);
                           if (targetN && targetN.subType === 'standard' && !comp.builtNodes.includes(b.targetNodeId)) cities++;
                           value = (lvl === 3 ? 15 : (lvl === 2 ? 10 : 5)) * Math.max(0, cities);
+                          recipientColor = '#fde047';
+                          recipientTag = '[ TO YOU ]';
                       }
                   }
 
-                  const cardKey = `${isPositive ? '+' : '-'}${value}`;
-                  if (!cardGroups[cardKey]) cardGroups[cardKey] = { colors: [], shortNames: [], value, isPositive };
-                  cardGroups[cardKey].colors.push(dotColor);
-                  cardGroups[cardKey].shortNames.push(comp.short);
+                  if (value !== 0) {
+                      const cardKey = `${isPositive ? '+' : '-'}${value}-${recipientTag}`;
+                      if (!cardGroups[cardKey]) cardGroups[cardKey] = { colors: [], shortNames: [], value, isPositive, recipientColor, recipientTag };
+                      cardGroups[cardKey].colors.push(dotColor);
+                      cardGroups[cardKey].shortNames.push(comp.short);
+                  }
               });
 
               const processGroups = (groupsObj) => {
@@ -427,7 +439,7 @@ const GameBoard = () => {
             detroit: "+10 Track Segments for this company.",
             mountain: "Flat tax applied to build cost.",
             chicago: "Ends game if continuous transcontinental link is complete.",
-            start: "Starting network hub.",
+            start: "Starting Network Hub (S.N.H.).",
             standard: "Generates base income."
         };
 
@@ -489,7 +501,7 @@ const GameBoard = () => {
             <hr style="border: 0; border-top: 1px dashed rgba(255,255,255,0.2); margin: 6px 0;" />
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px;">
               <span style="color: #94a3b8; font-weight: bold;">Income:</span>
-              <span style="color: #4ade80; font-weight: 900; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);">
+              <span style="color: #4ade80; font-weight: 900; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); white-space: nowrap;">
                 $${hitNode.value || 0}
               </span>
             </div>
@@ -557,9 +569,9 @@ const GameBoard = () => {
          };
          const theme = themeMap[frontCardType] || themeMap['green'];
 
-         const cardCount = breakdown.cardCount || 1;
-         const playerBonus = breakdown.playerBonus || 20;
-         const totalCost = breakdown.total || 26;
+         const cardCount = breakdown.cardCount || breakdown.units || 1;
+         const playerBonus = breakdown.playerBonus || 0;
+         const totalCost = breakdown.total || 0;
 
          const html = `
           <div style="font-family: 'Courier New', Courier, monospace; min-width: 280px; padding: 4px;">
@@ -571,14 +583,16 @@ const GameBoard = () => {
                 ${cardCount} ${theme.label}
               </span>
             </div>
+            ${playerBonus > 0 ? `
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 16px;">
               <span style="color: #fde047; font-weight: bold;">PLAYER</span>
-              <span style="color: #fde047; font-weight: bold;">+$${playerBonus}</span>
+              <span style="color: #fde047; font-weight: bold; white-space: nowrap;">+$${playerBonus}</span>
             </div>
             <div style="font-size: 16px; color: #94a3b8; margin-bottom: 16px;">$${playerBonus}</div>
+            ` : ''}
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 16px;">
               <span style="color: #ffffff; font-weight: bold;">COMPANY</span>
-              <span style="color: #ffffff; font-weight: bold;">-$${totalCost}</span>
+              <span style="color: #ffffff; font-weight: bold; white-space: nowrap;">-$${totalCost}</span>
             </div>
             <div style="font-size: 16px; color: #94a3b8;">Labor + Track</div>
           </div>
