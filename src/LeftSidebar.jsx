@@ -234,27 +234,27 @@ const LeftSidebar = () => {
               title="Click to Expand Panels"
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', cursor: 'pointer', zIndex: 20, marginBottom: '8px' }}
             >
-              {/* Player Cash (Silver/Green) */}
-              <div className="mini-pill" style={{
-                background: 'linear-gradient(to bottom, #f0f0f0 0%, #b3b3b3 100%)',
-                border: '3px solid #777', borderRadius: '24px', height: '52px',
-                display: 'flex', alignItems: 'center', padding: '0 14px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.8)'
-              }}>
-                <img src="/PLAYER.svg" alt="Player Cash" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.4))' }} />
-                <span style={{ marginLeft: 'auto', color: '#008000', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff' }}>
-                  ${playerCash}
-                </span>
-              </div>
-              {/* Player Net Worth (Gold) */}
+              {/* Player Cash (Gold) */}
               <div className="mini-pill" style={{
                 background: 'linear-gradient(to bottom, #dfb127 0%, #9e791b 100%)',
                 border: '3px solid #b58b16', borderRadius: '24px', height: '52px',
                 display: 'flex', alignItems: 'center', padding: '0 14px',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.5)'
               }}>
-                <img src="/PLAYER.svg" alt="Player Net Worth" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.4))' }} />
+                <img src="/PLAYER.svg" alt="Player Cash" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.4))' }} />
                 <span style={{ marginLeft: 'auto', color: '#ffffff', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8)' }}>
+                  ${playerCash}
+                </span>
+              </div>
+              {/* Player Net Worth (Silver) */}
+              <div className="mini-pill" style={{
+                background: 'linear-gradient(to bottom, #f0f0f0 0%, #b3b3b3 100%)',
+                border: '3px solid #777', borderRadius: '24px', height: '52px',
+                display: 'flex', alignItems: 'center', padding: '0 14px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.8)'
+              }}>
+                <img src="/PLAYER.svg" alt="Player Net Worth" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.4))' }} />
+                <span style={{ marginLeft: 'auto', color: '#008000', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff' }}>
                   ${playerNetWorth}
                 </span>
               </div>

@@ -65,12 +65,12 @@ const SharedMapAnimations = () => (
     .anim-banker-1 { animation: paceBanker1 8s ease-in-out infinite; }
     .anim-banker-2 { animation: paceBanker2 9s ease-in-out infinite; animation-delay: 1.5s; }
 
-    @keyframes hqWarmLightOn { 0%, 25% { opacity: 0.9; fill: #4c1d95; } 75%, 100% { opacity: 1; fill: #fde047; } }
+    @keyframes hqWarmLightOn { 0%, 25% { opacity: 0.9; fill: #881337; } 75%, 100% { opacity: 1; fill: #fde047; } }
     .hq-light-a { animation: hqWarmLightOn 10s ease-in-out infinite alternate; }
     .hq-light-b { animation: hqWarmLightOn 14s ease-in-out infinite alternate-reverse; animation-delay: 2s; }
     .hq-light-c { animation: hqWarmLightOn 18s ease-in-out infinite alternate; animation-delay: 5s; }
     .hq-light-on { opacity: 1; fill: #fef08a; }
-    .hq-light-off { opacity: 0.9; fill: #4c1d95; }
+    .hq-light-off { opacity: 0.9; fill: #881337; }
     @keyframes paceCEO { 0%, 10% { transform: translate(0px, 0px); } 40%, 60% { transform: translate(3px, 1.5px); } 90%, 100% { transform: translate(0px, 0px); } }
     .anim-ceo { animation: paceCEO 6s ease-in-out infinite; }
     @keyframes telegraphSpark { 0%, 80% { opacity: 0; } 82% { opacity: 1; fill: #e0f2fe; transform: scale(1.5); } 84% { opacity: 0; } 86% { opacity: 1; fill: #7dd3fc; transform: scale(2.5); } 88%, 100% { opacity: 0; } }
@@ -441,20 +441,20 @@ const RegionalHQLiving = ({ x, y }) => {
           <polygon points="10,55 50,75 50,80 10,60" fill="#94a3b8" />
           <polygon points="50,75 90,55 90,60 50,80" fill="#64748b" />
           <polygon points="10,55 50,75 90,55 50,35" fill="#cbd5e1" />
-          <polygon points="15,57.5 30,65 30,35 15,27.5" fill="#a855f7" />
+          <polygon points="15,57.5 30,65 30,35 15,27.5" fill="#e11d48" />
           <polygon points="15,27.5 30,35 45,27.5 30,20" fill="#475569" />
           <polygon points="18,33 22,35 22,42 18,40" className="hq-light-c" />
           <polygon points="18,46 22,48 22,55 18,53" className="hq-light-on" />
           <polygon points="25,36.5 29,38.5 29,45.5 25,43.5" className="hq-light-a" />
           <polygon points="25,49.5 29,51.5 29,58.5 25,56.5" className="hq-light-off" />
-          <polygon points="70,65 85,57.5 85,27.5 70,35" fill="#7e22ce" />
+          <polygon points="70,65 85,57.5 85,27.5 70,35" fill="#be123c" />
           <polygon points="55,27.5 70,35 85,27.5 70,20" fill="#475569" />
           <polygon points="71,38.5 75,36.5 75,43.5 71,45.5" className="hq-light-b" />
           <polygon points="71,51.5 75,49.5 75,56.5 71,58.5" className="hq-light-on" />
           <polygon points="78,35 82,33 82,40 78,42" className="hq-light-off" />
           <polygon points="78,48 82,46 82,53 78,55" className="hq-light-a" />
-          <polygon points="30,65 50,75 50,15 30,5" fill="#a855f7" />
-          <polygon points="50,75 70,65 70,5 50,15" fill="#7e22ce" />
+          <polygon points="30,65 50,75 50,15 30,5" fill="#e11d48" />
+          <polygon points="50,75 70,65 70,5 50,15" fill="#be123c" />
           <polygon points="30,5 50,15 70,5 50,-5" fill="#334155" />
           <polygon points="29,64.5 31,65.5 31,5.5 29,4.5" fill="#f8fafc" />
           <polygon points="48,74 50,75 50,15 48,14" fill="#f8fafc" />
@@ -468,6 +468,14 @@ const RegionalHQLiving = ({ x, y }) => {
           <polygon points="42,45 46,47 46,54 42,52" className="hq-light-on" />
           <polygon points="34,54 38,56 38,63 34,61" className="hq-light-on" />
           <polygon points="42,58 46,60 46,67 42,65" className="hq-light-off" />
+          <polygon points="54,17 58,15 58,22 54,24" className="hq-light-off" />
+          <polygon points="62,13 66,11 66,18 62,20" className="hq-light-b" />
+          <polygon points="54,30 58,28 58,35 54,37" className="hq-light-on" />
+          <polygon points="62,26 66,24 66,31 62,33" className="hq-light-a" />
+          <polygon points="54,43 58,41 58,48 54,50" className="hq-light-off" />
+          <polygon points="62,39 66,37 66,44 62,46" className="hq-light-on" />
+          <polygon points="54,56 58,54 58,61 54,63" className="hq-light-c" />
+          <polygon points="62,52 66,50 66,57 62,59" className="hq-light-off" />
           <g>
             <clipPath id={ceoClipId}>
               <polygon points="34,15 38,17 38,24 34,22" />

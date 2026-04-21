@@ -907,12 +907,12 @@ export const RegionalLevyUpgraded = () => (
   <div style={{ width: '66px', height: '66px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateZ(0)', willChange: 'transform' }}>
     <div style={{ flexShrink: 0, width: '100px', height: '100px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(0.66)' }}>
       <style>{`
-        @keyframes warmLightOn { 0%, 25% { opacity: 0.9; fill: #4c1d95; } 75%, 100% { opacity: 1; fill: #fde047; } }
+        @keyframes warmLightOn { 0%, 25% { opacity: 0.9; fill: #881337; } 75%, 100% { opacity: 1; fill: #fde047; } }
         .hq-light-a { animation: warmLightOn 10s ease-in-out infinite alternate; }
         .hq-light-b { animation: warmLightOn 14s ease-in-out infinite alternate-reverse; animation-delay: 2s; }
         .hq-light-c { animation: warmLightOn 18s ease-in-out infinite alternate; animation-delay: 5s; }
         .hq-light-on { opacity: 1; fill: #fef08a; }
-        .hq-light-off { opacity: 0.9; fill: #4c1d95; }
+        .hq-light-off { opacity: 0.9; fill: #881337; }
         
         @keyframes paceCEO { 0%, 10% { transform: translate(0px, 0px); } 40%, 60% { transform: translate(3px, 1.5px); } 90%, 100% { transform: translate(0px, 0px); } }
         .anim-ceo { animation: paceCEO 6s ease-in-out infinite; }
@@ -933,7 +933,7 @@ export const RegionalLevyUpgraded = () => (
             <polygon points="50,75 90,55 90,60 50,80" fill="#64748b" />
             <polygon points="10,55 50,75 90,55 50,35" fill="#cbd5e1" />
             
-            <polygon points="15,57.5 30,65 30,35 15,27.5" fill="#a855f7" />
+            <polygon points="15,57.5 30,65 30,35 15,27.5" fill="#e11d48" />
             <polygon points="15,27.5 30,35 45,27.5 30,20" fill="#475569" />
             
             <polygon points="18,33 22,35 22,42 18,40" className="hq-light-c" />
@@ -941,7 +941,7 @@ export const RegionalLevyUpgraded = () => (
             <polygon points="25,36.5 29,38.5 29,45.5 25,43.5" className="hq-light-a" />
             <polygon points="25,49.5 29,51.5 29,58.5 25,56.5" className="hq-light-off" />
 
-            <polygon points="70,65 85,57.5 85,27.5 70,35" fill="#7e22ce" />
+            <polygon points="70,65 85,57.5 85,27.5 70,35" fill="#be123c" />
             <polygon points="55,27.5 70,35 85,27.5 70,20" fill="#475569" />
             
             <polygon points="71,38.5 75,36.5 75,43.5 71,45.5" className="hq-light-b" />
@@ -949,8 +949,8 @@ export const RegionalLevyUpgraded = () => (
             <polygon points="78,35 82,33 82,40 78,42" className="hq-light-off" />
             <polygon points="78,48 82,46 82,53 78,55" className="hq-light-a" />
 
-            <polygon points="30,65 50,75 50,15 30,5" fill="#a855f7" />
-            <polygon points="50,75 70,65 70,5 50,15" fill="#7e22ce" />
+            <polygon points="30,65 50,75 50,15 30,5" fill="#e11d48" />
+            <polygon points="50,75 70,65 70,5 50,15" fill="#be123c" />
             <polygon points="30,5 50,15 70,5 50,-5" fill="#334155" />
 
             <polygon points="29,64.5 31,65.5 31,5.5 29,4.5" fill="#f8fafc" />

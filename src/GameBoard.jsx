@@ -141,7 +141,7 @@ const GameBoard = () => {
                   // 1. Calculate Track Revenue (I-Beam) - GOES TO PLAYER (GOLD)
                   const trackRev = 10;
                   const trackKey = `+${trackRev}`;
-                  if (!trackGroups[trackKey]) trackGroups[trackKey] = { colors: [], shortNames: [], value: trackRev, isPositive: true, recipientColor: '#fde047', recipientTag: '[ TO YOU ]' };
+                  if (!trackGroups[trackKey]) trackGroups[trackKey] = { colors: [], shortNames: [], value: trackRev, isPositive: true, recipientColor: '#dfb127', recipientTag: '[ TO YOU ]' };
                   trackGroups[trackKey].colors.push(dotColor);
                   trackGroups[trackKey].shortNames.push(comp.short);
 
@@ -155,7 +155,7 @@ const GameBoard = () => {
                       const kickback = window.game ? window.game.calculateBaronKickback(effectCard.label, comp.id, b.targetNodeId, effectCard.level || 1) : 0;
                       value = Math.abs(kickback);
                       isPositive = kickback <= 0; 
-                      recipientColor = isPositive ? '#fde047' : '#c084fc'; 
+                      recipientColor = isPositive ? '#dfb127' : '#c084fc'; 
                       recipientTag = isPositive ? '[ TO YOU ]' : '[ TO BARON ]';
                   } else if (effectCard.type === 'green') {
                       const char = effectCard.label.charAt(0);
@@ -166,7 +166,7 @@ const GameBoard = () => {
                               return n && (n.type === 'start' || n.subType === 'union_yard');
                           });
                           value = isValid ? (lvl === 3 ? 75 : (lvl === 2 ? 50 : 25)) : 0;
-                          recipientColor = '#fde047';
+                          recipientColor = '#dfb127';
                           recipientTag = '[ TO YOU ]';
                       } else if (char === 'B') { 
                           value = lvl === 3 ? 60 : (lvl === 2 ? 30 : 15);
@@ -181,7 +181,7 @@ const GameBoard = () => {
                           const targetN = nodes.find(n => n.id === b.targetNodeId);
                           if (targetN && targetN.subType === 'standard' && !comp.builtNodes.includes(b.targetNodeId)) cities++;
                           value = (lvl === 3 ? 15 : (lvl === 2 ? 10 : 5)) * Math.max(0, cities);
-                          recipientColor = '#fde047';
+                          recipientColor = '#dfb127';
                           recipientTag = '[ TO YOU ]';
                       }
                   }
@@ -453,7 +453,7 @@ const GameBoard = () => {
         }
 
         const typeLabel = subType.replace('_', ' ').toUpperCase();
-        const typeColors = { regional_hq: '#e066ff', parlor: '#e066ff', fed_exchange: '#3b82f6', boomtown: '#ef4444', supply: '#facc15' };
+        const typeColors = { regional_hq: '#e11d48', parlor: '#e066ff', fed_exchange: '#3b82f6', boomtown: '#ef4444', supply: '#facc15' };
         const accentColor = typeColors[subType] || '#94a3b8';
 
         let bypassedHtml = '';
@@ -585,8 +585,8 @@ const GameBoard = () => {
             </div>
             ${playerBonus > 0 ? `
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 16px;">
-              <span style="color: #fde047; font-weight: bold;">PLAYER</span>
-              <span style="color: #fde047; font-weight: bold; white-space: nowrap;">+$${playerBonus}</span>
+              <span style="color: #dfb127; font-weight: bold;">PLAYER</span>
+              <span style="color: #dfb127; font-weight: bold; white-space: nowrap;">+$${playerBonus}</span>
             </div>
             <div style="font-size: 16px; color: #94a3b8; margin-bottom: 16px;">$${playerBonus}</div>
             ` : ''}

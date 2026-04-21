@@ -1282,6 +1282,8 @@ export const ParlorModal = () => {
   const leaveParlor = useGameStore(state => state.leaveParlor);
   const rerollParlor = useGameStore(state => state.rerollParlor);
 
+  // NEW: State to toggle visibility for map inspection
+  const [isHidden, setIsHidden] = useState(false);
   const scale = useModalScale();
 
   if (!gameState || !gameState.parlorOffers || gameState.parlorOffers.length === 0) return null;
@@ -1289,10 +1291,36 @@ export const ParlorModal = () => {
   const rerollCost = gameState.parlorRerollCost || 25;
   const canReroll = gameState.playerCash >= rerollCost;
 
+  // NEW: Floating button when hidden
+  if (isHidden) {
+    return (
+      <>
+        <style>{`.parlor-btn:active { transform: scale(0.95) !important; box-shadow: inset 0 4px 8px rgba(0,0,0,0.5) !important; }`}</style>
+        <button 
+          className="parlor-btn"
+          onPointerDown={(e) => { e.stopPropagation(); setIsHidden(false); }}
+          style={{ position: 'fixed', bottom: '40px', right: '40px', zIndex: 2147483647, padding: '15px 30px', backgroundColor: '#e066ff', color: '#000', fontSize: '20px', fontWeight: '900', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 10px 25px rgba(0,0,0,0.9)', pointerEvents: 'auto', transition: 'transform 0.1s', fontFamily: 'Arial, sans-serif' }}
+        >
+          👁 RETURN TO PARLOR
+        </button>
+      </>
+    );
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: 'rgba(15, 23, 42, 0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', backdropFilter: 'blur(6px)', pointerEvents: 'auto', overflowY: 'auto' }}>
+      <style>{`.parlor-btn:active { transform: scale(0.95) !important; box-shadow: inset 0 4px 8px rgba(0,0,0,0.5) !important; }`}</style>
       
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zoom: scale, padding: '40px 20px' }}>
+        
+        {/* NEW: Hide Button inside the modal */}
+        <button 
+          className="parlor-btn"
+          onPointerDown={(e) => { e.stopPropagation(); setIsHidden(true); }}
+          style={{ padding: '12px 40px', border: '2px solid #334155', borderRadius: '8px', color: '#e066ff', marginBottom: '30px', backgroundColor: '#020617', cursor: 'pointer', fontSize: '16px', fontWeight: '900', boxShadow: '0 6px 12px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.1)', transition: 'transform 0.1s', letterSpacing: '1px', fontFamily: 'Arial, sans-serif' }}>
+          👁 HIDE TO VIEW MAP
+        </button>
+
         <h1 style={{ color: '#e066ff', fontSize: '56px', margin: '0 0 5px 0', textShadow: '3px 4px 6px rgba(0,0,0,0.9), 0 0 20px rgba(224, 102, 255, 0.3)', letterSpacing: '2px', fontWeight: '900', textTransform: 'uppercase', textAlign: 'center' }}>
           THE PARLOR
         </h1>

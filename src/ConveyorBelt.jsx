@@ -69,6 +69,19 @@ const ConveyorBelt = () => {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
 
+  // --- NEW: Auto-deselect timer (7 seconds) ---
+  useEffect(() => {
+      let timer;
+      if (selectedIndex !== null) {
+          timer = setTimeout(() => {
+              setSelectedIndex(null);
+          }, 7000);
+      }
+      return () => {
+          if (timer) clearTimeout(timer);
+      };
+  }, [selectedIndex]);
+
   const belt = gameState?.abacus?.belt || [];
 
   const windowRef = useRef(null);
