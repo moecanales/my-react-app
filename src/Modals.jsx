@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from './App';
-import { getNativeCardInfo } from './NewCardsData';
+import SoundManager from './SoundManager.js';
+import { getNativeCardInfo } from './App.jsx';
 import GameCard from './GameCard';
 import { generateTownLore } from './LoreGenerator';
 
@@ -157,16 +158,16 @@ const TelegramDispatch = () => {
     showDiscard || showAudioSettings || selectedNodeId !== null || 
     (gameState?.parlorOffers?.length > 0) || (gameState?.inIPOPhase);
 
-  const [activeMsg, setActiveMsg] = useState(null);
+  const [activeMsg, useState] = React.useState(null);
 
   useEffect(() => {
     let timer;
     if (!activeMsg && !isBlockingModalOpen && telegramQueue.length > 0) {
-        setActiveMsg(telegramQueue[0]);
+        useState(telegramQueue[0]);
     }
     if (activeMsg) {
         timer = setTimeout(() => {
-            setActiveMsg(null);
+            useState(null);
             dequeueTelegram();
         }, 6000);
     }
@@ -219,7 +220,7 @@ const TrashModal = () => {
   const trashCount = useGameStore(state => state.trashCount);
   const gameState = useGameStore(state => state.gameState);
   const executeTrashSelection = useGameStore(state => state.executeTrashSelection);
-  const [selectedCards, setSelectedCards] = useState([]);
+  const [selectedCards, setSelectedCards] = React.useState([]);
 
   useEffect(() => {
       if (showTrashModal) {
@@ -370,9 +371,9 @@ export const AuditModal = () => {
   const toggleAudit = useGameStore(state => state.toggleAudit);
   const gameState = useGameStore(state => state.gameState);
   
-  const [viewMode, setViewMode] = useState('gallery'); 
-  const [isDenseView, setIsDenseView] = useState(true); 
-  const [ledgerSort, setLedgerSort] = useState('type'); 
+  const [viewMode, setViewMode] = React.useState('gallery'); 
+  const [isDenseView, setIsDenseView] = React.useState(true); 
+  const [ledgerSort, setLedgerSort] = React.useState('type'); 
   const scale = useModalScale();
 
   const portfolioData = useMemo(() => {
@@ -1086,14 +1087,61 @@ export const StartMenuModal = () => {
 
   if (!showStartMenu || !gameState) return null;
 
-  const handleStart = () => {
-      restartGame(); 
-      closeStartMenu(); 
+  const unlockAudioSilently = () => {
+      let audio = window.globalAudioManager;
+      if (!audio) {
+          audio = new SoundManager();
+          window.globalAudioManager = audio;
+          if (window.game) window.game.audio = audio;
+      }
+      if (!audio.initialized) audio.init();
+      if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
+  };
+
+  const handleStart = (mode = 'standard') => {
+      let audio = window.globalAudioManager;
+      if (!audio) {
+          audio = new SoundManager();
+          window.globalAudioManager = audio;
+          if (window.game) window.game.audio = audio;
+      }
+
+      if (!audio.initialized) audio.init();
+      if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
+
+      const state = useGameStore.getState();
+      if (audio.isMuted) {
+          state.toggleAudio();
+      } else {
+          if (typeof audio.setMusicVolume === 'function') audio.setMusicVolume(0.4);
+          if (typeof audio.setSfxVolume === 'function') audio.setSfxVolume(0.8);
+          if (typeof audio.toggleThemeLoop === 'function') audio.toggleThemeLoop(true);
+          
+          if (mode !== 'daily' && mode !== 'tutorial') {
+              setTimeout(() => {
+                  if (typeof audio.playCash === 'function') audio.playCash();
+              }, 300);
+          }
+      }
+
+      setTimeout(() => {
+          if (mode === 'daily' && window.game && typeof window.game.startDailyRun === 'function') {
+              window.game.startDailyRun();
+          } else if (mode === 'tutorial') {
+              if (window.game && typeof window.TutorialManager !== 'undefined') {
+                  window.game.tutorial = new window.TutorialManager(window.game);
+                  window.game.tutorial.start();
+              }
+          } else {
+              restartGame(); 
+          }
+          closeStartMenu(); 
+      }, 50);
   };
 
   if (phase === 'confidential') {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 999999, backgroundColor: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', cursor: 'pointer', overflowY: 'auto' }} onClick={() => setPhase('menu')}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 999999, backgroundColor: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', cursor: 'pointer', overflowY: 'auto' }} onClick={() => { unlockAudioSilently(); setPhase('menu'); }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zoom: scale, padding: '20px' }}>
           <h1 style={{ color: '#fff', fontSize: '36px', fontWeight: 'normal', letterSpacing: '4px', margin: '0 0 10px 0' }}>RIGHT OF WAY: EASTWARD BOUND</h1>
           <div style={{ color: '#666', fontSize: '18px', letterSpacing: '2px', marginBottom: '60px' }}>INTERNAL DESIGN PROTOTYPE / VERTICAL SLICE</div>
@@ -1154,10 +1202,10 @@ export const StartMenuModal = () => {
 
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div style={{ display: 'flex', gap: '15px' }}>
-              <button onClick={handleStart} style={{ flex: 1, padding: '20px', backgroundColor: '#facc15', color: '#000', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 0 20px rgba(250, 204, 21, 0.4)' }}>STANDARD RUN</button>
-              <button style={{ flex: 1, padding: '20px', backgroundColor: '#06b6d4', color: '#000', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>DAILY [2026-04-09]</button>
+              <button onClick={() => handleStart('standard')} style={{ flex: 1, padding: '20px', backgroundColor: '#facc15', color: '#000', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer', boxShadow: '0 0 20px rgba(250, 204, 21, 0.4)' }}>STANDARD RUN</button>
+              <button onClick={() => handleStart('daily')} style={{ flex: 1, padding: '20px', backgroundColor: '#06b6d4', color: '#000', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>DAILY [2026-04-09]</button>
           </div>
-          <button style={{ width: '100%', padding: '20px', backgroundColor: '#4ade80', color: '#000', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>PLAY TUTORIAL</button>
+          <button onClick={() => handleStart('tutorial')} style={{ width: '100%', padding: '20px', backgroundColor: '#4ade80', color: '#000', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>PLAY TUTORIAL</button>
           <button style={{ width: '100%', padding: '20px', backgroundColor: '#334155', color: '#fff', fontSize: '24px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>ACCESS PERK STORE</button>
         </div>
 
@@ -1171,6 +1219,30 @@ export const IPOModal = () => {
   const applyPackage = useGameStore(state => state.applyPackage);
   const [isHidden, setIsHidden] = useState(false);
   const scale = useModalScale();
+
+  const handleIPOClick = (e, idx) => {
+      e.stopPropagation();
+
+      let audio = window.globalAudioManager;
+      if (!audio) {
+          audio = new SoundManager();
+          window.globalAudioManager = audio;
+          if (window.game) window.game.audio = audio;
+      }
+
+      if (!audio.initialized) audio.init();
+      if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
+
+      const state = useGameStore.getState();
+      if (audio.isMuted) {
+          state.toggleAudio(); 
+      } else {
+          if (typeof audio.toggleThemeLoop === 'function') audio.toggleThemeLoop(true);
+          if (typeof audio.playCash === 'function') audio.playCash();
+      }
+
+      applyPackage(idx);
+  };
 
   if (!gameState || !gameState.inIPOPhase || !gameState.currentPackages) return null;
 
@@ -1232,7 +1304,7 @@ export const IPOModal = () => {
             return (
               <div 
                 key={idx} 
-                onPointerDown={(e) => { e.stopPropagation(); applyPackage(idx); }} 
+                onPointerDown={(e) => handleIPOClick(e, idx)} 
                 style={{ width: '320px', background: theme.background, border: theme.border, borderRadius: '16px', padding: '25px', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)', boxShadow: `0 15px 30px rgba(0,0,0,0.8), inset 0 2px 6px rgba(255,255,255,0.4)`, display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }} 
                 onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-10px) scale(1.03)'; e.currentTarget.style.boxShadow = `0 25px 40px rgba(0,0,0,0.9), 0 0 30px ${theme.glow}, inset 0 2px 6px rgba(255,255,255,0.6)`; }} 
                 onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = `0 15px 30px rgba(0,0,0,0.8), inset 0 2px 6px rgba(255,255,255,0.4)`; }}
@@ -1282,7 +1354,6 @@ export const ParlorModal = () => {
   const leaveParlor = useGameStore(state => state.leaveParlor);
   const rerollParlor = useGameStore(state => state.rerollParlor);
 
-  // NEW: State to toggle visibility for map inspection
   const [isHidden, setIsHidden] = useState(false);
   const scale = useModalScale();
 
@@ -1291,7 +1362,6 @@ export const ParlorModal = () => {
   const rerollCost = gameState.parlorRerollCost || 25;
   const canReroll = gameState.playerCash >= rerollCost;
 
-  // NEW: Floating button when hidden
   if (isHidden) {
     return (
       <>
@@ -1313,7 +1383,6 @@ export const ParlorModal = () => {
       
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zoom: scale, padding: '40px 20px' }}>
         
-        {/* NEW: Hide Button inside the modal */}
         <button 
           className="parlor-btn"
           onPointerDown={(e) => { e.stopPropagation(); setIsHidden(true); }}

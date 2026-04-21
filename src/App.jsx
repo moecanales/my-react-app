@@ -116,7 +116,6 @@ export const useGameStore = create((set, get) => ({
   proxyCompanyId: null,
 
   targetedCardIndices: [],
-  // THE FIX: Prevents Zustand from triggering an infinite 60fps re-render loop that crashes WebGL
   setTargetedCardIndices: (indices) => set(state => {
       if (state.targetedCardIndices.join(',') === indices.join(',')) return {};
       return { targetedCardIndices: indices };
@@ -124,7 +123,6 @@ export const useGameStore = create((set, get) => ({
 
   hoveredCardFinancials: [],
   setHoveredCardFinancials: (data) => set(state => {
-      // Deep compare stringify to prevent WebGL tearing from 60fps re-renders
       if (JSON.stringify(state.hoveredCardFinancials) === JSON.stringify(data)) return {};
       return { hoveredCardFinancials: data };
   }),
@@ -138,11 +136,8 @@ export const useGameStore = create((set, get) => ({
   toggleAudio: () => {
       if (window.game) {
           if (!window.game.audio || !window.game.audio.initialized) {
-              try {
-                  window.game.audio = new SoundManager();
-              } catch (e) {
-                  console.warn("Handshake failed: SoundManager not found in global scope.", e);
-              }
+              window.game.audio = window.globalAudioManager || new window.SoundManager();
+              window.globalAudioManager = window.game.audio;
           }
 
           if (window.game.audio && typeof window.game.audio.init === 'function') {
@@ -188,6 +183,10 @@ export const useGameStore = create((set, get) => ({
     if (!gameInstance) {
         gameInstance = new window.Game();
         window.game = gameInstance; 
+        
+        if (window.globalAudioManager) {
+            gameInstance.audio = window.globalAudioManager;
+        }
         
         if (!gameInstance.ui) gameInstance.ui = {};
         gameInstance.ui.showParlorModal = () => { syncState(set); };
@@ -455,6 +454,11 @@ export const useGameStore = create((set, get) => ({
   restartGame: () => {
     if (!gameInstance) return;
     gameInstance.startNewRun();
+    
+    if (window.globalAudioManager) {
+        window.game.audio = window.globalAudioManager;
+    }
+    
     if (gameInstance.abacus && gameInstance.abacus.belt.length === 0) {
         gameInstance.abacus.refillBelt();
     }
@@ -683,10 +687,22 @@ export default function App() {
             window.game.mouseY = e.clientY;
         }
     };
+
+    const handleGlobalInteract = () => {
+        if (window.game?.audio?.ctx?.state === 'suspended') {
+            window.game.audio.ctx.resume();
+        }
+    };
+
     window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('click', handleGlobalInteract);
+    window.addEventListener('pointerdown', handleGlobalInteract);
+
     return () => {
         clearTimeout(timer);
         window.removeEventListener('mousemove', handleGlobalMouseMove);
+        window.removeEventListener('click', handleGlobalInteract);
+        window.removeEventListener('pointerdown', handleGlobalInteract);
     };
   }, [initGame]);
 

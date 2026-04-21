@@ -1,5 +1,13 @@
 class SoundManager {
     constructor() {
+        // --- NEW: TRUE SINGLETON PATTERN ---
+        // If the game engine tries to instantiate a new SoundManager after a restart,
+        // it will just grab the persistent, already-unlocked instance.
+        if (window.__globalSoundManagerInstance) {
+            return window.__globalSoundManagerInstance;
+        }
+        window.__globalSoundManagerInstance = this;
+
         // THE SLEDGEHAMMER: Catch all MP3 objects (DOM and Off-DOM)
         if (typeof window.tutorialVolume === 'undefined') window.tutorialVolume = 0.8;
         if (!window.audioSledgehammerInstalled) {
@@ -35,10 +43,30 @@ class SoundManager {
         this.isLooping = false;
         this.nextLoopTime = 0;
         this.loopTimeout = null;
+
+        // --- NEW: GLOBAL BROWSER UNLOCKER ---
+        // Forces the browser to lift the Autoplay Policy the second the user clicks ANYTHING.
+        const globalUnlock = () => {
+            if (!this.initialized) this.init();
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(e => console.warn("Audio resume deferred", e));
+            }
+            document.removeEventListener('pointerdown', globalUnlock);
+            document.removeEventListener('click', globalUnlock);
+        };
+        document.addEventListener('pointerdown', globalUnlock);
+        document.addEventListener('click', globalUnlock);
     }
 
     init() {
-        if (this.initialized) return;
+        // Safe return if already initialized, but verify context state
+        if (this.initialized) {
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+            return;
+        }
+        
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
@@ -84,6 +112,7 @@ class SoundManager {
 
     toggleThemeLoop(forceState = null) {
         if (!this.initialized) this.init();
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         
         const shouldPlay = forceState !== null ? forceState : !this.isLooping;
 
@@ -158,6 +187,7 @@ class SoundManager {
     playClick() {
         // Custom Sine Click
         if (!this.initialized) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const osc = this.ctx.createOscillator();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(190, this.ctx.currentTime);
@@ -183,6 +213,7 @@ class SoundManager {
     playCash() {
         // Register Style (Approved Variant)
         if (!this.initialized) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         this.playTone(1500, 'sine', 0.1, 0.3);
         setTimeout(() => this.playTone(2000, 'sine', 0.2, 0.3), 80);
     }
@@ -201,6 +232,7 @@ class SoundManager {
     playCardSlide() {
         // Filtered White Noise
         if (!this.initialized) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const duration = 0.15;
         const bufferSize = this.ctx.sampleRate * duration;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -241,6 +273,7 @@ class SoundManager {
     // --- NEW: BARON REACTION AUDIO ---
     playRetroLaugh() {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const bursts = 4;
         for (let i = 0; i < bursts; i++) {
             const osc = this.ctx.createOscillator();
@@ -264,6 +297,7 @@ class SoundManager {
 
     playSadTrombone() {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const freqs = [300, 280, 260, 150]; 
         const times = [0, 0.4, 0.8, 1.2]; 
         const durations = [0.3, 0.3, 0.3, 1.2]; 
@@ -294,6 +328,7 @@ class SoundManager {
 
     playAngryGrowl() {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const osc1 = this.ctx.createOscillator();
         const osc2 = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
@@ -324,6 +359,7 @@ class SoundManager {
 
     playSurpriseBoing() {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
 
@@ -348,6 +384,7 @@ class SoundManager {
 
     playAnnoyedGrunt() {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const osc = this.ctx.createOscillator(); 
         const gain = this.ctx.createGain();
         osc.type = 'sawtooth'; 
@@ -369,6 +406,7 @@ class SoundManager {
     // --- HELPERS ---
     playTone(freq, type, duration, vol = 1.0) {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
@@ -385,6 +423,7 @@ class SoundManager {
 
     playNoise(duration, vol = 1.0, filterFreq = 1000) {
         if (!this.initialized || this.isMuted) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         const bufferSize = this.ctx.sampleRate * duration;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -462,3 +501,5 @@ class SoundManager {
         }
     }
 }
+
+export default SoundManager;
