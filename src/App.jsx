@@ -53,20 +53,25 @@ const syncState = (set) => {
       : (parlorSource.parlorRerollCost || 25);
   
   let projCash = gameInstance.playerCash;
+  let baronProjCash = 0;
   Object.keys(gameInstance.companies).forEach(k => {
       const c = gameInstance.companies[k];
       if (!c.isBankrupt) {
           if (c.dividendPolicy === 'full') {
-              projCash += Math.ceil(c.income / c.maxShares) * (gameInstance.playerShares[k] || 0);
+              projCash += Math.ceil(c.income / c.maxShares) * (snap.playerShares[k] || 0);
+              baronProjCash += Math.ceil(c.income / c.maxShares) * (snap.baronShares[k] || 0);
           } else if (c.dividendPolicy === 'half') {
               const retained = Math.floor(c.income / 2);
-              projCash += Math.ceil((c.income - retained) / c.maxShares) * (gameInstance.playerShares[k] || 0);
+              projCash += Math.ceil((c.income - retained) / c.maxShares) * (snap.playerShares[k] || 0);
+              baronProjCash += Math.ceil((c.income - retained) / c.maxShares) * (snap.baronShares[k] || 0);
           }
       }
   });
   Object.values(gameInstance.privateCompanies || {}).forEach(pc => {
       if (pc.owner === 'player') projCash += pc.incomeValue;
+      if (pc.owner === 'baron') baronProjCash += pc.incomeValue;
   });
+  snap.baronProjectedIncome = baronProjCash;
 
   const effectivePrice = Math.max(1, (gameInstance.currentContractPrice || 15) - (gameInstance.priceModifiers?.blue || 0));
   const penaltyPerUnit = effectivePrice + ((gameInstance.contractFailureCount || 0) * 5);
@@ -487,7 +492,8 @@ export const getNativeCardInfo = (item) => {
 
 const TopBar = () => {
   const gameState = useGameStore(state => state.gameState);
-  const restartGame = useGameStore(state => state.restartGame);
+  const endTurn = useGameStore(state => state.endTurn);
+  const toggleAudioSettings = useGameStore(state => state.toggleAudioSettings);
 
   if (!gameState) return null;
 
@@ -518,9 +524,12 @@ const TopBar = () => {
         })}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', marginLeft: '20px', flexShrink: 0 }}>
-        <button onClick={restartGame} style={{ background: '#d32f2f', color: '#fff', border: '1px solid #ff4d4d', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9em' }}>Restart Match</button>
-        <button onClick={() => { if(window.game && window.game.ui) window.game.ui.showHowToPlayModal(); }} style={{ background: '#333', color: '#fff', border: '1px solid #555', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9em' }}>? HOW TO PLAY</button>
+      <div style={{ display: 'flex', gap: '10px', marginLeft: '20px', flexShrink: 0, alignItems: 'center' }}>
+        <button onClick={endTurn} style={{ background: '#d32f2f', color: '#fff', border: '1px solid #ff4d4d', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9em', letterSpacing: '1px' }}>END OF YEAR</button>
+        <div style={{ background: '#111', color: '#c084fc', border: '1px solid #555', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>BARON EST:</span>
+            <span style={{ color: '#fff' }}>+${gameState.baronProjectedIncome || 0}</span>
+        </div>
       </div>
     </div>
   );

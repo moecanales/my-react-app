@@ -37,6 +37,7 @@ class SoundManager {
         this.voiceAudio = null; 
         this.isVoicePaused = false; 
         this.voiceVolume = 0.8; 
+        this.musicUnlocked = false; 
 
         this.SONG_DATA = [{"step":0,"freq":659.25},{"step":0,"freq":293.66},{"step":1,"freq":523.25},{"step":1,"freq":293.66},{"step":2,"freq":1046.5},{"step":3,"freq":987.77},{"step":3,"freq":261.63},{"step":4,"freq":1046.5},{"step":5,"freq":987.77},{"step":5,"freq":659.25},{"step":5,"freq":293.66},{"step":6,"freq":1046.5},{"step":6,"freq":523.25},{"step":7,"freq":987.77},{"step":7,"freq":261.63},{"step":8,"freq":1046.5},{"step":8,"freq":659.25},{"step":9,"freq":523.25},{"step":9,"freq":293.66},{"step":10,"freq":587.33},{"step":11,"freq":659.25},{"step":11,"freq":329.63},{"step":13,"freq":523.25},{"step":13,"freq":293.66},{"step":14,"freq":987.77},{"step":14,"freq":587.33},{"step":15,"freq":1046.5},{"step":15,"freq":659.25},{"step":15,"freq":329.63},{"step":16,"freq":783.99},{"step":16,"freq":293.66},{"step":17,"freq":659.25},{"step":17,"freq":293.66},{"step":18,"freq":1046.5},{"step":18,"freq":523.25},{"step":19,"freq":987.77},{"step":19,"freq":261.63},{"step":20,"freq":1046.5},{"step":21,"freq":523.25},{"step":21,"freq":293.66},{"step":22,"freq":1046.5},{"step":23,"freq":987.77},{"step":23,"freq":523.25},{"step":23,"freq":261.63},{"step":24,"freq":1046.5},{"step":25,"freq":987.77},{"step":25,"freq":523.25},{"step":25,"freq":293.66},{"step":26,"freq":1046.5},{"step":27,"freq":987.77},{"step":27,"freq":587.33},{"step":29,"freq":659.25},{"step":29,"freq":293.66},{"step":30,"freq":523.25}];
         this.BPM = 80;
@@ -111,6 +112,8 @@ class SoundManager {
     // --- MUSIC LOOP LOGIC (Lookahead Scheduling) ---
 
     toggleThemeLoop(forceState = null) {
+        if (forceState === true && !this.musicUnlocked) return false;
+
         if (!this.initialized) this.init();
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         
@@ -502,4 +505,5 @@ class SoundManager {
     }
 }
 
+window.SoundManager = SoundManager;
 export default SoundManager;

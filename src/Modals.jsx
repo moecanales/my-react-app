@@ -1002,8 +1002,7 @@ const TooltipOverlay = () => {
 const AudioSettingsModal = () => {
     const show = useGameStore(state => state.showAudioSettings);
     const toggle = useGameStore(state => state.toggleAudioSettings);
-    const toggleAudio = useGameStore(state => state.toggleAudio);
-    const isMuted = useGameStore(state => state.gameState?.isMuted);
+    const restartGame = useGameStore(state => state.restartGame);
 
     const [musicVol, setMusicVol] = useState(0.4);
     const [sfxVol, setSfxVol] = useState(0.8);
@@ -1041,13 +1040,14 @@ const AudioSettingsModal = () => {
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 10005, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div style={{ backgroundColor: '#1a1a20', border: '2px solid #ffd700', padding: '30px', borderRadius: '8px', width: '400px', color: 'white', boxShadow: '0 10px 40px rgba(0,0,0,0.9)' }}>
-                <h2 style={{ color: '#ffd700', marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px' }}>AUDIO SETTINGS</h2>
+                <h2 style={{ color: '#ffd700', marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px', textAlign: 'center', letterSpacing: '2px' }}>SYSTEMS MENU</h2>
 
-                <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'center' }}>
-                    <button onClick={toggleAudio} style={{ padding: '12px', backgroundColor: '#111', color: isMuted ? '#ff4d4d' : '#4dff4d', border: '1px solid #ffd700', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2em', width: '100%' }}>
-                        {isMuted ? '🔇 MUTED' : '🔊 AUDIO'}
-                    </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px' }}>
+                    <button onClick={() => { if(window.game && window.game.ui) window.game.ui.showHowToPlayModal(); toggle(); }} style={{ width: '100%', padding: '12px', backgroundColor: '#333', color: '#fff', border: '1px solid #555', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px', fontSize: '1.1em' }}>? HOW TO PLAY</button>
+                    <button onClick={() => { restartGame(); toggle(); }} style={{ width: '100%', padding: '12px', backgroundColor: '#d32f2f', color: '#fff', border: '1px solid #ff4d4d', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px', fontSize: '1.1em', letterSpacing: '1px' }}>RESTART MATCH</button>
                 </div>
+
+                <h3 style={{ color: '#aaa', fontSize: '14px', borderBottom: '1px solid #444', paddingBottom: '5px', marginBottom: '15px' }}>AUDIO SETTINGS</h3>
 
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', color: '#aaa', fontWeight: 'bold' }}>
@@ -1115,12 +1115,10 @@ export const StartMenuModal = () => {
       } else {
           if (typeof audio.setMusicVolume === 'function') audio.setMusicVolume(0.4);
           if (typeof audio.setSfxVolume === 'function') audio.setSfxVolume(0.8);
-          if (typeof audio.toggleThemeLoop === 'function') audio.toggleThemeLoop(true);
           
-          if (mode !== 'daily' && mode !== 'tutorial') {
-              setTimeout(() => {
-                  if (typeof audio.playCash === 'function') audio.playCash();
-              }, 300);
+          if (mode === 'daily' || mode === 'tutorial') {
+              audio.musicUnlocked = true;
+              if (typeof audio.toggleThemeLoop === 'function') audio.toggleThemeLoop(true);
           }
       }
 
@@ -1237,6 +1235,7 @@ export const IPOModal = () => {
       if (audio.isMuted) {
           state.toggleAudio(); 
       } else {
+          audio.musicUnlocked = true;
           if (typeof audio.toggleThemeLoop === 'function') audio.toggleThemeLoop(true);
           if (typeof audio.playCash === 'function') audio.playCash();
       }
