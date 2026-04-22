@@ -254,7 +254,7 @@ const LeftSidebar = () => {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.8)'
               }}>
                 <img src="/PLAYER.svg" alt="Player Net Worth" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.4))' }} />
-                <span style={{ marginLeft: 'auto', color: '#008000', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff' }}>
+                <span style={{ marginLeft: 'auto', color: '#facc15', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8)' }}>
                   ${playerNetWorth}
                 </span>
               </div>

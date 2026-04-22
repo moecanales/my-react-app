@@ -73,6 +73,11 @@ const syncState = (set) => {
   });
   snap.baronProjectedIncome = baronProjCash;
 
+  // --- NEW: Sync Projected Wealth ---
+  snap.projectedWealth = typeof gameInstance.getProjectedWealth === 'function' 
+      ? gameInstance.getProjectedWealth() 
+      : 0;
+
   const effectivePrice = Math.max(1, (gameInstance.currentContractPrice || 15) - (gameInstance.priceModifiers?.blue || 0));
   const penaltyPerUnit = effectivePrice + ((gameInstance.contractFailureCount || 0) * 5);
   const blueUnits = gameInstance.abacus?.ledger?.blue || 0;
@@ -490,6 +495,73 @@ export const getNativeCardInfo = (item) => {
     return { name, desc, icon };
 };
 
+const WealthTracker = () => {
+    const gameState = useGameStore(state => state.gameState);
+    if (!gameState) return null;
+
+    const rawWealth = gameState.projectedWealth || 0;
+
+    let bracket = Math.floor(rawWealth / 100) * 100;
+    bracket = Math.max(0, Math.min(bracket, 4900));
+
+    const windowWidth = 100; 
+    const targetX = bracket + 50; 
+    const translateX = (windowWidth / 2) - targetX;
+
+    const isExposed = bracket >= 300;
+
+    const stripItems = [];
+    for (let w = 0; w <= 5000; w += 100) {
+        const isDanger = w >= 300;
+        stripItems.push(
+            <div key={w} style={{
+                position: 'absolute',
+                left: `${w}px`,
+                width: '100px',
+                height: '100%',
+                borderRight: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                fontFamily: 'monospace',
+                background: isDanger ? 'rgba(244, 67, 54, 0.15)' : 'rgba(223, 177, 39, 0.1)',
+                color: isDanger ? '#F44336' : '#dfb127'
+            }}>
+                ${w}+
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '36px' }} title="PROJECTED WEALTH: Estimates your Net Worth after this year's dividends. If you cross the $300 threshold, you MUST have a higher Net Worth than the Baron at year-end, or face a hostile takeover!">
+            
+            {/* Left Column: Badge Only */}
+            <div style={{
+                fontSize: '11px', fontWeight: '900', letterSpacing: '1px', padding: '0 12px', borderRadius: '4px',
+                backgroundColor: isExposed ? '#F44336' : '#4CAF50', color: isExposed ? '#fff' : '#000',
+                boxShadow: isExposed ? '0 0 10px rgba(244, 67, 54, 0.4)' : '0 0 10px rgba(76, 175, 80, 0.4)',
+                display: 'flex', alignItems: 'center', height: '100%', boxSizing: 'border-box'
+            }}>
+                {isExposed ? 'EXPOSED' : 'PROTECTED'}
+            </div>
+
+            {/* Right Column: The Mechanical Window */}
+            <div style={{ position: 'relative', width: `${windowWidth}px`, height: '100%', overflow: 'hidden', background: '#000', border: '1px solid #333', borderRadius: '4px', boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.8)', boxSizing: 'border-box' }}>
+                <div style={{ position: 'absolute', height: '100%', width: '5000px', left: 0, top: 0, transform: `translateX(${translateX}px)`, transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+                    {stripItems}
+                </div>
+                {/* Top and Bottom Target Pointers */}
+                <div style={{ position: 'absolute', left: '50%', top: 0, width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '6px solid #facc15', transform: 'translateX(-50%)', zIndex: 2, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }}></div>
+                <div style={{ position: 'absolute', left: '50%', bottom: 0, width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '6px solid #facc15', transform: 'translateX(-50%)', zIndex: 2, filter: 'drop-shadow(0 -2px 2px rgba(0,0,0,0.5))' }}></div>
+                {/* Glossy Overlay */}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.4) 100%)', pointerEvents: 'none', zIndex: 3 }}></div>
+            </div>
+        </div>
+    );
+};
+
 const TopBar = () => {
   const gameState = useGameStore(state => state.gameState);
   const endTurn = useGameStore(state => state.endTurn);
@@ -524,12 +596,35 @@ const TopBar = () => {
         })}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', marginLeft: '20px', flexShrink: 0, alignItems: 'center' }}>
-        <button onClick={endTurn} style={{ background: '#d32f2f', color: '#fff', border: '1px solid #ff4d4d', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9em', letterSpacing: '1px' }}>END OF YEAR</button>
-        <div style={{ background: '#111', color: '#c084fc', border: '1px solid #555', padding: '8px 16px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>BARON EST:</span>
-            <span style={{ color: '#fff' }}>+${gameState.baronProjectedIncome || 0}</span>
-        </div>
+      <div style={{ display: 'flex', gap: '12px', marginLeft: '20px', flexShrink: 0, alignItems: 'center', height: '36px' }}>
+        <button 
+            onClick={endTurn} 
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 12px rgba(220, 38, 38, 0.5)'; }} 
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)'; }} 
+            onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(2px)'; e.currentTarget.style.boxShadow = 'none'; }} 
+            style={{ 
+                background: 'linear-gradient(to bottom, #ef4444, #dc2626)', 
+                color: '#fff', 
+                border: '1px solid #b91c1c', 
+                padding: '0 24px', 
+                height: '100%', 
+                borderRadius: '6px', 
+                cursor: 'pointer', 
+                fontWeight: '900', 
+                fontSize: '14px', 
+                letterSpacing: '1px', 
+                textShadow: '1px 1px 2px rgba(0,0,0,0.6)', 
+                boxShadow: '0 4px 6px rgba(0,0,0,0.3)', 
+                transition: 'all 0.1s ease', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                boxSizing: 'border-box'
+            }}
+        >
+            END OF YEAR
+        </button>
+        <WealthTracker />
       </div>
     </div>
   );
