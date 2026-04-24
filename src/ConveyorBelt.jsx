@@ -1,3 +1,4 @@
+// ConveyorBelt.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useGameStore } from './App';
 import { getNativeCardInfo } from './NewCardsData';
@@ -159,8 +160,11 @@ const ConveyorBelt = () => {
       displayBelt.push({ item: null, index: i });
   }
 
+  const tutorial = gameState?.tutorial;
+  const beltClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('steel-dashboard-container') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
+
   return (
-    <div style={{ 
+    <div className={beltClass} style={{ 
         gridArea: '3 / 2 / 4 / 3', 
         backgroundColor: '#1a1a20', 
         padding: '10px 30px', 

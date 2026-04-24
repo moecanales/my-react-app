@@ -1,3 +1,4 @@
+// Modals.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from './App';
 import SoundManager from './SoundManager.js';
@@ -158,16 +159,16 @@ const TelegramDispatch = () => {
     showDiscard || showAudioSettings || selectedNodeId !== null || 
     (gameState?.parlorOffers?.length > 0) || (gameState?.inIPOPhase);
 
-  const [activeMsg, useState] = React.useState(null);
+  const [activeMsg, setActiveMsg] = React.useState(null);
 
   useEffect(() => {
     let timer;
     if (!activeMsg && !isBlockingModalOpen && telegramQueue.length > 0) {
-        useState(telegramQueue[0]);
+        setActiveMsg(telegramQueue[0]);
     }
     if (activeMsg) {
         timer = setTimeout(() => {
-            useState(null);
+            setActiveMsg(null);
             dequeueTelegram();
         }, 6000);
     }
@@ -1080,6 +1081,7 @@ export const StartMenuModal = () => {
   const showStartMenu = useGameStore(state => state.showStartMenu);
   const closeStartMenu = useGameStore(state => state.closeStartMenu);
   const restartGame = useGameStore(state => state.restartGame);
+  const startTutorial = useGameStore(state => state.startTutorial);
   const gameState = useGameStore(state => state.gameState);
   
   const [phase, setPhase] = useState('confidential');
@@ -1125,15 +1127,13 @@ export const StartMenuModal = () => {
       setTimeout(() => {
           if (mode === 'daily' && window.game && typeof window.game.startDailyRun === 'function') {
               window.game.startDailyRun();
+              closeStartMenu();
           } else if (mode === 'tutorial') {
-              if (window.game && typeof window.TutorialManager !== 'undefined') {
-                  window.game.tutorial = new window.TutorialManager(window.game);
-                  window.game.tutorial.start();
-              }
+              startTutorial();
           } else {
               restartGame(); 
+              closeStartMenu(); 
           }
-          closeStartMenu(); 
       }, 50);
   };
 
@@ -1495,199 +1495,196 @@ const ParlorOfferItem = ({ offer, completeParlorPurchase }) => {
   );
 };
 
-export const DiscardModal = () => {
+const DiscardModal = () => {
   const showDiscard = useGameStore(state => state.showDiscard);
   const toggleDiscard = useGameStore(state => state.toggleDiscard);
   const gameState = useGameStore(state => state.gameState);
 
-  const [viewMode, setViewMode] = useState('gallery'); 
-  const [isDenseView, setIsDenseView] = useState(true); 
-  const [ledgerSort, setLedgerSort] = useState('type'); 
-  const scale = useModalScale();
-
-  const portfolioData = useMemo(() => {
-    if (!gameState) return { gallery: { green:{}, blue:{}, red:{} }, ledger: [], stats: { total:0, g:0, b:0, r:0 } };
-    
-    const { discards } = gameState;
-    const galleryDeck = { green: {}, blue: {}, red: {} };
-    
-    let stats = { total:0, g:0, b:0, r:0 };
-    const ledgerMap = new Map(); 
-
-    const processItem = (card, preciseLoc, coColor) => {
-        stats.total++;
-        if (card.type === 'green') stats.g++;
-        if (card.type === 'blue') stats.b++;
-        if (card.type === 'red') stats.r++;
-
-        if (galleryDeck[card.type]) {
-            const gKey = card.label;
-            if (!galleryDeck[card.type][gKey]) {
-                galleryDeck[card.type][gKey] = { baseCard: card, counts: { 1: 0, 2: 0, 3: 0 } };
-            }
-            galleryDeck[card.type][gKey].counts[card.level || 1]++;
-        }
-
-        const lKey = `${card.type}_${card.label}_L${card.level || 1}_${preciseLoc}`;
-        
-        if (!ledgerMap.has(lKey)) {
-            const info = getNativeCardInfo(card);
-            ledgerMap.set(lKey, {
-                key: lKey,
-                name: info.name,
-                label: card.label,
-                level: card.level || 1,
-                type: card.type,
-                locationTag: preciseLoc,
-                coColor: coColor,
-                count: 0
-            });
-        }
-        ledgerMap.get(lKey).count++;
-    };
-
-    ['green', 'blue', 'red'].forEach(color => {
-        (discards?.[color] || []).forEach(c => processItem(c, 'DISCARD', null));
-    });
-
-    return { gallery: galleryDeck, rawLedger: Array.from(ledgerMap.values()), stats };
-  }, [gameState]);
-
   if (!showDiscard || !gameState) return null;
 
-  const renderGalleryRow = (title, colorDict, colorHex) => {
-      const cards = Object.values(colorDict);
-      if (cards.length === 0) return null;
-      const gapSize = isDenseView ? '15px' : '30px';
+  const discards = gameState.discards || { green: [], blue: [], red: [] };
+  const allDiscards = [...discards.green, ...discards.blue, ...discards.red];
 
-      return (
-          <div style={{ marginBottom: isDenseView ? '15px' : '30px' }}>
-              <h3 style={{ color: colorHex, borderBottom: `1px solid ${colorHex}`, paddingBottom: '10px', marginTop: 0, letterSpacing: '2px', textTransform: 'uppercase' }}>
-                  {title} ({cards.length})
-              </h3>
-              <div style={{ display: 'flex', overflowX: 'auto', gap: gapSize, padding: '20px 10px', paddingBottom: '30px', scrollbarWidth: 'thin', scrollbarColor: `${colorHex} #1e293b` }}>
-                  {cards.map(data => (
-                      <PortfolioCardItem key={data.baseCard.label} data={data} color={data.baseCard.type} isDenseView={isDenseView} />
-                  ))}
-              </div>
-          </div>
-      );
+  const renderCard = (c, i) => {
+    const info = getNativeCardInfo(c);
+    const bgColors = { 'green': '#2e7d32', 'blue': '#1565c0', 'red': '#7e22ce' };
+    const baseBg = bgColors[c.type] || '#555';
+    
+    return (
+        <div key={i} style={{
+            width: '120px', padding: '15px', borderRadius: '8px',
+            backgroundColor: baseBg, color: '#fff', border: '2px solid rgba(255,255,255,0.2)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+        }}>
+            <span style={{ fontWeight: 'bold', fontSize: '1.05em', marginBottom: '5px', lineHeight: '1.2' }}>{info.name}</span>
+            <span style={{ fontSize: '0.85em', opacity: 0.9 }}>Lvl {c.level || 1} <span style={{fontSize:'0.8em', opacity: 0.7}}>({c.label})</span></span>
+        </div>
+    );
   };
-
-  const renderSortedLedger = (rawLedgerArray) => {
-      const renderSection = (title, items, hex) => {
-          if (items.length === 0) return null;
-          return (
-              <div style={{ marginBottom: '20px' }}>
-                  <h3 style={{ color: hex, borderBottom: `1px solid ${hex}`, paddingBottom: '10px', marginTop: 0, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                      {title} ({items.length} lines)
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      {items.map(({ key, ...item }) => <LedgerLineItem key={key} {...item} hexColor={hex} />)}
-                  </div>
-              </div>
-          );
-      };
-
-      let sorted = [...rawLedgerArray];
-      sorted.sort((a, b) => a.name.localeCompare(b.name) || a.level - b.level);
-
-      const gList = sorted.filter(i => i.type === 'green');
-      const bList = sorted.filter(i => i.type === 'blue');
-      const rList = sorted.filter(i => i.type === 'red');
-
-      return (
-          <div style={{ padding: '10px' }}>
-              {renderSection('Infrastructure Assets', gList, '#4ade80')}
-              {renderSection('Blue Contract Agreements', bList, '#60a5fa')}
-              {renderSection('Purple Market Actions', rList, '#c084fc')} 
-          </div>
-      );
-  };
-
-  const { gallery, rawLedger, stats } = portfolioData;
-
-  const btnStyle = (isActive) => ({
-      padding: '6px 12px',
-      backgroundColor: isActive ? '#facc15' : '#1e293b',
-      color: isActive ? '#000' : '#94a3b8',
-      border: '1px solid #facc15',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontWeight: 'bold',
-      fontSize: '12px'
-  });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(15, 23, 42, 0.95)', display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(6px)' }}>
-      <div style={{ 
-          backgroundColor: '#0f172a', borderRadius: '12px', border: '1px solid #334155', color: 'white', 
-          width: '95%', maxWidth: '1400px', height: '85vh', display: 'flex', 
-          boxShadow: '0 20px 50px rgba(0,0,0,0.8)', zoom: scale, overflow: 'hidden'
-      }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10000, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ backgroundColor: '#1e1e1e', padding: '30px', borderRadius: '12px', border: '2px solid #555', color: 'white', maxWidth: '850px', width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 40px rgba(0,0,0,0.8)' }}>
         
-        <div style={{ width: '280px', backgroundColor: '#020617', borderRight: '1px solid #334155', padding: '30px', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ margin: '0 0 40px 0', color: '#facc15', letterSpacing: '2px', fontSize: '24px', fontWeight: '900' }}>DISCARD PILE</h2>
-            <div style={{ marginBottom: '30px' }}><div style={{ color: '#94a3b8', fontSize: '12px', letterSpacing: '1px', marginBottom: '5px' }}>TOTAL TRASHED</div><div style={{ color: '#f8fafc', fontSize: '48px', fontWeight: '900' }}>{stats.total}</div></div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div><div style={{ color: '#4ade80', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '5px' }}>GREEN (INFRA)</div><div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{stats.g}</div></div>
-                <div><div style={{ color: '#60a5fa', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '5px' }}>BLUE (CONTRACTS)</div><div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{stats.b}</div></div>
-                <div><div style={{ color: '#c084fc', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '5px' }}>PURPLE (MARKET)</div><div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{stats.r}</div></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #333', paddingBottom: '15px', marginBottom: '20px' }}>
+            <div>
+                <h2 style={{ margin: 0, color: '#fff', letterSpacing: '1px' }}>DISCARD PILE</h2>
+                <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '0.9em' }}>Cards you have played this year. They will shuffle back into your deck when it empties.</p>
             </div>
-            <button onClick={toggleDiscard} style={{ marginTop: 'auto', padding: '15px', backgroundColor: 'transparent', color: '#94a3b8', border: '1px solid #475569', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }} onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#1e293b'; e.currentTarget.style.color = '#fff'; }} onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}>CLOSE PILE</button>
+            <button onClick={toggleDiscard} style={{ padding: '8px 16px', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                CLOSE X
+            </button>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '30px', overflow: 'hidden' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '20px', gap: '20px' }}>
-                
-                {viewMode === 'ledger' && (
-                    <div style={{ display: 'flex', gap: '8px', marginRight: '20px', alignItems: 'center' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 'bold', marginRight: '5px' }}>SORT BY:</span>
-                        <button onClick={() => setLedgerSort('type')} style={{...btnStyle(ledgerSort==='type')}}>TYPE</button>
-                    </div>
-                )}
-
-                {viewMode === 'gallery' && (
-                    <button 
-                        onClick={() => setIsDenseView(!isDenseView)}
-                        style={{ padding: '10px', backgroundColor: isDenseView ? '#facc15' : '#1e293b', color: isDenseView ? '#000' : '#facc15', border: '1px solid #facc15', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}
-                        title={isDenseView ? "Switch to Large Thumbnail" : "Switch to Small Thumbnail"}
-                    >
-                        {isDenseView ? '[::: SMALL THUMBNAIL]' : '[::: LARGE THUMBNAIL]'}
-                    </button>
-                )}
-
-                <div style={{ display: 'flex', backgroundColor: '#1e293b', borderRadius: '8px', padding: '4px' }}>
-                    <button onClick={() => setViewMode('gallery')} style={{ padding: '8px 20px', backgroundColor: viewMode === 'gallery' ? '#334155' : 'transparent', color: viewMode === 'gallery' ? '#facc15' : '#94a3b8', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>GALLERY VIEW</button>
-                    <button onClick={() => setViewMode('ledger')} style={{ padding: '8px 20px', backgroundColor: viewMode === 'ledger' ? '#334155' : 'transparent', color: viewMode === 'ledger' ? '#facc15' : '#94a3b8', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>LEDGER VIEW</button>
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '15px', padding: '10px 5px', alignContent: 'flex-start' }}>
+            {allDiscards.length > 0 ? allDiscards.map(renderCard) : (
+                <div style={{ width: '100%', textAlign: 'center', color: '#666', fontStyle: 'italic', padding: '40px 0' }}>
+                    Your discard pile is currently empty.
                 </div>
-            </div>
-
-            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px' }}>
-                <style>{`
-                    ::-webkit-scrollbar { height: 8px; width: 8px; }
-                    ::-webkit-scrollbar-track { background: #0f172a; }
-                    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-                    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-                `}</style>
-                
-                {viewMode === 'gallery' ? (
-                    <div>
-                        {renderGalleryRow('Infrastructure Assets', gallery.green, '#4ade80')}
-                        {renderGalleryRow('Blue Contract Agreements', gallery.blue, '#60a5fa')}
-                        {renderGalleryRow('Purple Market Actions', gallery.red, '#c084fc')}
-                    </div>
-                ) : (
-                    <div>
-                        {renderSortedLedger(rawLedger)}
-                    </div>
-                )}
-            </div>
+            )}
         </div>
+
       </div>
     </div>
   );
+};
+
+const TutorialOverlay = () => {
+    const gameState = useGameStore(state => state.gameState);
+    const [hideModal, setHideModal] = React.useState(false);
+    const [voiceToggled, setVoiceToggled] = React.useState(false);
+    const [tutLockTimer, setTutLockTimer] = React.useState(0);
+    const canvasRef = React.useRef(null);
+
+    const tutorial = gameState?.tutorial;
+
+    // Reset hide state when the tutorial step changes
+    React.useEffect(() => {
+        setHideModal(false);
+    }, [tutorial?.currentStepIndex]);
+
+    React.useEffect(() => {
+        // Only lock on the very first step (Step 0)
+        if (gameState?.tutorial?.isActive && gameState?.tutorial?.currentStepIndex === 0) {
+            setTutLockTimer(6); // HARD LOCK FOR 6 SECONDS
+        } else {
+            setTutLockTimer(0);
+        }
+    }, [gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex]);
+
+    React.useEffect(() => {
+        // Tick down every second
+        if (tutLockTimer > 0) {
+            const timerId = setTimeout(() => setTutLockTimer(prev => prev - 1), 1000);
+            return () => clearTimeout(timerId);
+        }
+    }, [tutLockTimer]);
+
+    // Render the Baron's face on step change
+    React.useEffect(() => {
+        if (tutorial?.isActive && window.game?.baronAnimator && canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            window.game.baronAnimator.drawCharacter(canvasRef.current, ctx, 32, 43, Date.now() / 1000, 'normal', 0.45);
+        }
+    }, [tutorial?.isActive, tutorial?.currentStepIndex, hideModal]);
+
+    if (!tutorial || !tutorial.isActive || !tutorial.stepData || hideModal) return null;
+
+    const { stepData, currentStepIndex } = tutorial;
+    const totalSteps = window.game?.tutorial?.storyboard?.length || 0;
+    const isIntro = currentStepIndex === 0;
+    const trigger = stepData.trigger;
+    const isVoicePaused = window.game?.audio?.isVoicePaused;
+
+    // Strip the "[The Baron]: " prefix since we have the UI header
+    const cleanDialogue = stepData.dialogue.replace('[The Baron]: ', '');
+
+    const handleVoiceToggle = () => {
+        if (window.game?.audio) {
+            window.game.audio.toggleVoicePause();
+            setVoiceToggled(!voiceToggled);
+        }
+    };
+
+    const handleNext = () => {
+        if (window.game?.tutorial) window.game.tutorial.advance();
+    };
+
+    const handleGotIt = () => {
+        if (window.game?.audio) window.game.audio.stopVoiceover();
+        setHideModal(true); // Close visually so player can interact with the map
+    };
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
+            pointerEvents: 'none', display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'center',
+            background: isIntro ? 'rgba(0, 0, 0, 0.6)' : 'transparent'
+        }}>
+            <div style={{
+                background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
+                borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
+                pointerEvents: 'auto', position: 'relative', width: '90%', maxWidth: '420px', padding: '20px'
+            }}>
+                <button onClick={handleVoiceToggle} style={{
+                    position: 'absolute', top: '10px', right: '10px', background: 'transparent',
+                    border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.75em',
+                    padding: '4px 8px', borderRadius: '4px', zIndex: 100, transition: 'all 0.2s'
+                }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; }}>
+                    {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
+                </button>
+                
+                <div style={{
+                    width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
+                    border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
+                    justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)'
+                }}>
+                    <canvas ref={canvasRef} width="65" height="65"></canvas>
+                </div>
+                
+                <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
+                    THE BARON SAYS:
+                </div>
+                
+                <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px' }}>
+                    {cleanDialogue}
+                </div>
+                
+                {trigger.type === 'clickNext' ? (
+                    <button 
+                        className="tutorial-highlight" 
+                        onClick={(e) => {
+                            // --- HARD LOGIC LOCK ---
+                            if (tutLockTimer > 0) {
+                                e.preventDefault();
+                                return; // BLOCKS THE CLICK ENTIRELY
+                            }
+                            handleNext();
+                        }} 
+                        disabled={tutLockTimer > 0} 
+                        style={{
+                            background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
+                            marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', 
+                            cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
+                            borderRadius: '4px',
+                            opacity: tutLockTimer > 0 ? 0.6 : 1
+                        }}
+                    >
+                        {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
+                    </button>
+                ) : (
+                    <button onClick={handleGotIt} style={{
+                        background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                        fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                    }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
+                        GOT IT (Close to play)
+                    </button>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export const AllModals = () => (

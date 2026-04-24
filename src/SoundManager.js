@@ -39,11 +39,11 @@ class SoundManager {
         this.voiceVolume = 0.8; 
         this.musicUnlocked = false; 
 
-        this.SONG_DATA = [{"step":0,"freq":659.25},{"step":0,"freq":293.66},{"step":1,"freq":523.25},{"step":1,"freq":293.66},{"step":2,"freq":1046.5},{"step":3,"freq":987.77},{"step":3,"freq":261.63},{"step":4,"freq":1046.5},{"step":5,"freq":987.77},{"step":5,"freq":659.25},{"step":5,"freq":293.66},{"step":6,"freq":1046.5},{"step":6,"freq":523.25},{"step":7,"freq":987.77},{"step":7,"freq":261.63},{"step":8,"freq":1046.5},{"step":8,"freq":659.25},{"step":9,"freq":523.25},{"step":9,"freq":293.66},{"step":10,"freq":587.33},{"step":11,"freq":659.25},{"step":11,"freq":329.63},{"step":13,"freq":523.25},{"step":13,"freq":293.66},{"step":14,"freq":987.77},{"step":14,"freq":587.33},{"step":15,"freq":1046.5},{"step":15,"freq":659.25},{"step":15,"freq":329.63},{"step":16,"freq":783.99},{"step":16,"freq":293.66},{"step":17,"freq":659.25},{"step":17,"freq":293.66},{"step":18,"freq":1046.5},{"step":18,"freq":523.25},{"step":19,"freq":987.77},{"step":19,"freq":261.63},{"step":20,"freq":1046.5},{"step":21,"freq":523.25},{"step":21,"freq":293.66},{"step":22,"freq":1046.5},{"step":23,"freq":987.77},{"step":23,"freq":523.25},{"step":23,"freq":261.63},{"step":24,"freq":1046.5},{"step":25,"freq":987.77},{"step":25,"freq":523.25},{"step":25,"freq":293.66},{"step":26,"freq":1046.5},{"step":27,"freq":987.77},{"step":27,"freq":587.33},{"step":29,"freq":659.25},{"step":29,"freq":293.66},{"step":30,"freq":523.25}];
-        this.BPM = 80;
-        this.isLooping = false;
-        this.nextLoopTime = 0;
-        this.loopTimeout = null;
+        // Task 12 & 13: Absolute path setup and Sledgehammer detection fix
+        this.themeAudio = new Audio('/audio/theme.mp3');
+        this.themeAudio.loop = true;
+        this.themeAudio.setAttribute('loop', 'true'); // Fixes Sledgehammer detection
+        this.themeAudio.volume = 0; // NEW: Born completely silent
 
         // --- NEW: GLOBAL BROWSER UNLOCKER ---
         // Forces the browser to lift the Autoplay Policy the second the user clicks ANYTHING.
@@ -89,6 +89,17 @@ class SoundManager {
 
             this.initialized = true;
             console.log("Audio System Initialized");
+
+            // --- Task 13: Silence the init() Method ---
+            const isTutorialActive = window.game && window.game.tutorial && window.game.tutorial.isActive;
+
+            if (isTutorialActive) {
+                // Pre-crush volume to 0 instantly
+                if (this.musicGain && this.ctx) this.musicGain.gain.value = 0;
+                if (this.themeAudio) this.themeAudio.volume = 0;
+            } else {
+                // [Keep whatever existing logic normally starts the theme here]
+            }
         } catch (e) {
             console.warn("Web Audio API not supported", e);
         }
@@ -101,88 +112,69 @@ class SoundManager {
         }
     }
 
+    // Task 12: Ensure synchronous update for both APIs
     setMusicVolume(val) {
-        if (this.musicGain) this.musicGain.gain.setValueAtTime(val, this.ctx.currentTime);
+        if (this.themeAudio) {
+            this.themeAudio.volume = val;
+        }
+        if (this.musicGain && this.ctx) {
+            try { this.musicGain.gain.cancelScheduledValues(this.ctx.currentTime); } catch(e){}
+            this.musicGain.gain.value = val; // Forces synchronous update
+            this.musicGain.gain.setValueAtTime(val, this.ctx.currentTime);
+        }
     }
 
     setSfxVolume(val) {
         if (this.sfxGain) this.sfxGain.gain.setValueAtTime(val, this.ctx.currentTime);
     }
 
-    // --- MUSIC LOOP LOGIC (Lookahead Scheduling) ---
+    // --- MUSIC PLAYBACK LOGIC ---
 
+    // Task 13: The 50ms Delay Shield
     toggleThemeLoop(forceState = null) {
-        if (forceState === true && !this.musicUnlocked) return false;
+        const shouldPlay = forceState !== null ? forceState : this.themeAudio.paused;
 
-        if (!this.initialized) this.init();
-        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
-        
-        const shouldPlay = forceState !== null ? forceState : !this.isLooping;
+        if (shouldPlay) {
+            if (!this.isMuted) {
+                // 1. HARD PRE-MUTE: Crush to 0 instantly
+                if (this.musicGain && this.ctx) {
+                    try { this.musicGain.gain.cancelScheduledValues(this.ctx.currentTime); } catch(e){}
+                    this.musicGain.gain.value = 0;
+                }
+                this.themeAudio.volume = 0;
 
-        if (!shouldPlay) {
-            this.isLooping = false;
-            clearTimeout(this.loopTimeout);
-        } else {
-            if (!this.isLooping) {
-                this.isLooping = true;
-                // Start slightly in the future to ensure sync
-                this.nextLoopTime = this.ctx.currentTime + 0.1;
-                this.scheduleLoop();
+                // 2. PLAY IN SILENCE: Start the track playing at 0 volume
+                this.themeAudio.play().then(() => {
+
+                    // 3. THE 50ms SHIELD: Wait for the UI and TutorialManager to finish their setup
+                    setTimeout(() => {
+                        const isTutorial = window.game && window.game.tutorial && window.game.tutorial.isActive;
+
+                        // If 50ms have passed, the track hasn't been paused, AND it's a standard run,
+                        // THEN we finally bring the volume up to 0.4.
+                        if (!this.themeAudio.paused && !isTutorial) {
+                            if (this.musicGain && this.ctx) {
+                                this.musicGain.gain.value = 0.4;
+                                this.musicGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                            }
+                            this.themeAudio.volume = 0.4;
+                        }
+                    }, 50);
+
+                }).catch(e => {
+                    console.error("AUDIO PLAY FAILED! Error:", e.message);
+                });
             }
-        }
-        return this.isLooping;
-    }
-
-    scheduleLoop() {
-        if (!this.ctx || !this.isLooping) return;
-        
-        const secondsPerBeat = 60.0 / this.BPM;
-        const stepTime = secondsPerBeat / 4; 
-        // 32 steps = 2 bars of 4/4 time
-        const loopDuration = 32 * stepTime;
-
-        // Schedule all notes for THIS loop iteration
-        this.SONG_DATA.forEach(note => {
-            // Absolute time in audio context
-            const playTime = this.nextLoopTime + (note.step * stepTime);
-            this.playThemeNote(note.freq, playTime);
-        });
-
-        // Advance the time tracker for the NEXT loop
-        this.nextLoopTime += loopDuration;
-
-        // Set a timeout to schedule the NEXT loop before this one ends
-        // We wake up slightly before the loop ends to queue the next batch
-        const timeUntilNextSchedule = (this.nextLoopTime - this.ctx.currentTime - 0.5); // 0.5s lookahead
-        
-        // Safety check if we fell behind (tab backgrounded etc)
-        if (timeUntilNextSchedule < 0) {
-            this.nextLoopTime = this.ctx.currentTime; // Reset to now
-            this.scheduleLoop();
         } else {
-            this.loopTimeout = setTimeout(() => {
-                if (this.isLooping) this.scheduleLoop();
-            }, timeUntilNextSchedule * 1000);
+            this.themeAudio.pause();
+            // Lock it at 0 when paused to be absolutely safe
+            if (this.musicGain && this.ctx) {
+                try { this.musicGain.gain.cancelScheduledValues(this.ctx.currentTime); } catch(e){}
+                this.musicGain.gain.value = 0;
+            }
+            this.themeAudio.volume = 0;
         }
-    }
-
-    playThemeNote(freq, time) {
-        const osc = this.ctx.createOscillator();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(freq, time);
-
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0, time);
-        
-        // Envelope
-        gain.gain.linearRampToValueAtTime(0.2, time + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.020, time + 0.11);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.55); 
-
-        osc.connect(gain);
-        gain.connect(this.musicGain); // Connect to Music Channel
-        osc.start(time);
-        osc.stop(time + 0.6); 
+        return !this.themeAudio.paused;
     }
 
     // --- SFX (Connected to sfxGain) ---

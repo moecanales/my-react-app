@@ -1,3 +1,4 @@
+// App.jsx
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { create } from 'zustand';
 import { toPng } from 'html-to-image';
@@ -73,10 +74,16 @@ const syncState = (set) => {
   });
   snap.baronProjectedIncome = baronProjCash;
 
-  // --- NEW: Sync Projected Wealth ---
   snap.projectedWealth = typeof gameInstance.getProjectedWealth === 'function' 
       ? gameInstance.getProjectedWealth() 
       : 0;
+
+  snap.tutorial = (gameInstance.tutorial && gameInstance.tutorial.isActive) ? {
+      isActive: gameInstance.tutorial.isActive,
+      currentStepIndex: gameInstance.tutorial.currentStepIndex,
+      stepData: gameInstance.tutorial.storyboard ? gameInstance.tutorial.storyboard[gameInstance.tutorial.currentStepIndex] : null,
+      locks: gameInstance.tutorial.currentLocks || {}
+  } : null;
 
   const effectivePrice = Math.max(1, (gameInstance.currentContractPrice || 15) - (gameInstance.priceModifiers?.blue || 0));
   const penaltyPerUnit = effectivePrice + ((gameInstance.contractFailureCount || 0) * 5);
@@ -100,6 +107,25 @@ const syncState = (set) => {
 export const useGameStore = create((set, get) => ({
   showStartMenu: true, 
   closeStartMenu: () => set({ showStartMenu: false }),
+  startTutorial: () => {
+      if (window.game) {
+          window.game.inIPOPhase = false;
+          
+          // Instantiate the tutorial manager using the global reference
+          if (window.TutorialManager) {
+              window.game.tutorial = new window.TutorialManager(window.game);
+          }
+          
+          // Safely invoke start
+          if (window.game.tutorial && typeof window.game.tutorial.start === 'function') {
+              window.game.tutorial.start();
+              syncState(set);
+              set({ showStartMenu: false, showLedger: false, showLiquidation: false });
+          } else {
+              console.error("TutorialManager failed to load or start is not a function.");
+          }
+      }
+  },
   gameState: null,
   hoveredTooltip: null,
   isAnimatingPlay: false, 
@@ -270,12 +296,20 @@ export const useGameStore = create((set, get) => ({
 
   buyShare: (id) => {
     if (!gameInstance) return;
+    if (gameInstance.tutorial && gameInstance.tutorial.isActive) {
+        const allowed = gameInstance.tutorial.handleAction('buyStock', id);
+        if (!allowed) return;
+    }
     gameInstance.buyShare(id);
     syncState(set);
   },
   
   endTurn: () => {
     if (!gameInstance) return;
+    if (gameInstance.tutorial && gameInstance.tutorial.isActive) {
+        const allowed = gameInstance.tutorial.handleAction('endYear', '');
+        if (!allowed) return;
+    }
     gameInstance.endTurn();
     syncState(set);
   },
@@ -296,6 +330,10 @@ export const useGameStore = create((set, get) => ({
           alert("SWAP FAILED: You can only swap cards of the exact same color!");
           return;
       }
+      if (gameInstance.tutorial && gameInstance.tutorial.isActive) {
+          const allowed = gameInstance.tutorial.handleAction('swapCards', '');
+          if (!allowed) return;
+      }
       const temp = belt[indexA];
       belt[indexA] = belt[indexB];
       belt[indexB] = temp;
@@ -312,6 +350,11 @@ export const useGameStore = create((set, get) => ({
   executeBuild: async (companyId, targetNodeId) => {
     const state = get();
     if (!gameInstance || state.isAnimatingPlay) return;
+
+    if (gameInstance.tutorial && gameInstance.tutorial.isActive) {
+        const allowed = gameInstance.tutorial.handleAction('buildTrack', targetNodeId);
+        if (!allowed) return;
+    }
 
     const comp = gameInstance.companies[companyId];
     const conn = gameInstance.connections.find(c => 
@@ -569,6 +612,10 @@ const TopBar = () => {
 
   if (!gameState) return null;
 
+  // NEW: Tutorial State Check
+  const tutorial = gameState.tutorial;
+  const btnClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('btn-end-year') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
+
   const MARKET_TRACK = [
     0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 
     110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 
@@ -598,6 +645,7 @@ const TopBar = () => {
 
       <div style={{ display: 'flex', gap: '12px', marginLeft: '20px', flexShrink: 0, alignItems: 'center', height: '36px' }}>
         <button 
+            className={btnClass}
             onClick={endTurn} 
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 12px rgba(220, 38, 38, 0.5)'; }} 
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)'; }} 
@@ -638,8 +686,12 @@ const BottomLeftPanel = () => {
 
   const yearsLeft = Math.max(0, (gameState.maxTurns || 12) - gameState.turn + 1);
 
+  // NEW: Tutorial State Check
+  const tutorial = gameState.tutorial;
+  const panelClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('hud-right-panel') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
+
   return (
-    <div style={{ gridArea: '3 / 1 / 4 / 2', backgroundColor: '#1a1a20', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderTop: '4px solid #333', borderRight: '2px solid #333' }}>
+    <div className={panelClass} style={{ gridArea: '3 / 1 / 4 / 2', backgroundColor: '#1a1a20', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderTop: '4px solid #333', borderRight: '2px solid #333' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span style={{ fontSize: '1.8em', fontWeight: '900', color: '#555', letterSpacing: '1px', textShadow: '1px 1px 0px #000' }}>TIME LEFT</span>
           <span style={{ fontSize: '2.5em', fontWeight: '900', color: '#fff', textShadow: '2px 2px 4px #000' }}>{yearsLeft}</span>
@@ -779,9 +831,114 @@ const BaronOverlay = () => {
     );
 };
 
+const TutorialOverlay = () => {
+    const gameState = useGameStore(state => state.gameState);
+    const [hideModal, setHideModal] = React.useState(false);
+    const [voiceToggled, setVoiceToggled] = React.useState(false);
+    const canvasRef = React.useRef(null);
+
+    const tutorial = gameState?.tutorial;
+
+    // Reset hide state when the tutorial step changes
+    React.useEffect(() => {
+        setHideModal(false);
+    }, [tutorial?.currentStepIndex]);
+
+    // Render the Baron's face on step change
+    React.useEffect(() => {
+        if (tutorial?.isActive && window.game?.baronAnimator && canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            window.game.baronAnimator.drawCharacter(canvasRef.current, ctx, 32, 43, Date.now() / 1000, 'normal', 0.45);
+        }
+    }, [tutorial?.isActive, tutorial?.currentStepIndex, hideModal]);
+
+    if (!tutorial || !tutorial.isActive || !tutorial.stepData || hideModal) return null;
+
+    const { stepData, currentStepIndex } = tutorial;
+    const totalSteps = window.game?.tutorial?.storyboard?.length || 0;
+    const isIntro = currentStepIndex === 0;
+    const trigger = stepData.trigger;
+    const isVoicePaused = window.game?.audio?.isVoicePaused;
+
+    // Strip the "[The Baron]: " prefix since we have the UI header
+    const cleanDialogue = stepData.dialogue.replace('[The Baron]: ', '');
+
+    const handleVoiceToggle = () => {
+        if (window.game?.audio) {
+            window.game.audio.toggleVoicePause();
+            setVoiceToggled(!voiceToggled);
+        }
+    };
+
+    const handleNext = () => {
+        if (window.game?.tutorial) window.game.tutorial.advance();
+    };
+
+    const handleGotIt = () => {
+        if (window.game?.audio) window.game.audio.stopVoiceover();
+        setHideModal(true); // Close visually so player can interact with the map
+    };
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
+            pointerEvents: 'none', display: 'flex', flexDirection: 'column',
+            justifyContent: 'center', alignItems: 'center',
+            background: isIntro ? 'rgba(0, 0, 0, 0.6)' : 'transparent'
+        }}>
+            <div style={{
+                background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
+                borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
+                pointerEvents: 'auto', position: 'relative', width: '90%', maxWidth: '420px', padding: '20px'
+            }}>
+                <button onClick={handleVoiceToggle} style={{
+                    position: 'absolute', top: '10px', right: '10px', background: 'transparent',
+                    border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.75em',
+                    padding: '4px 8px', borderRadius: '4px', zIndex: 100, transition: 'all 0.2s'
+                }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; }}>
+                    {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
+                </button>
+                
+                <div style={{
+                    width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
+                    border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
+                    justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)'
+                }}>
+                    <canvas ref={canvasRef} width="65" height="65"></canvas>
+                </div>
+                
+                <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
+                    THE BARON SAYS:
+                </div>
+                
+                <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px' }}>
+                    {cleanDialogue}
+                </div>
+                
+                {trigger.type === 'clickNext' ? (
+                    <button className="tutorial-highlight" onClick={handleNext} style={{
+                        background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
+                        marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', cursor: 'pointer', borderRadius: '4px'
+                    }}>
+                        {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : 'CONTINUE'}
+                    </button>
+                ) : (
+                    <button onClick={handleGotIt} style={{
+                        background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                        fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                    }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
+                        GOT IT (Close to play)
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
 export default function App() {
   const initGame = useGameStore(state => state.initGame);
   const isReady = useGameStore(state => state.isReady);
+  const gameState = useGameStore(state => state.gameState); 
 
  useEffect(() => {
     const timer = setTimeout(() => { initGame(); }, 100);
@@ -812,15 +969,40 @@ export default function App() {
 
   if (!isReady) return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#1e1e1e' }}><h2>Loading Engine...</h2></div>;
 
+  const isActiveTutorial = gameState && gameState.tutorial && gameState.tutorial.isActive;
+
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `html, body, #root { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #1e1e1e; } .hidden { display: none !important; }`}} />
+      <style dangerouslySetInnerHTML={{__html: `
+        html, body, #root { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #1e1e1e; } 
+        .hidden { display: none !important; }
+        
+        /* --- TUTORIAL CSS --- */
+        .tut-strict-lock { pointer-events: none; user-select: none; }
+        .tut-strict-lock .tut-allow-clicks { pointer-events: auto; }
+        .tutorial-spotlight { pointer-events: auto !important; position: relative; z-index: 9600; outline: 4px solid #facc15 !important; outline-offset: 4px; animation: pulseOutline 1.5s infinite; border-radius: 6px; }
+        .tutorial-spotlight-silver { pointer-events: auto !important; position: relative; z-index: 9600; outline: 4px solid #cbd5e1 !important; outline-offset: 4px; animation: pulseOutlineSilver 1.5s infinite; border-radius: 6px; }
+        .tutorial-glow-minor { pointer-events: auto !important; position: relative; z-index: 8999; outline: 3px solid rgba(255, 255, 255, 0.6) !important; outline-offset: 2px; border-radius: 6px; }
+        .tutorial-dimmed { opacity: 0.4 !important; pointer-events: none !important; filter: grayscale(80%) !important; }
+        
+        @keyframes pulseOutline {
+            0% { outline-color: rgba(250, 204, 21, 0.6); outline-offset: 4px; }
+            50% { outline-color: rgba(250, 204, 21, 1); outline-offset: 8px; }
+            100% { outline-color: rgba(250, 204, 21, 0.6); outline-offset: 4px; }
+        }
+        @keyframes pulseOutlineSilver {
+            0% { outline-color: rgba(203, 213, 225, 0.6); outline-offset: 4px; }
+            50% { outline-color: rgba(203, 213, 225, 1); outline-offset: 8px; }
+            100% { outline-color: rgba(203, 213, 225, 0.6); outline-offset: 4px; }
+        }
+      `}} />
       <AllModals />
       <AnimationOverlay />
       <HudOverlays />
       <BaronAvatar />
       <BaronOverlay /> 
-      <div style={{ display: 'grid', gridTemplateColumns: 'max-content minmax(0, 1fr)', gridTemplateRows: '60px minmax(0, 1fr) 180px', width: '100vw', height: '100vh', backgroundColor: '#111' }}>
+      <TutorialOverlay /> 
+      <div className={isActiveTutorial ? 'tut-strict-lock' : ''} style={{ display: 'grid', gridTemplateColumns: 'max-content minmax(0, 1fr)', gridTemplateRows: '60px minmax(0, 1fr) 180px', width: '100vw', height: '100vh', backgroundColor: '#111' }}>
         <TopBar />
         <LeftSidebar />
         <GameBoard />

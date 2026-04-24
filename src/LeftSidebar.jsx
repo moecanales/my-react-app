@@ -1,3 +1,4 @@
+// LeftSidebar.jsx
 import React, { useState } from 'react';
 import { useGameStore } from './App';
 import PlayerPanel from './PlayerPanel'; 
@@ -66,6 +67,17 @@ const LeftSidebar = () => {
   // Track the active fast build state
   const activeBuildComp = gameState.activeCompanyForBuild;
 
+  // --- NEW TASK 8: Dynamic Tutorial Class Helper ---
+  const getTutClass = (id) => {
+      if (!gameState.tutorial?.isActive) return '';
+      if (gameState.tutorial.stepData?.focusUI?.includes(id)) {
+          if (id === 'player-networth-pill') return 'tutorial-spotlight-silver tut-allow-clicks';
+          return 'tutorial-spotlight tut-allow-clicks';
+      }
+      if (gameState.tutorial.stepData?.focusMinor?.includes(id)) return 'tutorial-glow-minor tut-allow-clicks';
+      return 'tutorial-dimmed';
+  };
+
   // Safe Data Extraction & Validation for Pills
   const getCompData = (id) => {
     const comp = gameState.companies?.[id] || {};
@@ -132,7 +144,8 @@ const LeftSidebar = () => {
       borderRight: '2px solid #333', 
       padding: '0px', 
       height: '100%', 
-      overflow: 'auto', 
+      overflow: 'visible',
+      zIndex: (gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 0) ? 9600 : 10,
       display: 'flex',
       flexDirection: 'column',
       position: 'relative'
@@ -230,12 +243,14 @@ const LeftSidebar = () => {
             </div>
           ) : (
             <div 
-              onClick={() => setIsPanelsExpanded(true)}
+              onClick={() => { if (!gameState.tutorial?.isActive) setIsPanelsExpanded(true); }}
               title="Click to Expand Panels"
               style={{ display: 'flex', flexDirection: 'column', gap: '8px', cursor: 'pointer', zIndex: 20, marginBottom: '8px' }}
             >
               {/* Player Cash (Gold) */}
-              <div className="mini-pill" style={{
+              <div className={`mini-pill ${getTutClass('player-cash-pill')}`} style={{
+                position: 'relative',
+                zIndex: 9601,
                 background: 'linear-gradient(to bottom, #dfb127 0%, #9e791b 100%)',
                 border: '3px solid #b58b16', borderRadius: '24px', height: '52px',
                 display: 'flex', alignItems: 'center', padding: '0 14px',
@@ -245,9 +260,15 @@ const LeftSidebar = () => {
                 <span style={{ marginLeft: 'auto', color: '#ffffff', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8)' }}>
                   ${playerCash}
                 </span>
+                {gameState.tutorial?.isActive && gameState.tutorial.stepData?.focusUI?.includes('player-cash-pill') && (
+                  <div style={{ position: 'absolute', left: '100%', marginLeft: '16px', top: '50%', transform: 'translateY(-50%)', color: '#facc15', fontWeight: '900', fontSize: '20px', whiteSpace: 'nowrap', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 9999, pointerEvents: 'none' }}>
+                    <span style={{ fontSize: '28px' }}>⬅</span> PERSONAL CASH
+                  </div>
+                )}
               </div>
               {/* Player Net Worth (Silver) */}
-              <div className="mini-pill" style={{
+              <div className={`mini-pill ${getTutClass('player-networth-pill')}`} style={{
+                position: 'relative',
                 background: 'linear-gradient(to bottom, #f0f0f0 0%, #b3b3b3 100%)',
                 border: '3px solid #777', borderRadius: '24px', height: '52px',
                 display: 'flex', alignItems: 'center', padding: '0 14px',
@@ -257,6 +278,11 @@ const LeftSidebar = () => {
                 <span style={{ marginLeft: 'auto', color: '#facc15', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8)' }}>
                   ${playerNetWorth}
                 </span>
+                {gameState.tutorial?.isActive && gameState.tutorial.stepData?.focusUI?.includes('player-networth-pill') && (
+                  <div style={{ position: 'absolute', left: '100%', marginLeft: '16px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1', fontWeight: '900', fontSize: '20px', whiteSpace: 'nowrap', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 9999, pointerEvents: 'none' }}>
+                    <span style={{ fontSize: '28px' }}>⬅</span> NET WORTH
+                  </div>
+                )}
               </div>
               {/* Baron Net Worth (Purple) */}
               <div className="mini-pill" style={{
@@ -280,7 +306,7 @@ const LeftSidebar = () => {
               <TestCharter />
             </div>
           ) : (
-            <div className="mini-pill" onClick={() => setIsBNOExpanded(true)} style={{ background: 'linear-gradient(to bottom, #39b54a 0%, #1c5e25 100%)', border: '3px solid #0f3d16', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
+            <div className={`mini-pill ${getTutClass('company-card-bo')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsBNOExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #39b54a 0%, #1c5e25 100%)', border: '3px solid #0f3d16', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
               <img src="/gn.svg" alt="GN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
               <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto' }}>
@@ -317,7 +343,7 @@ const LeftSidebar = () => {
               <CharterORN />
             </div>
           ) : (
-            <div className="mini-pill" onClick={() => setIsNYCExpanded(true)} style={{ background: 'linear-gradient(to bottom, #32b5cc 0%, #156d7d 100%)', border: '3px solid #0a4652', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
+            <div className={`mini-pill ${getTutClass('company-card-nyc')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsNYCExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #32b5cc 0%, #156d7d 100%)', border: '3px solid #0a4652', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
               <img src="/orn.svg" alt="ORN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
               <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto' }}>
@@ -354,7 +380,7 @@ const LeftSidebar = () => {
               <CharterCP />
             </div>
           ) : (
-            <div className="mini-pill" onClick={() => setIsPRExpanded(true)} style={{ background: 'linear-gradient(to bottom, #e31818 0%, #7a0909 100%)', border: '3px solid #4a0303', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
+            <div className={`mini-pill ${getTutClass('company-card-prr')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsPRExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #e31818 0%, #7a0909 100%)', border: '3px solid #4a0303', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
               <img src="/cpr.svg" alt="CPR Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
               <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto' }}>

@@ -559,9 +559,10 @@ const BoomtownSaloon = ({ x, y }) => (
 // --- THE FIX: Massive layered drop shadow to simulate extreme altitude
 const StartNodeLiving = ({ node }) => {
   let logo = '';
-  if (node.name === 'Seattle') logo = '/gn.svg'; 
-  else if (node.name === 'Portland') logo = '/orn.svg'; 
-  else if (node.name === 'San Francisco') logo = '/cpr.svg'; 
+  // CHANGED: Support generic tutorial hub names alongside real city names, matching ID as well
+  if (node.name === 'Seattle' || node.name === 'Northern Hub' || node.id == 0) logo = '/gn.svg'; 
+  else if (node.name === 'Portland' || node.name === 'Central Hub' || node.id == 1) logo = '/orn.svg'; 
+  else if (node.name === 'San Francisco' || node.name === 'Southern Hub' || node.id == 2) logo = '/cpr.svg'; 
 
   return (
     <div style={{ 

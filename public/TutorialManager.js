@@ -1,9 +1,11 @@
+// TutorialManager.js
 class TutorialManager {
     constructor(game) {
         this.game = game;
         this.storyboard = (typeof TUTORIAL_STORYBOARD !== 'undefined') ? TUTORIAL_STORYBOARD.storyboard : [];
         this.currentStepIndex = 0;
         this.isActive = false;
+        this.stepStartTime = 0;
     }
 
     start() {
@@ -20,6 +22,16 @@ class TutorialManager {
             this.game.audio.init();
         }
 
+        // --- NEW: Force music to stay off during the tutorial ---
+        if (this.game.audio) {
+            if (typeof this.game.audio.toggleThemeLoop === 'function') {
+                this.game.audio.toggleThemeLoop(false);
+            }
+            if (typeof this.game.audio.setMusicVolume === 'function') {
+                this.game.audio.setMusicVolume(0); // Instantly silences the active buffer
+            }
+        }
+
         // --- NEW FIX: Forcefully hide the Start Screen Overlay ---
         const startOverlay = document.getElementById('start-modal-overlay');
         if (startOverlay) {
@@ -29,45 +41,37 @@ class TutorialManager {
         this.isActive = true;
         this.currentStepIndex = 0;
         
+        // --- NEW: KILLS THE IPO PHASE SO TUTORIAL CAN RUN ---
+        this.game.inIPOPhase = false; 
+        
         // FIX: Top Controls hiding logic removed so they remain visible for Option B Topography
         
         this.game.gridCols = 6;
         this.game.gridRows = 9;
         
-        document.body.classList.add('tut-strict-lock'); // Lock down the UI
+        // --- NEW TASK 6: Patch Step 0 to point to BOTH correct UI elements ---
+        if (this.storyboard.length > 0) {
+            this.storyboard[0].focusUI = ['player-cash-pill', 'player-networth-pill'];
+            if (this.storyboard[0].dialogue) {
+                this.storyboard[0].dialogue = this.storyboard[0].dialogue.replace("bottom right-hand corner", "top left");
+            }
+        }
         
         this.loadStep(this.storyboard[this.currentStepIndex]);
     }
 
     applySpotlights() {
-        // 1. Clear any existing spotlights and glows
-        document.querySelectorAll('.tutorial-spotlight').forEach(el => el.classList.remove('tutorial-spotlight'));
-        document.querySelectorAll('.tutorial-glow-minor').forEach(el => el.classList.remove('tutorial-glow-minor'));
-        document.body.classList.remove('tut-highlight-stats');
-        
-        // 2. Apply new targets based on the current step
-        const step = this.storyboard[this.currentStepIndex];
-        if (step) {
-            if (step.focusUI) {
-                step.focusUI.forEach(targetId => {
-                    const el = document.getElementById(targetId);
-                    if (el) el.classList.add('tutorial-spotlight');
-                });
-            }
-            if (step.focusMinor) {
-                step.focusMinor.forEach(targetId => {
-                    const el = document.getElementById(targetId);
-                    if (el) el.classList.add('tutorial-glow-minor');
-                });
-            }
-            if (step.highlightStats) {
-                document.body.classList.add('tut-highlight-stats');
-            }
-        }
+        // Obsolete in React: Handled declaratively via Zustand focusUI state sync.
     }
 
     loadStep(stepData) {
         if (!stepData) return;
+
+        // --- NEW: Start the Engine Lock Stopwatch for Step 0 ---
+        if (this.currentStepIndex === 0) {
+            this.stepStartTime = Date.now();
+        }
+
         console.log(`Loading Tutorial Step: ${stepData.id}`);
 
         // 1. OVERRIDE LEDGER
@@ -78,11 +82,20 @@ class TutorialManager {
         // 2. MAP OVERRIDE & FOG OF WAR
         const CELL_W = this.game.customSettings?.cellWidth || 100;
         const CELL_H = 60;
-        const OFFSET = 50;
+        
+        const OFFSET_X = 250; 
+        const OFFSET_Y = 225; 
+
         stepData.nodes.forEach(n => {
-            if (n.x === undefined) n.x = OFFSET + (n.c * CELL_W);
-            if (n.y === undefined) n.y = OFFSET + (n.r * CELL_H);
+            if (n.x === undefined) n.x = OFFSET_X + (n.c * CELL_W);
+            if (n.y === undefined) n.y = OFFSET_Y + (n.r * CELL_H);
             n.revealed = (n.type === 'start');
+
+            if (n.type === 'start') {
+                if (n.id === 0 || n.id === '0') n.name = "Northern Hub";
+                if (n.id === 1 || n.id === '1') n.name = "Central Hub";
+                if (n.id === 2 || n.id === '2') n.name = "Southern Hub";
+            }
         });
 
         this.game.nodes = stepData.nodes;
@@ -164,7 +177,6 @@ class TutorialManager {
                 if (stepData.id >= 12 && stepData.id <= 15) targetComp = 'nyc'; // OR&N
                 stepData.focusUI = [`company-card-${targetComp}`];
             }
-            // HACK REMOVED: Step 16 logic was stripped out so the clickNext trigger remains intact.
         }
         // --- END NEW ---
 
@@ -179,96 +191,37 @@ class TutorialManager {
 
         this.currentLocks = stepData.locks;
         this.game.revealMap(); // FIXED: Map reveals AFTER tracks are injected
-        this.game.ui.update();
-        this.game.renderer.resize();
-        this.game.renderer.draw();
-        this.game.renderer.renderSteelBoard();
+        
+        // Safety check before drawing
+        if (this.game.renderer) {
+            this.game.renderer.resize();
+            this.game.renderer.draw();
+            this.game.renderer.renderSteelBoard();
+        }
+        
         this.showDialogue(stepData.dialogue, stepData.trigger);
-        this.applySpotlights(); // NEW: Trigger the visual highlights
+        this.applySpotlights(); // Obsolete, but left for backward compatibility structure
+        
+        // --- NEW: SYNC REACT UI ---
+        if (this.game.onStateChanged) this.game.onStateChanged();
     }
 
     showDialogue(text, trigger) {
-        let overlay = document.getElementById('tutorial-center-modal');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'tutorial-center-modal';
-            document.body.appendChild(overlay);
-        }
-
-        // NEW: Toggle CSS Reading Mode based on trigger type
+        // Toggle CSS Reading Mode based on trigger type
         if (trigger.type === 'clickNext') {
             document.body.classList.add('tut-reading-mode');
         } else {
             document.body.classList.remove('tut-reading-mode');
         }
 
-        const isIntro = (this.currentStepIndex === 0);
-
-        let nextBtnHTML = '';
-        if (trigger.type === 'clickNext') {
-            const btnText = (this.currentStepIndex === this.storyboard.length - 1) ? 'GOT IT (Return to Menu)' : 'CONTINUE';
-            nextBtnHTML = `<button class="smart-btn tutorial-highlight" onclick="game.tutorial.advance()" style="background:var(--accent-gold); color:black; font-size:1.0em; padding:10px; margin-top:15px; border: 2px solid #fff;">${btnText}</button>`;
-        } else {
-            nextBtnHTML = `<button class="smart-btn" onclick="if(game.audio) game.audio.stopVoiceover(); document.getElementById('tutorial-center-modal').classList.add('hidden')" style="background:#333; color:#fff; border-color:#555; padding:10px; font-size:1.0em; margin-top:15px;">GOT IT (Close to play)</button>`;
-        }
-
-        // 30% Smaller, always centered using flexbox.
-        let boxStyles = "margin: 0 auto; position: relative; width: 90%; max-width: 420px; padding: 20px;";
-
-        // NEW: Dynamic Play/Pause Button for Voiceover
-        let voiceBtnState = (this.game.audio && this.game.audio.isVoicePaused) ? "▶️ Play Voice" : "⏸️ Pause Voice";
-        let voiceBtnHTML = `<button id="tut-voice-btn" onclick="if(game.audio) { const isPaused = game.audio.toggleVoicePause(); this.innerText = isPaused ? '▶️ Play Voice' : '⏸️ Pause Voice'; }" style="position:absolute; top:10px; right:10px; background:transparent; border:1px solid #555; color:#aaa; cursor:pointer; font-size:0.75em; padding:4px 8px; border-radius:4px; z-index:100; transition:all 0.2s;" onmouseover="this.style.color='#fff'; this.style.borderColor='#fff'" onmouseout="this.style.color='#aaa'; this.style.borderColor='#555'">${voiceBtnState}</button>`;
-
-        overlay.innerHTML = `
-            <div class="tutorial-dialogue-box" style="background:#16213e; border:3px solid var(--accent-gold); text-align:center; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); pointer-events: auto; ${boxStyles}">
-                ${voiceBtnHTML}
-                <div class="tutorial-baron-avatar" style="width:75px; height:75px; margin:-55px auto 10px auto; background:#0f3460; border:2px solid var(--accent-gold); border-radius:50%; overflow:hidden; display:flex; justify-content:center; align-items:center; box-shadow:0 5px 15px rgba(0,0,0,0.5);">
-                    <canvas id="tutorial-baron-canvas" width="65" height="65"></canvas>
-                </div>
-                <div style="font-weight:900; color:var(--baron-color); margin-bottom:8px; font-size:1.0em; letter-spacing:2px;">THE BARON SAYS:</div>
-                <div style="font-size:0.95em; color:#ddd; line-height:1.5; text-align:left; border-top:1px solid #444; padding-top:12px;">${text}</div>
-                ${nextBtnHTML}
-            </div>
-        `;
-        
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.zIndex = '9500';
-        
-        // ALLOW BACKGROUND SCROLLING
-        overlay.style.pointerEvents = 'none';
-        
-        // Centering
-        overlay.style.display = 'flex';
-        overlay.style.flexDirection = 'column';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-
-        // Dim logic
-        if (isIntro) {
-            overlay.style.background = 'rgba(0, 0, 0, 0.1)'; 
-        } else {
-            overlay.style.background = 'transparent'; 
-        }
-        
+        // Play voiceover
         if (this.game.audio) {
             const currentSceneId = this.storyboard[this.currentStepIndex].id;
             this.game.audio.playVoiceover(currentSceneId);
         }
 
-        overlay.classList.remove('hidden');
-
-        setTimeout(() => {
-            const canvas = document.getElementById('tutorial-baron-canvas');
-            if (canvas && this.game.baronAnimator) {
-                const ctx = canvas.getContext('2d');
-                // Scaled down the drawing size to 0.45 to match the new 65x65 canvas
-                this.game.baronAnimator.drawCharacter(canvas, ctx, 32, 43, Date.now() / 1000, 'normal', 0.45);
-            }
-        }, 50);
+        // Force the React bridge to sync state and trigger the TutorialOverlay component
+        if (this.game.onStateChanged) this.game.onStateChanged();
     }
 
     handleAction(actionType, targetId) {
@@ -299,7 +252,6 @@ class TutorialManager {
             if (stepId === 4.5 || stepId === '4.5') {
                 // Enforce that 'Legacy Plate' (A) was swapped into the consumption slot (index 0)
                 if (!this.game.abacus.belt[0] || this.game.abacus.belt[0].label !== 'A') {
-                    this.game.ui.spawnFloatingMessage("The Baron told you to swap the cards first! Put Legacy Plate in the right-most slot.", "bad");
                     if (this.game.audio) this.game.audio.playError();
                     return false; // Block the build
                 }
@@ -307,25 +259,21 @@ class TutorialManager {
             // --- END NEW ---
 
             if (currentTrigger.type === 'onNodeBuilt' && target !== targetId.toString()) {
-                this.game.ui.spawnFloatingMessage("Wrong location. Look for the pulsing gold ring.", "bad");
                 if (this.game.audio) this.game.audio.playError();
                 return false;
             }
             if (this.currentLocks.buildTrack) {
-                this.game.ui.spawnFloatingMessage("Focus on the task at hand.", "bad");
                 if (this.game.audio) this.game.audio.playError();
                 return false;
             }
         }
 
         if (actionType === 'buyStock' && this.currentLocks.buyStock) {
-            this.game.ui.spawnFloatingMessage("The Baron forbids this action right now.", "bad");
             if (this.game.audio) this.game.audio.playError();
             return false;
         }
         
         if (actionType === 'endYear' && this.currentLocks.endYear) {
-            this.game.ui.spawnFloatingMessage("You must complete your actions first.", "bad");
             if (this.game.audio) this.game.audio.playError();
             return false;
         }
@@ -334,6 +282,27 @@ class TutorialManager {
     }
 
     advance() {
+        // --- THE ULTIMATE VAULT LOCK ---
+        // Completely block advance() during the first 6 seconds of Step 0
+        if (this.currentStepIndex === 0) {
+            const elapsed = Date.now() - (this.stepStartTime || 0);
+            const lockTime = 6000; // 6 seconds
+
+            if (elapsed < lockTime) {
+                const timeLeft = Math.ceil((lockTime - elapsed) / 1000);
+                // Play buzzer sound
+                if (this.game.audio && typeof this.game.audio.playError === 'function') {
+                    this.game.audio.playError();
+                }
+                // Spawn visual feedback
+                if (this.game.ui && typeof this.game.ui.spawnFloatingMessage === 'function') {
+                    this.game.ui.spawnFloatingMessage(`Listen to the Baron! (${timeLeft}s)`, 'bad');
+                }
+                console.log(`Tutorial locked. ${timeLeft} seconds remaining.`);
+                return; // ABORT THE ADVANCE ENTIRELY
+            }
+        }
+
         if (this.game.audio) this.game.audio.stopVoiceover();
         
         this.currentStepIndex++;
@@ -357,6 +326,7 @@ class TutorialManager {
             
             // 2. Scrub Spotlights & Glows
             document.querySelectorAll('.tutorial-spotlight').forEach(el => el.classList.remove('tutorial-spotlight'));
+            document.querySelectorAll('.tutorial-spotlight-silver').forEach(el => el.classList.remove('tutorial-spotlight-silver'));
             document.querySelectorAll('.tutorial-glow-minor').forEach(el => el.classList.remove('tutorial-glow-minor'));
 
             // 3. Remove Overlays
@@ -367,7 +337,7 @@ class TutorialManager {
             const topControls = document.querySelector('.top-bar-controls');
             if (topControls) topControls.style.display = 'flex';
             
-            if (this.game.ui) this.game.ui.spawnFloatingMessage("TUTORIAL COMPLETE. Good luck.", "good");
+            if (this.game.onStateChanged) this.game.onStateChanged();
             
             // 5. Execute Seamless Hard Reload
             window.location.reload(); 
@@ -377,3 +347,6 @@ class TutorialManager {
         }
     }
 }
+
+// --- NEW: Expose class globally for React/Vite ---
+window.TutorialManager = TutorialManager;

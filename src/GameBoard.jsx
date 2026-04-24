@@ -1,3 +1,4 @@
+// GameBoard.jsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Stage } from '@pixi/react';
 import { useGameStore } from './App';
@@ -37,6 +38,8 @@ const GameBoard = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
   const [ripples, setRipples] = useState([]);
 
+  const isTutInit = gameState?.tutorial?.isActive && gameState.tutorial.currentStepIndex === 0;
+
   const connections = gameState?.connections || [];
   const companies = gameState?.companies || {};
   const nodes = gameState?.nodes || [];
@@ -54,6 +57,30 @@ const GameBoard = () => {
 
   const [zoomScale, setZoomScale] = useState(() => getMinZoom());
   const [showGrid, setShowGrid] = useState(false);
+
+  useEffect(() => {
+    if (gameState?.tutorial?.isActive && gameState.tutorial.currentStepIndex === 0) {
+      setZoomScale(1.3);
+      // Wait just 10ms for React to apply the layout without CSS transitions
+      setTimeout(() => {
+        if (containerRef.current) {
+          // Find the actual start nodes on the map
+          const startNodes = nodes.filter(n => n.type === 'start');
+          if (startNodes.length > 0) {
+            // Get their exact average Y coordinate
+            const avgY = startNodes.reduce((sum, n) => sum + n.y, 0) / startNodes.length;
+            
+            // Calculate where the scrollbar needs to be to put avgY in the center of the screen
+            const targetScroll = (avgY * 1.3) - (containerRef.current.clientHeight / 2);
+            
+            // Clamp it to 0 so we don't break the top boundary of the map
+            containerRef.current.scrollTop = Math.max(0, targetScroll);
+            containerRef.current.scrollLeft = 0; 
+          }
+        }
+      }, 10); 
+    }
+  }, [gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex, nodes]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -615,7 +642,7 @@ const GameBoard = () => {
   }
 
   return (
-    <div style={{ gridArea: '2 / 2 / 3 / 3', position: 'relative', overflow: 'hidden', backgroundColor: '#0f172a' }}>
+    <div className="tut-allow-clicks" style={{ gridArea: '2 / 2 / 3 / 3', position: 'relative', overflow: 'hidden', backgroundColor: '#0f172a' }}>
       <div style={{ position: 'absolute', top: '20px', right: '20px', width: '40px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e293b', border: '2px solid #334155', borderRadius: '8px', zIndex: 1000, boxShadow: '0 4px 6px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
          <button onClick={() => setZoomScale(prev => Math.min(prev + 0.2, 2.0))} style={{ padding: '8px 0', color: 'white', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>+</button>
          <button onClick={() => setZoomScale(getMinZoom())} style={{ padding: '8px 0', color: '#94a3b8', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>FIT</button>
@@ -635,8 +662,8 @@ const GameBoard = () => {
       </div>
 
       <div id="map-container" ref={containerRef} style={{ width: '100%', height: '100%', overflowX: 'auto', overflowY: 'hidden', cursor: cursorStyle, scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'none' }} onPointerDown={handlePointerDown} onPointerLeave={(e) => { handlePointerUpOrLeave(e); setTooltip(null); }} onPointerUp={handlePointerUpOrLeave} onPointerMove={handlePointerMove}>
-        <div style={{ width: `${5200 * zoomScale}px`, height: `${dynamicBoardHeight * zoomScale}px`, position: 'relative', transition: 'width 0.3s ease-out, height 0.3s ease-out' }}>
-          <div className="map-layer" style={{ width: '5200px', height: `${dynamicBoardHeight}px`, position: 'relative', transform: `scale(${zoomScale})`, transformOrigin: 'top left', transition: 'transform 0.3s ease-out' }}>
+        <div style={{ width: `${5200 * zoomScale}px`, height: `${dynamicBoardHeight * zoomScale}px`, position: 'relative', transition: isTutInit ? 'none' : 'width 0.3s ease-out, height 0.3s ease-out' }}>
+          <div className="map-layer" style={{ width: '5200px', height: `${dynamicBoardHeight}px`, position: 'relative', transform: `scale(${zoomScale})`, transformOrigin: 'top left', transition: isTutInit ? 'none' : 'transform 0.3s ease-out' }}>
             <PacificOceanOverlay height={dynamicBoardHeight} ripples={ripples} />
             <CartographicMountainRange height={dynamicBoardHeight} />
             <RustBeltLandscape height={dynamicBoardHeight} />
@@ -653,6 +680,27 @@ const GameBoard = () => {
             <CostBubblesHTMLOverlay connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} showLinkCosts={showLinkCosts} zoomScale={zoomScale} />
             <HTMLOverlayLayer nodes={nodes} privateCompanies={privateCompanies} companies={companies} height={dynamicBoardHeight} cleanMap={cleanMap} relevantNodes={relevantNodes} />
             {showGrid && <DevGridOverlay width={5200} height={dynamicBoardHeight} />}
+            
+            {/* --- NEW: TUTORIAL NODE SPOTLIGHTS --- */}
+            {gameState?.tutorial?.isActive && gameState.tutorial.stepData?.focusNodes && (
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 100 }}>
+                    {gameState.tutorial.stepData.focusNodes.map(nodeId => {
+                        const node = nodes.find(n => n.id === nodeId);
+                        if (!node) return null;
+                        return (
+                            <div key={`spotlight-${nodeId}`} className="tutorial-spotlight" style={{
+                                position: 'absolute',
+                                left: `${node.x - 40}px`,
+                                top: `${node.y - 40}px`,
+                                width: '80px',
+                                height: '80px',
+                                borderRadius: '50%',
+                                pointerEvents: 'none'
+                            }} />
+                        );
+                    })}
+                </div>
+            )}
           </div>
         </div>
       </div>
