@@ -16,6 +16,13 @@ class TutorialManager {
             return;
         }
 
+        // --- NEW: THE ANTI-ANIMATION MUTE ---
+        // Prevents the sidebar from visibly animating from sandbox data to tutorial data
+        const flashFix = document.createElement('style');
+        flashFix.innerHTML = '* { transition: none !important; }';
+        document.head.appendChild(flashFix);
+        setTimeout(() => flashFix.remove(), 100);
+
         // AUTO-INIT FIX: The user clicking the "Play Tutorial" button counts as a 
         // user gesture, so we safely spin up the audio context right here.
         if (this.game.audio && !this.game.audio.initialized) {
@@ -111,16 +118,29 @@ class TutorialManager {
             const comp = this.game.companies[gameKey];
 
             if (comp) {
+                // --- BRUTE FORCE TUTORIAL PATCH V3 ---
+                // The raw JSON is missing maxShares, causing NaN math errors in the UI.
+                // We forcefully sanitize the data before the engine loads it.
+                compData.maxShares = compData.maxShares || 5;
+                compData.playerShares = compData.playerShares || 0;
+                compData.baronShares = compData.baronShares || 0;
+
+                // Dialogue explicitly states Central Pacific ('prr') has "no shares available"
+                if (gameKey === 'prr') {
+                    compData.baronShares = compData.maxShares - compData.playerShares;
+                }
+                // --------------------------------------
+
                 comp.treasury = compData.treasury;
                 comp.trackSegments = compData.track;
                 comp.stockIndex = Math.max(0, CONFIG.marketTrack.indexOf(compData.price));
                 comp.income = compData.income;
                 comp.maxShares = compData.maxShares;
-                
+
                 this.game.playerShares[gameKey] = compData.playerShares;
                 this.game.baron.shares[gameKey] = compData.baronShares;
                 comp.sharesIssued = compData.playerShares + compData.baronShares;
-                
+
                 let startNodeId = startNodeMap[gameKey];
                 let active = startNodeId;
                 comp.builtNodes = [startNodeId];

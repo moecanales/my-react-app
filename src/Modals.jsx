@@ -1656,10 +1656,10 @@ const TutorialOverlay = () => {
                     <button 
                         className="tutorial-highlight" 
                         onClick={(e) => {
-                            // --- HARD LOGIC LOCK ---
+                            // Double-guard the click just in case
                             if (tutLockTimer > 0) {
                                 e.preventDefault();
-                                return; // BLOCKS THE CLICK ENTIRELY
+                                return;
                             }
                             handleNext();
                         }} 

@@ -83,6 +83,8 @@ const LeftSidebar = () => {
     const comp = gameState.companies?.[id] || {};
     const track = comp.trackSegments || 0;
     const cash = comp.treasury || 0;
+    const name = comp.name || 'Unknown';
+    const colorStr = comp.colorStr || '#fff';
     
     // We safely map to the TopBar prices
     const stockIndex = comp.stockIndex || 0;
@@ -92,7 +94,7 @@ const LeftSidebar = () => {
     const availableShares = maxShares - sharesIssued;
     const canBuy = playerCash >= sharePrice && availableShares > 0;
 
-    return { cash, track, sharePrice, availableShares, canBuy };
+    return { cash, track, sharePrice, availableShares, canBuy, name, colorStr };
   };
 
   const bo = getCompData('bo');
@@ -306,10 +308,15 @@ const LeftSidebar = () => {
               <TestCharter />
             </div>
           ) : (
-            <div className={`mini-pill ${getTutClass('company-card-bo')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsBNOExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #39b54a 0%, #1c5e25 100%)', border: '3px solid #0f3d16', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
+            <div className={`mini-pill ${getTutClass('company-card-bo')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsBNOExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #39b54a 0%, #1c5e25 100%)', border: '3px solid #0f3d16', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer', overflow: 'visible', position: 'relative' }}>
               <img src="/gn.svg" alt="GN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
+                {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                   <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#facc15', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none' }}>
+                       TREASURY <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
+                   </div>
+                )}
                 <TreasureIcon fill="#90ee90" width="24" height="18" style={{ marginRight: '6px', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }} />
                 <span style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>{bo.cash}</span>
               </div>
@@ -319,8 +326,13 @@ const LeftSidebar = () => {
                   className={`track-action-btn ${errorBuyBNO ? 'error' : ''}`}
                   title={`Buy Share ($${bo.sharePrice})`}
                   onClick={(e) => handleMiniBuy(e, 'bo', bo.canBuy, setErrorBuyBNO)}
-                  style={{ opacity: bo.canBuy ? 1 : 0.5, cursor: bo.canBuy ? 'pointer' : 'not-allowed' }}
+                  style={{ opacity: bo.canBuy ? 1 : 0.5, cursor: bo.canBuy ? 'pointer' : 'not-allowed', position: 'relative' }}
                 >
+                  {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                     <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#cbd5e1', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none' }}>
+                         STOCK <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
+                     </div>
+                  )}
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', textDecoration: bo.availableShares === 0 ? 'line-through' : 'none' }}>{bo.availableShares}</span>
                   <BuyStockIcon fill="#90ee90" width="16" height="14" />
                 </button>
@@ -328,11 +340,39 @@ const LeftSidebar = () => {
                   className={`track-action-btn ${errorBuildBNO ? 'error' : ''} ${activeBuildComp === 'bo' ? 'active-build' : ''}`}
                   title={activeBuildComp === 'bo' ? 'Fast Build Active' : 'Build Track'}
                   onClick={(e) => handleMiniBuild(e, 'bo', bo.track, setErrorBuildBNO)}
+                  style={{ position: 'relative' }}
                 >
+                  {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                     <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#cbd5e1', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none' }}>
+                         TRACK <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
+                     </div>
+                  )}
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{bo.track}</span>
                   <TrackIcon fill="#90ee90" width="20" height="16" />
                 </button>
               </div>
+              
+              {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                  <div style={{
+                      position: 'absolute',
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: '16px',
+                      color: bo.colorStr || '#fff',
+                      fontWeight: '900',
+                      fontSize: '20px',
+                      whiteSpace: 'nowrap',
+                      textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      zIndex: 9999,
+                      pointerEvents: 'none'
+                  }}>
+                      <span style={{ fontSize: '28px' }}>⬅</span> {bo.name ? bo.name.toUpperCase() : 'UNKNOWN'}
+                  </div>
+              )}
             </div>
           )}
 
@@ -343,10 +383,10 @@ const LeftSidebar = () => {
               <CharterORN />
             </div>
           ) : (
-            <div className={`mini-pill ${getTutClass('company-card-nyc')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsNYCExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #32b5cc 0%, #156d7d 100%)', border: '3px solid #0a4652', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
+            <div className={`mini-pill ${getTutClass('company-card-nyc')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsNYCExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #32b5cc 0%, #156d7d 100%)', border: '3px solid #0a4652', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer', overflow: 'visible', position: 'relative' }}>
               <img src="/orn.svg" alt="ORN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
                 <TreasureIcon fill="#8cfcff" width="24" height="18" style={{ marginRight: '6px', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }} />
                 <span style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>{nyc.cash}</span>
               </div>
@@ -356,7 +396,7 @@ const LeftSidebar = () => {
                   className={`track-action-btn ${errorBuyNYC ? 'error' : ''}`}
                   title={`Buy Share ($${nyc.sharePrice})`}
                   onClick={(e) => handleMiniBuy(e, 'nyc', nyc.canBuy, setErrorBuyNYC)}
-                  style={{ opacity: nyc.canBuy ? 1 : 0.5, cursor: nyc.canBuy ? 'pointer' : 'not-allowed' }}
+                  style={{ opacity: nyc.canBuy ? 1 : 0.5, cursor: nyc.canBuy ? 'pointer' : 'not-allowed', position: 'relative' }}
                 >
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', textDecoration: nyc.availableShares === 0 ? 'line-through' : 'none' }}>{nyc.availableShares}</span>
                   <BuyStockIcon fill="#8cfcff" width="16" height="14" />
@@ -365,11 +405,34 @@ const LeftSidebar = () => {
                   className={`track-action-btn ${errorBuildNYC ? 'error' : ''} ${activeBuildComp === 'nyc' ? 'active-build' : ''}`}
                   title={activeBuildComp === 'nyc' ? 'Fast Build Active' : 'Build Track'}
                   onClick={(e) => handleMiniBuild(e, 'nyc', nyc.track, setErrorBuildNYC)}
+                  style={{ position: 'relative' }}
                 >
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{nyc.track}</span>
                   <TrackIcon fill="#8cfcff" width="20" height="16" />
                 </button>
               </div>
+              
+              {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                  <div style={{
+                      position: 'absolute',
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: '16px',
+                      color: nyc.colorStr || '#fff',
+                      fontWeight: '900',
+                      fontSize: '20px',
+                      whiteSpace: 'nowrap',
+                      textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      zIndex: 9999,
+                      pointerEvents: 'none'
+                  }}>
+                      <span style={{ fontSize: '28px' }}>⬅</span> {nyc.name ? nyc.name.toUpperCase() : 'UNKNOWN'}
+                  </div>
+              )}
             </div>
           )}
 
@@ -380,10 +443,10 @@ const LeftSidebar = () => {
               <CharterCP />
             </div>
           ) : (
-            <div className={`mini-pill ${getTutClass('company-card-prr')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsPRExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #e31818 0%, #7a0909 100%)', border: '3px solid #4a0303', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer' }}>
+            <div className={`mini-pill ${getTutClass('company-card-prr')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsPRExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #e31818 0%, #7a0909 100%)', border: '3px solid #4a0303', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer', overflow: 'visible', position: 'relative' }}>
               <img src="/cpr.svg" alt="CPR Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
                 <TreasureIcon fill="#ff8c8c" width="24" height="18" style={{ marginRight: '6px', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }} />
                 <span style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>{prr.cash}</span>
               </div>
@@ -393,7 +456,7 @@ const LeftSidebar = () => {
                   className={`track-action-btn ${errorBuyPRR ? 'error' : ''}`}
                   title={`Buy Share ($${prr.sharePrice})`}
                   onClick={(e) => handleMiniBuy(e, 'prr', prr.canBuy, setErrorBuyPRR)}
-                  style={{ opacity: prr.canBuy ? 1 : 0.5, cursor: prr.canBuy ? 'pointer' : 'not-allowed' }}
+                  style={{ opacity: prr.canBuy ? 1 : 0.5, cursor: prr.canBuy ? 'pointer' : 'not-allowed', position: 'relative' }}
                 >
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', textDecoration: prr.availableShares === 0 ? 'line-through' : 'none' }}>{prr.availableShares}</span>
                   <BuyStockIcon fill="#ff8c8c" width="16" height="14" />
@@ -402,11 +465,34 @@ const LeftSidebar = () => {
                   className={`track-action-btn ${errorBuildPRR ? 'error' : ''} ${activeBuildComp === 'prr' ? 'active-build' : ''}`}
                   title={activeBuildComp === 'prr' ? 'Fast Build Active' : 'Build Track'}
                   onClick={(e) => handleMiniBuild(e, 'prr', prr.track, setErrorBuildPRR)}
+                  style={{ position: 'relative' }}
                 >
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold' }}>{prr.track}</span>
                   <TrackIcon fill="#ff8c8c" width="20" height="16" />
                 </button>
               </div>
+              
+              {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                  <div style={{
+                      position: 'absolute',
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: '16px',
+                      color: prr.colorStr || '#fff',
+                      fontWeight: '900',
+                      fontSize: '20px',
+                      whiteSpace: 'nowrap',
+                      textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      zIndex: 9999,
+                      pointerEvents: 'none'
+                  }}>
+                      <span style={{ fontSize: '28px' }}>⬅</span> {prr.name ? prr.name.toUpperCase() : 'UNKNOWN'}
+                  </div>
+              )}
             </div>
           )}
 

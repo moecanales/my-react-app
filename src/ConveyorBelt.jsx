@@ -9,11 +9,20 @@ const AnimatedCardWrapper = ({ item, index, children }) => {
     const prevIndex = useRef(index);
     const isFirstMount = useRef(true);
 
+    const gameState = useGameStore(state => state.gameState);
+
     useEffect(() => {
         if (!item) return;
 
         if (isFirstMount.current) {
             isFirstMount.current = false;
+
+            // --- TUTORIAL ANTI-REBUILD PATCH ---
+            // If the tutorial is active and past Step 0, abort the fly-in animation.
+            if (gameState?.tutorial?.isActive && gameState.tutorial.currentStepIndex > 0) {
+                return;
+            }
+
             const deckEl = document.querySelector('.deck-box'); 
             const targetEl = document.getElementById(`belt-slot-container-${index}`);
             
@@ -49,7 +58,7 @@ const AnimatedCardWrapper = ({ item, index, children }) => {
             }
             prevIndex.current = index;
         }
-    }, [item, index]);
+    }, [item, index, gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex]);
 
     return <div style={{ position: 'relative', ...flyStyle, width: '100%', display: 'flex', justifyContent: 'center' }}>{children}</div>;
 };

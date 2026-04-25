@@ -835,6 +835,7 @@ const TutorialOverlay = () => {
     const gameState = useGameStore(state => state.gameState);
     const [hideModal, setHideModal] = React.useState(false);
     const [voiceToggled, setVoiceToggled] = React.useState(false);
+    const [tutLockTimer, setTutLockTimer] = React.useState(0);
     const canvasRef = React.useRef(null);
 
     const tutorial = gameState?.tutorial;
@@ -843,6 +844,36 @@ const TutorialOverlay = () => {
     React.useEffect(() => {
         setHideModal(false);
     }, [tutorial?.currentStepIndex]);
+
+    React.useLayoutEffect(() => {
+        if (!gameState?.tutorial?.isActive) {
+            setTutLockTimer(0);
+            return;
+        }
+
+        const step = gameState.tutorial.currentStepIndex;
+
+        if (step === 0) {
+            // --- MODAL 1 TIMER: Intro Speech ---
+            // TODO: Adjust this value when final audio is recorded.
+            setTutLockTimer(12);
+        } else if (step === 1) {
+            // --- MODAL 2 TIMER: Company Treasuries & Shares ---
+            // Set to 20 seconds for the longer speech.
+            // TODO: Adjust this value when final audio is recorded.
+            setTutLockTimer(20);
+        } else {
+            setTutLockTimer(0);
+        }
+    }, [gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex]);
+
+    React.useEffect(() => {
+        // Ticks down the Modal Timer
+        if (tutLockTimer > 0) {
+            const timerId = setTimeout(() => setTutLockTimer(prev => prev - 1), 1000);
+            return () => clearTimeout(timerId);
+        }
+    }, [tutLockTimer]);
 
     // Render the Baron's face on step change
     React.useEffect(() => {
@@ -916,18 +947,48 @@ const TutorialOverlay = () => {
                 </div>
                 
                 {trigger.type === 'clickNext' ? (
-                    <button className="tutorial-highlight" onClick={handleNext} style={{
-                        background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
-                        marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', cursor: 'pointer', borderRadius: '4px'
-                    }}>
-                        {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : 'CONTINUE'}
+                    <button 
+                        className="tutorial-highlight" 
+                        onClick={(e) => {
+                            // --- HARD LOGIC LOCK (MODAL TIMER) ---
+                            if (tutLockTimer > 0) {
+                                e.preventDefault();
+                                return; 
+                            }
+                            handleNext();
+                        }} 
+                        disabled={tutLockTimer > 0} 
+                        style={{
+                            background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
+                            marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', 
+                            cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
+                            borderRadius: '4px',
+                            opacity: tutLockTimer > 0 ? 0.6 : 1
+                        }}
+                    >
+                        {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
                     </button>
                 ) : (
-                    <button onClick={handleGotIt} style={{
-                        background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
-                        fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
-                    }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
-                        GOT IT (Close to play)
+                    <button 
+                       onClick={(e) => {
+                           // --- HARD LOGIC LOCK (MODAL TIMER) ---
+                           if (tutLockTimer > 0) {
+                               e.preventDefault();
+                               return; 
+                           }
+                           handleGotIt();
+                       }}
+                       disabled={tutLockTimer > 0}
+                       style={{
+                           background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                           fontSize: '1.0em', marginTop: '15px', borderRadius: '4px', fontWeight: 'bold',
+                           opacity: tutLockTimer > 0 ? 0.6 : 1, 
+                           cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer'
+                       }}
+                       onMouseOver={(e) => { if (tutLockTimer === 0) e.target.style.background = '#444'; }} 
+                       onMouseOut={(e) => { if (tutLockTimer === 0) e.target.style.background = '#333'; }}
+                    >
+                       {tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'GOT IT (Close to play)'}
                     </button>
                 )}
             </div>
