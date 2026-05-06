@@ -10,7 +10,7 @@ const TUTORIAL_STORYBOARD = {
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "A", "B", "D"],
-            "dialogue": "[The Baron]: Welcome to the railroad business. I am the Baron. Look closely at the bottom right-hand corner of your screen: you have $100 in Personal Cash, and your Net Worth is $100. That is YOUR money. The railroad companies have their own separate Treasuries. Do not confuse the two! My goal is simple: I will amass a higher Net Worth than you. I will be nice and give you a safety threshold—but the moment your Net Worth crosses $300, if my wealth is higher than yours, I will launch a hostile takeover and seize everything.",
+            "dialogue": "[The Baron]: Welcome to the railroad business. I am the Baron. Look closely at the left side of your screen: you have $100 in Personal Cash, and your Net Worth is $100. That is YOUR money. The railroad companies have their own separate Treasuries. Do not confuse the two! My goal is simple: I will amass a higher Net Worth than you. I will be nice and give you a safety threshold—but the moment your Net Worth crosses $300, if my wealth is higher than yours, I will launch a hostile takeover and seize everything.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "focusUI": ["hud-right-panel"],
             "trigger": { "type": "clickNext", "target": "" },
@@ -86,6 +86,7 @@ const TUTORIAL_STORYBOARD = {
             "beltLabels": ["E", "S", "A", "B", "D"],
             "dialogue": "[The Baron]: Excellent. Your Cash is now $75, but because GN's stock price rose to $30, your Net Worth actually increased to $105! More importantly, GN's Treasury is now $45, and since you own a share, you have the controlling interest to spend it. We need to build East toward Chicago. Look at the map. Seattle connects to a gray Standard City. Building there will cost GN $13, but it guarantees $15 in yearly income for its shareholders.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
+            "focusUI": ["player-cash-pill", "player-networth-pill", "company-card-bo", "stock-track-30"],
             "focusNodes": [0, 28],
             "trigger": { "type": "clickNext", "target": "" },
             "nodes": [

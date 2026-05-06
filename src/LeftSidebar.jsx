@@ -36,7 +36,7 @@ const LeftSidebar = () => {
   const buyShare = useGameStore(state => state.buyShare);
   
   // Layout & Zoom States
-  const [zoomLevel, setZoomLevel] = useState(0.87); // Shrunk to 87%
+  const [zoomLevel, setZoomLevel] = useState(0.87); 
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
   
   // Panel Expand/Collapse States - ALL DEFAULT TO CLOSED (MINIMIZED)
@@ -194,6 +194,13 @@ const LeftSidebar = () => {
             box-shadow: 0 0 12px rgba(250, 204, 21, 0.8), inset 0 0 8px rgba(250, 204, 21, 0.5); 
             transform: scale(1.05);
           }
+
+          /* NEW TUTORIAL GLOW ANIMATION */
+          @keyframes tutPointerGlow {
+            0% { text-shadow: 2px 2px 4px #000, 0 0 4px #facc15; transform: translateX(-50%) translateY(0); color: #facc15; }
+            50% { text-shadow: 2px 2px 4px #000, 0 0 15px #facc15, 0 0 25px #facc15; transform: translateX(-50%) translateY(-4px); color: #fff; }
+            100% { text-shadow: 2px 2px 4px #000, 0 0 4px #facc15; transform: translateX(-50%) translateY(0); color: #facc15; }
+          }
         `}
       </style>
 
@@ -262,7 +269,7 @@ const LeftSidebar = () => {
                 <span style={{ marginLeft: 'auto', color: '#ffffff', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8)' }}>
                   ${playerCash}
                 </span>
-                {gameState.tutorial?.isActive && gameState.tutorial.stepData?.focusUI?.includes('player-cash-pill') && (
+                {gameState.tutorial?.isActive && (gameState.tutorial.currentStepIndex === 0 || gameState.tutorial.currentStepIndex === 2) && gameState.tutorial.stepData?.focusUI?.includes('player-cash-pill') && (
                   <div style={{ position: 'absolute', left: '100%', marginLeft: '16px', top: '50%', transform: 'translateY(-50%)', color: '#facc15', fontWeight: '900', fontSize: '20px', whiteSpace: 'nowrap', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 9999, pointerEvents: 'none' }}>
                     <span style={{ fontSize: '28px' }}>⬅</span> PERSONAL CASH
                   </div>
@@ -280,14 +287,14 @@ const LeftSidebar = () => {
                 <span style={{ marginLeft: 'auto', color: '#facc15', fontSize: '32px', fontFamily: 'Arial, sans-serif', fontWeight: '900', textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8), 1px -1px 0 rgba(0,0,0,0.8), -1px 1px 0 rgba(0,0,0,0.8)' }}>
                   ${playerNetWorth}
                 </span>
-                {gameState.tutorial?.isActive && gameState.tutorial.stepData?.focusUI?.includes('player-networth-pill') && (
+                {gameState.tutorial?.isActive && (gameState.tutorial.currentStepIndex === 0 || gameState.tutorial.currentStepIndex === 2) && gameState.tutorial.stepData?.focusUI?.includes('player-networth-pill') && (
                   <div style={{ position: 'absolute', left: '100%', marginLeft: '16px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1', fontWeight: '900', fontSize: '20px', whiteSpace: 'nowrap', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 9999, pointerEvents: 'none' }}>
                     <span style={{ fontSize: '28px' }}>⬅</span> NET WORTH
                   </div>
                 )}
               </div>
               {/* Baron Net Worth (Purple) */}
-              <div className="mini-pill" style={{
+              <div className={`mini-pill ${getTutClass('baron-networth-pill')}`} style={{
                 background: 'linear-gradient(to bottom, #8a1991 0%, #4a0d4f 100%)',
                 border: '3px solid #5a1060', borderRadius: '24px', height: '52px',
                 display: 'flex', alignItems: 'center', padding: '0 14px',
@@ -312,7 +319,7 @@ const LeftSidebar = () => {
               <img src="/gn.svg" alt="GN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
               <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
-                {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
+                {gameState.tutorial?.isActive && (gameState.tutorial.currentStepIndex === 1 || gameState.tutorial.currentStepIndex === 2) && (
                    <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#facc15', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none' }}>
                        TREASURY <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
                    </div>
@@ -329,8 +336,8 @@ const LeftSidebar = () => {
                   style={{ opacity: bo.canBuy ? 1 : 0.5, cursor: bo.canBuy ? 'pointer' : 'not-allowed', position: 'relative' }}
                 >
                   {gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 1 && (
-                     <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#cbd5e1', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none' }}>
-                         STOCK <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
+                     <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#facc15', fontWeight: '900', fontSize: '15px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none', animation: 'tutPointerGlow 1.5s infinite' }}>
+                         SHARE <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
                      </div>
                   )}
                   <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', textDecoration: bo.availableShares === 0 ? 'line-through' : 'none' }}>{bo.availableShares}</span>

@@ -608,11 +608,9 @@ const WealthTracker = () => {
 const TopBar = () => {
   const gameState = useGameStore(state => state.gameState);
   const endTurn = useGameStore(state => state.endTurn);
-  const toggleAudioSettings = useGameStore(state => state.toggleAudioSettings);
 
   if (!gameState) return null;
 
-  // NEW: Tutorial State Check
   const tutorial = gameState.tutorial;
   const btnClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('btn-end-year') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
 
@@ -625,19 +623,42 @@ const TopBar = () => {
   const targets = ['bo', 'nyc', 'prr'];
 
   return (
-    <div style={{ gridArea: '1 / 1 / 2 / 3', backgroundColor: '#1a1a20', borderBottom: '3px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 15px', zIndex: 10, overflowX: 'hidden', minWidth: 0 }}>
+    <div style={{ 
+        gridArea: '1 / 1 / 2 / 3', 
+        backgroundColor: '#1a1a20', 
+        borderBottom: '3px solid #333', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        padding: '0 15px', 
+        zIndex: (tutorial?.isActive && tutorial.stepData?.focusUI?.some(c => c.startsWith('stock-track-'))) ? 9600 : 10, 
+        overflowX: 'hidden', 
+        minWidth: 0 
+    }}>
 
       <div style={{ display: 'flex', overflowX: 'auto', flex: 1, minWidth: 0, gap: '4px', paddingBottom: '4px', paddingTop: '4px' }}>
         {MARKET_TRACK.map((val, index) => {
           const activeComps = targets.filter(id => gameState.companies[id] && gameState.companies[id].stockIndex === index);
+          
+          // DYNAMICALLY TARGET THE $30 STOCK TRACK IF INSTRUCTED BY TUTORIAL JSON
+          const isTargetStock = tutorial?.isActive && tutorial.stepData?.focusUI?.includes(`stock-track-${val}`);
+          const stockClass = isTargetStock ? 'tutorial-spotlight tut-allow-clicks' : '';
+
           return (
-            <div key={index} style={{ width: '40px', height: '45px', flexShrink: 0, backgroundColor: '#111', border: '2px solid #555', borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', position: 'relative' }}>
+            <div key={index} className={stockClass} style={{ width: '40px', height: '45px', flexShrink: 0, backgroundColor: '#111', border: '2px solid #555', borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', position: 'relative' }}>
               <div style={{ fontSize: '1em', color: '#aaa', fontWeight: 'bold', marginTop: '4px' }}>{val}</div>
               <div style={{ display: 'flex', gap: '3px', position: 'absolute', bottom: '4px' }}>
                 {activeComps.map(id => (
                   <div key={id} style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: gameState.companies[id].colorStr || '#fff', border: '1px solid #000', boxShadow: '0 1px 3px rgba(0,0,0,0.9)' }} title={gameState.companies[id].name}></div>
                 ))}
               </div>
+              
+              {/* Added Glowing Arrow for the targeted stock mark specifically */}
+              {isTargetStock && (
+                  <div style={{ position: 'absolute', top: '100%', marginTop: '6px', color: '#facc15', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none', animation: 'tutPointerGlow 1.5s infinite' }}>
+                      <span style={{ fontSize: '20px', marginBottom: '-6px' }}>⬆</span> PRICE
+                  </div>
+              )}
             </div>
           );
         })}
@@ -686,7 +707,6 @@ const BottomLeftPanel = () => {
 
   const yearsLeft = Math.max(0, (gameState.maxTurns || 12) - gameState.turn + 1);
 
-  // NEW: Tutorial State Check
   const tutorial = gameState.tutorial;
   const panelClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('hud-right-panel') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
 
@@ -854,13 +874,8 @@ const TutorialOverlay = () => {
         const step = gameState.tutorial.currentStepIndex;
 
         if (step === 0) {
-            // --- MODAL 1 TIMER: Intro Speech ---
-            // TODO: Adjust this value when final audio is recorded.
             setTutLockTimer(12);
         } else if (step === 1) {
-            // --- MODAL 2 TIMER: Company Treasuries & Shares ---
-            // Set to 20 seconds for the longer speech.
-            // TODO: Adjust this value when final audio is recorded.
             setTutLockTimer(20);
         } else {
             setTutLockTimer(0);
@@ -891,7 +906,6 @@ const TutorialOverlay = () => {
     const trigger = stepData.trigger;
     const isVoicePaused = window.game?.audio?.isVoicePaused;
 
-    // Strip the "[The Baron]: " prefix since we have the UI header
     const cleanDialogue = stepData.dialogue.replace('[The Baron]: ', '');
 
     const handleVoiceToggle = () => {
@@ -907,7 +921,7 @@ const TutorialOverlay = () => {
 
     const handleGotIt = () => {
         if (window.game?.audio) window.game.audio.stopVoiceover();
-        setHideModal(true); // Close visually so player can interact with the map
+        setHideModal(true); 
     };
 
     return (
@@ -950,7 +964,6 @@ const TutorialOverlay = () => {
                     <button 
                         className="tutorial-highlight" 
                         onClick={(e) => {
-                            // --- HARD LOGIC LOCK (MODAL TIMER) ---
                             if (tutLockTimer > 0) {
                                 e.preventDefault();
                                 return; 
@@ -969,26 +982,11 @@ const TutorialOverlay = () => {
                         {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
                     </button>
                 ) : (
-                    <button 
-                       onClick={(e) => {
-                           // --- HARD LOGIC LOCK (MODAL TIMER) ---
-                           if (tutLockTimer > 0) {
-                               e.preventDefault();
-                               return; 
-                           }
-                           handleGotIt();
-                       }}
-                       disabled={tutLockTimer > 0}
-                       style={{
-                           background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
-                           fontSize: '1.0em', marginTop: '15px', borderRadius: '4px', fontWeight: 'bold',
-                           opacity: tutLockTimer > 0 ? 0.6 : 1, 
-                           cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer'
-                       }}
-                       onMouseOver={(e) => { if (tutLockTimer === 0) e.target.style.background = '#444'; }} 
-                       onMouseOut={(e) => { if (tutLockTimer === 0) e.target.style.background = '#333'; }}
-                    >
-                       {tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'GOT IT (Close to play)'}
+                    <button onClick={handleGotIt} style={{
+                        background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                        fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                    }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
+                        GOT IT (Close to play)
                     </button>
                 )}
             </div>
@@ -1055,6 +1053,11 @@ export default function App() {
             0% { outline-color: rgba(203, 213, 225, 0.6); outline-offset: 4px; }
             50% { outline-color: rgba(203, 213, 225, 1); outline-offset: 8px; }
             100% { outline-color: rgba(203, 213, 225, 0.6); outline-offset: 4px; }
+        }
+        @keyframes tutPointerGlow {
+            0% { text-shadow: 2px 2px 4px #000, 0 0 4px #facc15; transform: translateX(-50%) translateY(0); color: #facc15; }
+            50% { text-shadow: 2px 2px 4px #000, 0 0 15px #facc15, 0 0 25px #facc15; transform: translateX(-50%) translateY(-4px); color: #fff; }
+            100% { text-shadow: 2px 2px 4px #000, 0 0 4px #facc15; transform: translateX(-50%) translateY(0); color: #facc15; }
         }
       `}} />
       <AllModals />

@@ -6,6 +6,7 @@ class TutorialManager {
         this.currentStepIndex = 0;
         this.isActive = false;
         this.stepStartTime = 0;
+        this.isTransitioning = false; // NEW: The Vault Lock to prevent double-skipping
     }
 
     start() {
@@ -47,6 +48,7 @@ class TutorialManager {
 
         this.isActive = true;
         this.currentStepIndex = 0;
+        this.isTransitioning = false;
         
         // --- NEW: KILLS THE IPO PHASE SO TUTORIAL CAN RUN ---
         this.game.inIPOPhase = false; 
@@ -59,9 +61,6 @@ class TutorialManager {
         // --- NEW TASK 6: Patch Step 0 to point to BOTH correct UI elements ---
         if (this.storyboard.length > 0) {
             this.storyboard[0].focusUI = ['player-cash-pill', 'player-networth-pill'];
-            if (this.storyboard[0].dialogue) {
-                this.storyboard[0].dialogue = this.storyboard[0].dialogue.replace("bottom right-hand corner", "top left");
-            }
         }
         
         this.loadStep(this.storyboard[this.currentStepIndex]);
@@ -246,6 +245,9 @@ class TutorialManager {
 
     handleAction(actionType, targetId) {
         if (!this.isActive) return true;
+        
+        // CRITICAL BUG FIX: If we are currently transitioning to the next step, block all rapid-fire clicks
+        if (this.isTransitioning) return false; 
 
         const currentTrigger = this.storyboard[this.currentStepIndex].trigger;
         
@@ -253,7 +255,7 @@ class TutorialManager {
         if (actionType === 'buyStock') mappedTriggerType = 'onStockBought';
         if (actionType === 'buildTrack') mappedTriggerType = 'onNodeBuilt';
         if (actionType === 'endYear') mappedTriggerType = 'onEndYear'; 
-        if (actionType === 'swapCards') mappedTriggerType = 'onCardsSwapped'; // NEW: Hook for the belt puzzle
+        if (actionType === 'swapCards') mappedTriggerType = 'onCardsSwapped'; 
 
         let target = currentTrigger.target;
         const idMap = { 'gn': 'bo', 'orn': 'nyc', 'cp': 'prr' };
@@ -261,7 +263,14 @@ class TutorialManager {
 
         if (currentTrigger.type === mappedTriggerType && target === targetId.toString()) {
             if (this.game.ui) this.game.ui.closeModal(); 
-            setTimeout(() => this.advance(), 600); 
+            
+            // LOCK THE ENGINE DOWN
+            this.isTransitioning = true;
+            
+            setTimeout(() => {
+                this.isTransitioning = false; // RELEASE THE LOCK
+                this.advance();
+            }, 600); 
             return true; 
         }
 
@@ -323,6 +332,10 @@ class TutorialManager {
             }
         }
 
+        // Just in case advance() gets called from a CONTINUE button double-click, lock it out
+        if (this.isTransitioning && this.currentStepIndex !== 0) return;
+        this.isTransitioning = false; // Reset the state safely
+
         if (this.game.audio) this.game.audio.stopVoiceover();
         
         this.currentStepIndex++;
@@ -338,6 +351,7 @@ class TutorialManager {
             if (this.game.audio) this.game.audio.stopVoiceover();
             
             this.isActive = false;
+            this.isTransitioning = false;
             
             // 1. Scrub CSS Locks
             document.body.classList.remove('tut-strict-lock'); 

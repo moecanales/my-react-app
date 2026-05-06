@@ -1623,65 +1623,152 @@ const TutorialOverlay = () => {
             justifyContent: 'center', alignItems: 'center',
             background: isIntro ? 'rgba(0, 0, 0, 0.6)' : 'transparent'
         }}>
-            <div style={{
-                background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
-                borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
-                pointerEvents: 'auto', position: 'relative', width: '90%', maxWidth: '420px', padding: '20px'
-            }}>
-                <button onClick={handleVoiceToggle} style={{
-                    position: 'absolute', top: '10px', right: '10px', background: 'transparent',
-                    border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.75em',
-                    padding: '4px 8px', borderRadius: '4px', zIndex: 100, transition: 'all 0.2s'
-                }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; }}>
-                    {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
-                </button>
-                
+            
+            {/* WRAPPER FOR MAIN MODAL AND NEW SIDE PANEL */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+
+                {/* THE MAIN BARON MODAL */}
                 <div style={{
-                    width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
-                    border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
-                    justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)'
+                    background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
+                    borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
+                    pointerEvents: 'auto', position: 'relative', width: '90%', width: '420px', padding: '20px'
                 }}>
-                    <canvas ref={canvasRef} width="65" height="65"></canvas>
-                </div>
-                
-                <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
-                    THE BARON SAYS:
-                </div>
-                
-                <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px' }}>
-                    {cleanDialogue}
-                </div>
-                
-                {trigger.type === 'clickNext' ? (
-                    <button 
-                        className="tutorial-highlight" 
-                        onClick={(e) => {
-                            // Double-guard the click just in case
-                            if (tutLockTimer > 0) {
-                                e.preventDefault();
-                                return;
-                            }
-                            handleNext();
-                        }} 
-                        disabled={tutLockTimer > 0} 
-                        style={{
-                            background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
-                            marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', 
-                            cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
-                            borderRadius: '4px',
-                            opacity: tutLockTimer > 0 ? 0.6 : 1
-                        }}
-                    >
-                        {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
+                    <button onClick={handleVoiceToggle} style={{
+                        position: 'absolute', top: '10px', right: '10px', background: 'transparent',
+                        border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.75em',
+                        padding: '4px 8px', borderRadius: '4px', zIndex: 100, transition: 'all 0.2s'
+                    }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; }}>
+                        {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
                     </button>
-                ) : (
-                    <button onClick={handleGotIt} style={{
-                        background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
-                        fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
-                    }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
-                        GOT IT (Close to play)
-                    </button>
+                    
+                    <div style={{
+                        width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
+                        border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
+                        justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)'
+                    }}>
+                        <canvas ref={canvasRef} width="65" height="65"></canvas>
+                    </div>
+                    
+                    <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
+                        THE BARON SAYS:
+                    </div>
+                    
+                    <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px' }}>
+                        {cleanDialogue}
+                    </div>
+                    
+                    {trigger.type === 'clickNext' ? (
+                        <button 
+                            className="tutorial-highlight" 
+                            onClick={(e) => {
+                                // Double-guard the click just in case
+                                if (tutLockTimer > 0) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                handleNext();
+                            }} 
+                            disabled={tutLockTimer > 0} 
+                            style={{
+                                background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
+                                marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', 
+                                cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
+                                borderRadius: '4px',
+                                opacity: tutLockTimer > 0 ? 0.6 : 1
+                            }}
+                        >
+                            {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
+                        </button>
+                    ) : (
+                        <button onClick={handleGotIt} style={{
+                            background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                            fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                        }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
+                            GOT IT (Close to play)
+                        </button>
+                    )}
+                </div>
+
+                {/* --- NEW MAP ZOOM PANEL (ONLY FOR STEP 3 / INDEX 2) --- */}
+                {currentStepIndex === 2 && (
+                    <>
+                    <style>{`
+                        @keyframes fadeInSlide {
+                            0% { opacity: 0; transform: translateX(-20px); }
+                            100% { opacity: 1; transform: translateX(0); }
+                        }
+                    `}</style>
+                    <div style={{
+                        position: 'absolute',
+                        left: 'calc(100% + 40px)', // Snaps right next to the modal
+                        background: 'linear-gradient(145deg, #1e293b, #0f172a)',
+                        border: '2px solid #facc15',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        width: '320px',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.9), 0 0 20px rgba(250, 204, 21, 0.2)',
+                        zIndex: 9600,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        pointerEvents: 'none',
+                        opacity: 0,
+                        animation: 'fadeInSlide 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.2s'
+                    }}>
+                        <div style={{ color: '#facc15', fontWeight: '900', letterSpacing: '2px', marginBottom: '20px', fontSize: '14px', borderBottom: '1px dashed #555', paddingBottom: '10px', width: '100%', textAlign: 'center' }}>
+                            🔍 MAP PREVIEW
+                        </div>
+
+                        {/* The fake map UI */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative', width: '100%', justifyContent: 'center', marginTop: '30px', marginBottom: '60px' }}>
+                            
+                            {/* Seattle Node */}
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#39b54a', border: '3px solid #fff', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2, boxShadow: '0 2px 5px rgba(0,0,0,0.8)' }}>
+                            <span style={{ fontSize: '18px', color: '#fff' }}>★</span>
+                            </div>
+
+                            {/* Connection Line & Cost */}
+                            <div style={{ flex: 1, height: '4px', background: '#64748b', position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <div style={{ background: '#1e293b', border: '2px solid #60a5fa', color: '#fff', padding: '4px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 'bold', position: 'absolute', boxShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                                    $13
+                                </div>
+                            </div>
+
+                            {/* Standard City Node */}
+                            <div style={{ width: '35px', height: '35px', background: '#94a3b8', border: '2px solid #cbd5e1', borderRadius: '4px', zIndex: 2, boxShadow: '0 2px 5px rgba(0,0,0,0.8)' }}>
+                            </div>
+
+                            {/* Tooltip popping out of Standard City */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-75px',
+                                right: '-30px',
+                                background: 'rgba(10, 10, 15, 0.95)',
+                                border: '1px solid #facc15',
+                                padding: '10px',
+                                borderRadius: '6px',
+                                color: '#fff',
+                                fontSize: '12px',
+                                width: '150px',
+                                boxShadow: '0 5px 15px rgba(0,0,0,0.8)'
+                            }}>
+                                <div style={{ color: '#94a3b8', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '10px' }}>Standard City</div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>Yield:</span>
+                                    <span style={{ color: '#4ade80', fontWeight: '900', fontSize: '16px', animation: 'tutPointerGlow 1.5s infinite' }}>$15/yr</span>
+                                </div>
+                                {/* Arrow pointing down to city */}
+                                <div style={{ position: 'absolute', bottom: '-6px', left: '30px', width: '10px', height: '10px', background: 'rgba(10, 10, 15, 0.95)', borderBottom: '1px solid #facc15', borderRight: '1px solid #facc15', transform: 'rotate(45deg)' }}></div>
+                            </div>
+                        </div>
+                        
+                        <div style={{ color: '#cbd5e1', fontSize: '13px', textAlign: 'center', lineHeight: '1.5', fontStyle: 'italic', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            Connecting costs GN <strong style={{color: '#60a5fa'}}>$13</strong>, but pays shareholders <strong style={{color: '#4ade80'}}>$15</strong> every year.
+                        </div>
+                    </div>
+                    </>
                 )}
+
             </div>
         </div>
     );
