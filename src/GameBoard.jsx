@@ -335,6 +335,12 @@ const GameBoard = () => {
           if (gameState.activeCompanyForBuild) {
               attemptFastBuild(clickedNode.id);
           } else {
+              // --- TUTORIAL SAFETY LOCK 1 ---
+              if (gameState?.tutorial?.isActive) {
+                  if (window.game?.audio) window.game.audio.playError();
+                  return;
+              }
+              // --- END TUTORIAL SAFETY LOCK 1 ---
               handleNodeClick(clickedNode.id);
           }
           return; 
@@ -374,6 +380,12 @@ const GameBoard = () => {
                 if (gameState.activeCompanyForBuild) {
                     attemptFastBuild(targetNodeId);
                 } else {
+                    // --- TUTORIAL SAFETY LOCK 2 ---
+                    if (gameState?.tutorial?.isActive) {
+                        if (window.game?.audio) window.game.audio.playError();
+                        return;
+                    }
+                    // --- END TUTORIAL SAFETY LOCK 2 ---
                     handleNodeClick(targetNodeId);
                 }
                 return;

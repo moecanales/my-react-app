@@ -97,11 +97,8 @@ class TutorialManager {
             if (n.y === undefined) n.y = OFFSET_Y + (n.r * CELL_H);
             n.revealed = (n.type === 'start');
 
-            if (n.type === 'start') {
-                if (n.id === 0 || n.id === '0') n.name = "Northern Hub";
-                if (n.id === 1 || n.id === '1') n.name = "Central Hub";
-                if (n.id === 2 || n.id === '2') n.name = "Southern Hub";
-            }
+            // REMOVED: The code that forced these to be named "Northern Hub", etc.
+            // Now it respects the "Seattle" name written in tutorial_data.js!
         });
 
         this.game.nodes = stepData.nodes;
@@ -189,7 +186,7 @@ class TutorialManager {
             if (stepData.trigger.type === 'onStockBought') {
                 const targetComp = idMap[stepData.trigger.target] || stepData.trigger.target;
                 stepData.focusUI = [`company-card-${targetComp}`];
-            } else if (stepData.trigger.type === 'onNodeBuilt') {
+            } else if (stepData.trigger.type === 'onNodeBuilt' || stepData.trigger.type === 'onBuildIntercepted') {
                 // Infer the active company based on the tutorial phase
                 let targetComp = 'bo'; // Great Northern
                 if (stepData.id >= 9 && stepData.id <= 11) targetComp = 'prr'; // Central Pacific
@@ -261,6 +258,36 @@ class TutorialManager {
         const idMap = { 'gn': 'bo', 'orn': 'nyc', 'cp': 'prr' };
         if (idMap[target]) target = idMap[target];
 
+        // --- NEW: THE THEATRICAL INTERCEPTOR ---
+        if (actionType === 'buildTrack' && currentTrigger.type === 'onBuildIntercepted' && target === targetId.toString()) {
+            
+            // Forcefully cancel the active build mode so the UI resets
+            this.game.activeCompanyForBuild = null;
+            if (this.game.renderer && this.game.renderer.canvas) {
+                this.game.renderer.canvas.style.cursor = 'default';
+            }
+            
+            // THE ASSASSIN: The native game engine opens the "Establish Rail Service" modal 
+            // synchronously during this click event. We use tiny timeouts to slam it shut 
+            // the exact millisecond after the engine finishes opening it.
+            if (this.game.ui) {
+                this.game.ui.closeModal();
+                setTimeout(() => { if (this.game.ui) this.game.ui.closeModal(); }, 10);
+                setTimeout(() => { if (this.game.ui) this.game.ui.closeModal(); }, 50); // Double-tap to be certain
+            }
+            
+            if (this.game.onStateChanged) this.game.onStateChanged();
+
+            this.isTransitioning = true;
+            setTimeout(() => {
+                this.isTransitioning = false;
+                this.advance();
+            }, 250); // Short delay for dramatic effect
+            
+            return false; // IMPORTANT: Return false to block the engine from actually building the track!
+        }
+        // --- END NEW ---
+
         if (currentTrigger.type === mappedTriggerType && target === targetId.toString()) {
             if (this.game.ui) this.game.ui.closeModal(); 
             
@@ -275,8 +302,7 @@ class TutorialManager {
         }
 
         if (actionType === 'buildTrack') {
-            // --- NEW: STRICT TUTORIAL RAILS FOR STEP 4.5 ---
-            // FIX: Ensure we are checking for the specific Build Step ID (4.5) since the array shifted
+            // STRICT TUTORIAL RAILS FOR STEP 4.5
             const stepId = this.storyboard[this.currentStepIndex].id;
             if (stepId === 4.5 || stepId === '4.5') {
                 // Enforce that 'Legacy Plate' (A) was swapped into the consumption slot (index 0)
@@ -285,7 +311,12 @@ class TutorialManager {
                     return false; // Block the build
                 }
             }
-            // --- END NEW ---
+
+            // Block wrong node clicks during an intercept phase
+            if (currentTrigger.type === 'onBuildIntercepted' && target !== targetId.toString()) {
+                if (this.game.audio) this.game.audio.playError();
+                return false;
+            }
 
             if (currentTrigger.type === 'onNodeBuilt' && target !== targetId.toString()) {
                 if (this.game.audio) this.game.audio.playError();

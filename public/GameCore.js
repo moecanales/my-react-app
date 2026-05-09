@@ -63,7 +63,8 @@ class Game {
             refreshLiquidation: () => {},
             showTurnSummary: () => {},
             showModal: () => {},
-            getCardInfo: (card) => ({ name: `[${card.label}]` })
+            getCardInfo: (card) => ({ name: `[${card.label}]` }),
+            showEstablishServiceModal: () => {}
         };
         
         this.renderer = {
@@ -1119,20 +1120,29 @@ class Game {
     }
     
     handleNodeClick(nodeId) {
-        if (this.activeCompanyForBuild) { 
-            this.buildTrack(this.activeCompanyForBuild, nodeId); 
-            return; 
+        // --- NEW: Tutorial Map Click Safety Lock ---
+        // If the tutorial is active and no builder is armed, completely ignore the click to prevent native modals from opening.
+        if (this.tutorial && this.tutorial.isActive && !this.activeCompanyForBuild) {
+            if (this.audio && typeof this.audio.playError === 'function') {
+                this.audio.playError();
+            }
+            return;
         }
-        
-        const present = Object.keys(this.companies).filter(k => this.companies[k].builtNodes.includes(nodeId));
-        const buildable = Object.keys(this.companies).filter(k => 
-            this.connections.some(conn => 
-                (this.companies[k].activeLines.includes(conn.from) && conn.to === nodeId) || 
-                (this.companies[k].activeLines.includes(conn.to) && conn.from === nodeId)
-            )
-        );
-         
-        this.ui.showNodeActionsModal(present, buildable, this.nodes.find(n => n.id === nodeId));
+        // --- END NEW ---
+
+        if (!this.activeCompanyForBuild) {
+            // Native Engine Behavior: Open "Establish Rail Service" modal if no builder is armed.
+            if (this.ui && typeof this.ui.showEstablishServiceModal === 'function') {
+                this.ui.showEstablishServiceModal(nodeId);
+            }
+            return;
+        }
+
+        // Existing track building execution logic
+        const companyId = this.activeCompanyForBuild;
+        if (this.ui && typeof this.ui.executeBuild === 'function') {
+            this.ui.executeBuild(companyId, nodeId);
+        }
     }
 
     buildTrack(companyId, targetNodeId) {

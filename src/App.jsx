@@ -631,6 +631,7 @@ const TopBar = () => {
         alignItems: 'center', 
         justifyContent: 'space-between', 
         padding: '0 15px', 
+        position: 'relative',
         zIndex: (tutorial?.isActive && tutorial.stepData?.focusUI?.some(c => c.startsWith('stock-track-'))) ? 9600 : 10, 
         overflowX: 'hidden', 
         minWidth: 0 
@@ -640,25 +641,20 @@ const TopBar = () => {
         {MARKET_TRACK.map((val, index) => {
           const activeComps = targets.filter(id => gameState.companies[id] && gameState.companies[id].stockIndex === index);
           
-          // DYNAMICALLY TARGET THE $30 STOCK TRACK IF INSTRUCTED BY TUTORIAL JSON
           const isTargetStock = tutorial?.isActive && tutorial.stepData?.focusUI?.includes(`stock-track-${val}`);
-          const stockClass = isTargetStock ? 'tutorial-spotlight tut-allow-clicks' : '';
+          const stockClass = isTargetStock ? 'tutorial-spotlight-silver tut-allow-clicks' : (tutorial?.isActive ? 'tutorial-dimmed' : '');
+          
+          const boxBg = isTargetStock ? '#444' : '#111';
+          const boxBorder = isTargetStock ? '#facc15' : '#555';
 
           return (
-            <div key={index} className={stockClass} style={{ width: '40px', height: '45px', flexShrink: 0, backgroundColor: '#111', border: '2px solid #555', borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', position: 'relative' }}>
-              <div style={{ fontSize: '1em', color: '#aaa', fontWeight: 'bold', marginTop: '4px' }}>{val}</div>
+            <div key={index} id={`stock-track-${val}`} className={stockClass} style={{ width: '40px', height: '45px', flexShrink: 0, backgroundColor: boxBg, border: `2px solid ${boxBorder}`, borderRadius: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', position: 'relative', transition: 'all 0.3s' }}>
+              <div style={{ fontSize: '1em', color: isTargetStock ? '#fff' : '#aaa', fontWeight: 'bold', marginTop: '4px' }}>{val}</div>
               <div style={{ display: 'flex', gap: '3px', position: 'absolute', bottom: '4px' }}>
                 {activeComps.map(id => (
                   <div key={id} style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: gameState.companies[id].colorStr || '#fff', border: '1px solid #000', boxShadow: '0 1px 3px rgba(0,0,0,0.9)' }} title={gameState.companies[id].name}></div>
                 ))}
               </div>
-              
-              {/* Added Glowing Arrow for the targeted stock mark specifically */}
-              {isTargetStock && (
-                  <div style={{ position: 'absolute', top: '100%', marginTop: '6px', color: '#facc15', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none', animation: 'tutPointerGlow 1.5s infinite' }}>
-                      <span style={{ fontSize: '20px', marginBottom: '-6px' }}>⬆</span> PRICE
-                  </div>
-              )}
             </div>
           );
         })}
@@ -711,7 +707,18 @@ const BottomLeftPanel = () => {
   const panelClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('hud-right-panel') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
 
   return (
-    <div className={panelClass} style={{ gridArea: '3 / 1 / 4 / 2', backgroundColor: '#1a1a20', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderTop: '4px solid #333', borderRight: '2px solid #333' }}>
+    <div className={panelClass} style={{ 
+        gridArea: '3 / 1 / 4 / 2', 
+        backgroundColor: '#1a1a20', 
+        padding: '15px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center', 
+        borderTop: '4px solid #333', 
+        borderRight: '2px solid #333',
+        zIndex: tutorial?.isActive ? 9600 : 10,
+        position: 'relative'
+    }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span style={{ fontSize: '1.8em', fontWeight: '900', color: '#555', letterSpacing: '1px', textShadow: '1px 1px 0px #000' }}>TIME LEFT</span>
           <span style={{ fontSize: '2.5em', fontWeight: '900', color: '#fff', textShadow: '2px 2px 4px #000' }}>{yearsLeft}</span>
@@ -734,7 +741,9 @@ const BottomLeftPanel = () => {
 
 const HudOverlays = () => {
     const gameState = useGameStore(state => state.gameState);
-    if (!gameState) return null;
+    
+    // NEW LOGIC: Return null if no game state OR if tutorial is active
+    if (!gameState || gameState.tutorial?.isActive) return null;
 
     return (
         <>
@@ -787,7 +796,8 @@ const BaronAvatar = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    if (!gameState) return null;
+    // NEW LOGIC: Return null if no game state OR if tutorial is active
+    if (!gameState || gameState.tutorial?.isActive) return null;
 
     const isDanger = gameState.playerNetWorth >= 300;
 
@@ -859,6 +869,7 @@ const TutorialOverlay = () => {
     const canvasRef = React.useRef(null);
 
     const tutorial = gameState?.tutorial;
+    const stepData = tutorial?.stepData;
 
     // Reset hide state when the tutorial step changes
     React.useEffect(() => {
@@ -883,7 +894,6 @@ const TutorialOverlay = () => {
     }, [gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex]);
 
     React.useEffect(() => {
-        // Ticks down the Modal Timer
         if (tutLockTimer > 0) {
             const timerId = setTimeout(() => setTutLockTimer(prev => prev - 1), 1000);
             return () => clearTimeout(timerId);
@@ -898,20 +908,143 @@ const TutorialOverlay = () => {
         }
     }, [tutorial?.isActive, tutorial?.currentStepIndex, hideModal]);
 
-    if (!tutorial || !tutorial.isActive || !tutorial.stepData || hideModal) return null;
+    // World-Space to Screen-Space Tracking Bridge
+    React.useLayoutEffect(() => {
+        if (!tutorial || !tutorial.isActive) return;
 
-    const { stepData, currentStepIndex } = tutorial;
+        let rafId;
+        const updatePosition = () => {
+            const state = useGameStore.getState().gameState;
+            const currentStepData = state.tutorial?.stepData;
+
+            const modalWrapper = document.getElementById('tutorial-modal-wrapper');
+            const mapContainer = document.getElementById('map-container');
+            const mapLayer = document.querySelector('.map-layer');
+            
+            // 1. Dynamic Stock Track Arrow Targeting
+            const stockTargetId = currentStepData?.focusUI?.find(id => id.startsWith('stock-track-'));
+            const stockArrow = document.getElementById('tutorial-stock-arrow');
+            
+            if (stockArrow) {
+                if (stockTargetId) {
+                    const stockEl = document.getElementById(stockTargetId);
+                    if (stockEl) {
+                        const rect = stockEl.getBoundingClientRect();
+                        stockArrow.style.left = `${rect.right + 12}px`; 
+                        stockArrow.style.top = `${rect.top + (rect.height / 2)}px`; 
+                        stockArrow.style.opacity = '1';
+                    }
+                } else {
+                    stockArrow.style.opacity = '0';
+                }
+            }
+
+            // 2. Dynamic Belt Slot Arrow Targeting
+            const beltTargetId = currentStepData?.focusUI?.find(id => id.startsWith('belt-slot-'));
+            const beltArrow = document.getElementById('tutorial-belt-arrow');
+            
+            if (beltArrow) {
+                if (beltTargetId) {
+                    const beltEl = document.getElementById(beltTargetId);
+                    if (beltEl) {
+                        const rect = beltEl.getBoundingClientRect();
+                        beltArrow.style.left = `${rect.left + (rect.width / 2)}px`; 
+                        beltArrow.style.top = `${rect.top - 40}px`; 
+                        beltArrow.style.opacity = '1';
+                    }
+                } else {
+                    beltArrow.style.opacity = '0';
+                }
+            }
+
+            if (mapContainer && mapLayer) {
+                const rect = mapContainer.getBoundingClientRect();
+                let currentZoom = 1;
+                
+                const transform = window.getComputedStyle(mapLayer).transform;
+                if (transform !== 'none') {
+                    const matrix = transform.match(/^matrix\((.+)\)$/);
+                    if (matrix) currentZoom = parseFloat(matrix[1].split(', ')[0]);
+                }
+
+                if (modalWrapper && currentStepData?.modalAnchor) {
+                    const targetX = currentStepData.modalAnchor.x;
+                    const targetY = currentStepData.modalAnchor.y;
+                    
+                    const finalX = (targetX * currentZoom) - mapContainer.scrollLeft + rect.left;
+                    const finalY = (targetY * currentZoom) - mapContainer.scrollTop + rect.top;
+
+                    modalWrapper.style.left = `${finalX}px`;
+                    modalWrapper.style.top = `${finalY}px`;
+                    modalWrapper.style.transform = 'translate(0, 0)'; 
+                    
+                    if (currentStepData.arrowTarget) {
+                        const arrowPath = document.getElementById('tutorial-arrow-path');
+                        const arrowHead = document.getElementById('tutorial-arrow-head');
+                        
+                        if (arrowPath && arrowHead) {
+                            const worldDx = currentStepData.arrowTarget.x - targetX;
+                            const worldDy = currentStepData.arrowTarget.y - targetY;
+                            
+                            const screenDx = worldDx * currentZoom;
+                            const screenDy = worldDy * currentZoom;
+                            
+                            const startX = 0;
+                            const startY = 40; 
+                            
+                            const totalDx = screenDx - startX;
+                            const totalDy = screenDy - startY;
+
+                            const endX = startX + (totalDx * 0.8);
+                            const endY = startY + (totalDy * 0.8);
+                            
+                            const curveFactor = -0.2; 
+                            const midX = startX + (endX - startX) / 2;
+                            const midY = startY + (endY - startY) / 2;
+                            
+                            const cpX = midX - (endY - startY) * curveFactor;
+                            const cpY = midY + (endX - startX) * curveFactor;
+                            
+                            arrowPath.setAttribute('d', `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`);
+                            
+                            const angle = Math.atan2(endY - cpY, endX - cpX) * (180 / Math.PI);
+                            arrowHead.setAttribute('transform', `translate(${endX}, ${endY}) rotate(${angle})`);
+                        }
+                    }
+                }
+            }
+            rafId = requestAnimationFrame(updatePosition);
+        };
+        
+        rafId = requestAnimationFrame(updatePosition);
+        return () => cancelAnimationFrame(rafId);
+    }, [tutorial?.isActive]);
+
+    if (!tutorial || !tutorial.isActive || !stepData || hideModal) return null;
+
+    const { currentStepIndex } = tutorial;
     const totalSteps = window.game?.tutorial?.storyboard?.length || 0;
-    const isIntro = currentStepIndex === 0;
     const trigger = stepData.trigger;
     const isVoicePaused = window.game?.audio?.isVoicePaused;
 
+    const needsMapVisible = stepData.focusNodes && stepData.focusNodes.length > 0;
+    const needsBeltVisible = stepData.focusUI && stepData.focusUI.some(id => id.startsWith('belt-slot-'));
     const cleanDialogue = stepData.dialogue.replace('[The Baron]: ', '');
 
     const handleVoiceToggle = () => {
         if (window.game?.audio) {
             window.game.audio.toggleVoicePause();
             setVoiceToggled(!voiceToggled);
+        }
+    };
+
+    const handleReplayVoice = () => {
+        if (window.game?.audio && stepData?.id) {
+            window.game.audio.playVoiceover(stepData.id);
+            if (window.game.audio.isVoicePaused) {
+                window.game.audio.toggleVoicePause();
+                setVoiceToggled(!voiceToggled);
+            }
         }
     };
 
@@ -925,72 +1058,193 @@ const TutorialOverlay = () => {
     };
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
-            pointerEvents: 'none', display: 'flex', flexDirection: 'column',
-            justifyContent: 'center', alignItems: 'center',
-            background: isIntro ? 'rgba(0, 0, 0, 0.6)' : 'transparent'
-        }}>
-            <div style={{
-                background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
-                borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
-                pointerEvents: 'auto', position: 'relative', width: '90%', maxWidth: '420px', padding: '20px'
-            }}>
-                <button onClick={handleVoiceToggle} style={{
-                    position: 'absolute', top: '10px', right: '10px', background: 'transparent',
-                    border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.75em',
-                    padding: '4px 8px', borderRadius: '4px', zIndex: 100, transition: 'all 0.2s'
-                }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; }}>
-                    {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
-                </button>
-                
-                <div style={{
-                    width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
-                    border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
-                    justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)'
-                }}>
-                    <canvas ref={canvasRef} width="65" height="65"></canvas>
-                </div>
-                
-                <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
-                    THE BARON SAYS:
-                </div>
-                
-                <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px' }}>
-                    {cleanDialogue}
-                </div>
-                
-                {trigger.type === 'clickNext' ? (
-                    <button 
-                        className="tutorial-highlight" 
-                        onClick={(e) => {
-                            if (tutLockTimer > 0) {
-                                e.preventDefault();
-                                return; 
-                            }
-                            handleNext();
-                        }} 
-                        disabled={tutLockTimer > 0} 
-                        style={{
-                            background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
-                            marginTop: '15px', border: '2px solid #fff', fontWeight: 'bold', 
-                            cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
-                            borderRadius: '4px',
-                            opacity: tutLockTimer > 0 ? 0.6 : 1
-                        }}
-                    >
-                        {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
-                    </button>
-                ) : (
-                    <button onClick={handleGotIt} style={{
-                        background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
-                        fontSize: '1.0em', marginTop: '15px', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
-                    }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
-                        GOT IT (Close to play)
-                    </button>
-                )}
+        <>
+            <style>
+                {`
+                @keyframes tutPointerGlowSilverRight {
+                    0% { text-shadow: 2px 2px 4px #000, 0 0 4px #cbd5e1; transform: translateY(-50%) translateX(0); color: #cbd5e1; }
+                    50% { text-shadow: 2px 2px 4px #000, 0 0 15px #cbd5e1, 0 0 25px #cbd5e1; transform: translateY(-50%) translateX(-6px); color: #fff; }
+                    100% { text-shadow: 2px 2px 4px #000, 0 0 4px #cbd5e1; transform: translateY(-50%) translateX(0); color: #cbd5e1; }
+                }
+                @keyframes tutPointerGlowSilverDown {
+                    0% { text-shadow: 2px 2px 4px #000, 0 0 4px #cbd5e1; transform: translateX(-50%) translateY(0); color: #cbd5e1; }
+                    50% { text-shadow: 2px 2px 4px #000, 0 0 15px #cbd5e1, 0 0 25px #cbd5e1; transform: translateX(-50%) translateY(-6px); color: #fff; }
+                    100% { text-shadow: 2px 2px 4px #000, 0 0 4px #cbd5e1; transform: translateX(-50%) translateY(0); color: #cbd5e1; }
+                }
+                `}
+            </style>
+            
+            <div 
+                id="tutorial-stock-arrow"
+                style={{
+                    position: 'fixed', 
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#cbd5e1',
+                    fontWeight: '900',
+                    fontSize: '16px',
+                    zIndex: 10000, 
+                    pointerEvents: 'none',
+                    animation: 'tutPointerGlowSilverRight 1.5s infinite',
+                    opacity: 0,
+                    transition: 'opacity 0.3s'
+                }}
+            >
+                <span style={{ fontSize: '28px' }}>⬅</span> PRICE
             </div>
-        </div>
+
+            <div 
+                id="tutorial-belt-arrow"
+                style={{
+                    position: 'fixed',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    color: '#cbd5e1',
+                    fontWeight: '900',
+                    fontSize: '16px',
+                    zIndex: 10000,
+                    pointerEvents: 'none',
+                    animation: 'tutPointerGlowSilverDown 1.5s infinite',
+                    opacity: 0,
+                    transition: 'opacity 0.3s'
+                }}
+            >
+                CONSUME
+                <span style={{ fontSize: '28px', marginTop: '-8px' }}>⬇</span>
+            </div>
+
+            <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
+                pointerEvents: 'none', 
+                background: 'transparent',
+                transition: 'background 0.5s ease-in-out'
+            }}>
+
+                {/* THE ULTIMATE SHADOW & MASK (Window Frame) --- */}
+                <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, zIndex: -1 }}>
+                    <defs>
+                        <mask id="map-hole">
+                            <rect width="100%" height="100%" fill="white" />
+                            
+                            {/* Map Hole: standard calc width/height works perfectly here */}
+                            {needsMapVisible && (
+                                <rect x="275" y="60" width="100%" height="calc(100% - 240px)" fill="black" />
+                            )}
+                            
+                            {/* Belt Hole: Bulletproof SVG anchoring to the bottom */}
+                            {needsBeltVisible && (
+                                <rect x="275" y="100%" width="100%" height="180" fill="black" transform="translate(0, -180)" />
+                            )}
+                        </mask>
+                    </defs>
+                    <rect width="100%" height="100%" fill="rgba(0,0,0,0.85)" mask="url(#map-hole)" style={{ transition: 'all 0.5s ease-in-out' }} />
+                </svg>
+
+                {/* THE MAIN BARON MODAL WRAPPER */}
+                <div 
+                    id="tutorial-modal-wrapper"
+                    style={{
+                    position: 'absolute',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transition: stepData?.modalAnchor ? 'none' : 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    ...(stepData?.modalAnchor 
+                        ? {} 
+                        : (needsMapVisible 
+                            ? { left: 'calc(275px + 34%)', top: 'calc(60px + 49%)', transform: 'none' } 
+                            : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+                        )
+                    )
+                }}>
+
+                    {stepData?.arrowTarget && (
+                        <svg style={{ 
+                            position: 'absolute', 
+                            top: 0, left: 0, 
+                            width: '1px', height: '1px', 
+                            pointerEvents: 'none', 
+                            overflow: 'visible', 
+                            animation: 'tutPointerGlow 1.5s infinite',
+                            zIndex: -1
+                        }}>
+                            <path id="tutorial-arrow-path" fill="transparent" stroke="#facc15" strokeWidth="4" strokeDasharray="8,6" />
+                            <polygon id="tutorial-arrow-head" points="-10,-10 10,0 -10,10" fill="#facc15" />
+                        </svg>
+                    )}
+
+                    <div style={{
+                        background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
+                        borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
+                        pointerEvents: 'auto', position: 'relative', width: '420px', padding: '20px',
+                        display: 'flex', flexDirection: 'column'
+                    }}>
+                        <div style={{
+                            width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
+                            border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
+                            justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
+                            flexShrink: 0
+                        }}>
+                            <canvas ref={canvasRef} width="65" height="65"></canvas>
+                        </div>
+                        
+                        <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
+                            THE BARON SAYS:
+                        </div>
+                        
+                        <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px', paddingBottom: '15px' }}>
+                            {cleanDialogue}
+                        </div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
+                            <button onClick={handleReplayVoice} style={{
+                                background: '#222', border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.85em', padding: '6px 12px', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '5px'
+                            }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; e.target.style.background = '#333'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; e.target.style.background = '#222'; }}>
+                                🔄 Replay
+                            </button>
+                            <button onClick={handleVoiceToggle} style={{
+                                background: '#222', border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.85em', padding: '6px 12px', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '5px'
+                            }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; e.target.style.background = '#333'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; e.target.style.background = '#222'; }}>
+                                {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
+                            </button>
+                        </div>
+                        
+                        {trigger.type === 'clickNext' ? (
+                            <button 
+                                className="tutorial-highlight" 
+                                onClick={(e) => {
+                                    if (tutLockTimer > 0) {
+                                        e.preventDefault();
+                                        return; 
+                                    }
+                                    handleNext();
+                                }} 
+                                disabled={tutLockTimer > 0} 
+                                style={{
+                                    background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
+                                    border: '2px solid #fff', fontWeight: 'bold', 
+                                    cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
+                                    borderRadius: '4px',
+                                    opacity: tutLockTimer > 0 ? 0.6 : 1
+                                }}
+                            >
+                                {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
+                            </button>
+                        ) : (
+                            <button onClick={handleGotIt} style={{
+                                background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                                fontSize: '1.0em', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                            }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
+                                GOT IT (Close to play)
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </>
     );
 };
 
@@ -1039,25 +1293,53 @@ export default function App() {
         /* --- TUTORIAL CSS --- */
         .tut-strict-lock { pointer-events: none; user-select: none; }
         .tut-strict-lock .tut-allow-clicks { pointer-events: auto; }
-        .tutorial-spotlight { pointer-events: auto !important; position: relative; z-index: 9600; outline: 4px solid #facc15 !important; outline-offset: 4px; animation: pulseOutline 1.5s infinite; border-radius: 6px; }
-        .tutorial-spotlight-silver { pointer-events: auto !important; position: relative; z-index: 9600; outline: 4px solid #cbd5e1 !important; outline-offset: 4px; animation: pulseOutlineSilver 1.5s infinite; border-radius: 6px; }
-        .tutorial-glow-minor { pointer-events: auto !important; position: relative; z-index: 8999; outline: 3px solid rgba(255, 255, 255, 0.6) !important; outline-offset: 2px; border-radius: 6px; }
+        
+        /* The ::after element ensures the glow hugs the curves perfectly without wiping out inline box-shadows */
+        .tutorial-spotlight, .tutorial-spotlight-silver, .tutorial-glow-minor { 
+            pointer-events: auto !important; position: relative; z-index: 9600; 
+        }
+        .tutorial-spotlight::after {
+            content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+            animation: pulseGlowGold 1.5s infinite; z-index: 10;
+        }
+        .tutorial-spotlight-silver::after {
+            content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+            animation: pulseGlowSilver 1.5s infinite; z-index: 10;
+        }
+        .tutorial-glow-minor::after {
+            content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+            animation: pulseGlowWhite 1.5s infinite; z-index: 10;
+        }
+        
+        /* 5. FULFILLS Z-INDEX WORKAROUND REQUIREMENT --- */
+        #tutorial-center-modal .center-modal { z-index: 9900; }
+        
         .tutorial-dimmed { opacity: 0.4 !important; pointer-events: none !important; filter: grayscale(80%) !important; }
         
-        @keyframes pulseOutline {
-            0% { outline-color: rgba(250, 204, 21, 0.6); outline-offset: 4px; }
-            50% { outline-color: rgba(250, 204, 21, 1); outline-offset: 8px; }
-            100% { outline-color: rgba(250, 204, 21, 0.6); outline-offset: 4px; }
+        @keyframes pulseGlowGold {
+            0% { box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 1), 0 0 15px rgba(250, 204, 21, 0.6); }
+            100% { box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4); }
         }
-        @keyframes pulseOutlineSilver {
-            0% { outline-color: rgba(203, 213, 225, 0.6); outline-offset: 4px; }
-            50% { outline-color: rgba(203, 213, 225, 1); outline-offset: 8px; }
-            100% { outline-color: rgba(203, 213, 225, 0.6); outline-offset: 4px; }
+        @keyframes pulseGlowSilver {
+            0% { box-shadow: 0 0 0 2px rgba(203, 213, 225, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(203, 213, 225, 1), 0 0 15px rgba(203, 213, 225, 0.6); }
+            100% { box-shadow: 0 0 0 2px rgba(203, 213, 225, 0.4); }
+        }
+        @keyframes pulseGlowWhite {
+            0% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4); }
+            50% { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8), 0 0 10px rgba(255, 255, 255, 0.4); }
+            100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4); }
         }
         @keyframes tutPointerGlow {
             0% { text-shadow: 2px 2px 4px #000, 0 0 4px #facc15; transform: translateX(-50%) translateY(0); color: #facc15; }
             50% { text-shadow: 2px 2px 4px #000, 0 0 15px #facc15, 0 0 25px #facc15; transform: translateX(-50%) translateY(-4px); color: #fff; }
             100% { text-shadow: 2px 2px 4px #000, 0 0 4px #facc15; transform: translateX(-50%) translateY(0); color: #facc15; }
+        }
+        @keyframes tutPointerGlowSilver {
+            0% { text-shadow: 2px 2px 4px #000, 0 0 4px #cbd5e1; transform: translateX(-50%) translateY(0); color: #cbd5e1; }
+            50% { text-shadow: 2px 2px 4px #000, 0 0 15px #cbd5e1, 0 0 25px #cbd5e1; transform: translateX(-50%) translateY(-4px); color: #fff; }
+            100% { text-shadow: 2px 2px 4px #000, 0 0 4px #cbd5e1; transform: translateX(-50%) translateY(0); color: #cbd5e1; }
         }
       `}} />
       <AllModals />

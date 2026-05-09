@@ -79,7 +79,7 @@ const ConveyorBelt = () => {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
 
-  // --- NEW: Auto-deselect timer (7 seconds) ---
+  // Auto-deselect timer (7 seconds)
   useEffect(() => {
       let timer;
       if (selectedIndex !== null) {
@@ -169,8 +169,10 @@ const ConveyorBelt = () => {
       displayBelt.push({ item: null, index: i });
   }
 
+  // --- NEW: Dynamic Z-Index logic for Tutorial ---
   const tutorial = gameState?.tutorial;
-  const beltClass = tutorial?.isActive ? (tutorial.stepData?.focusUI?.includes('steel-dashboard-container') ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
+  const isBeltTargeted = tutorial?.isActive && tutorial.stepData?.focusUI?.some(id => id.startsWith('belt-slot-') || id === 'steel-dashboard-container');
+  const beltClass = tutorial?.isActive ? (isBeltTargeted ? 'tutorial-spotlight tut-allow-clicks' : 'tutorial-dimmed') : '';
 
   return (
     <div className={beltClass} style={{ 
@@ -184,7 +186,7 @@ const ConveyorBelt = () => {
         gap: '20px', 
         overflow: 'visible', 
         position: 'relative', 
-        zIndex: 50, 
+        zIndex: isBeltTargeted ? 9600 : 50, // Elevates above tutorial mask (9500)
         width: '100%', 
         boxSizing: 'border-box' 
     }}>

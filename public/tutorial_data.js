@@ -1,3 +1,4 @@
+// tutorial_data.js
 const TUTORIAL_STORYBOARD = {
     "storyboard": [
         {
@@ -46,7 +47,7 @@ const TUTORIAL_STORYBOARD = {
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "A", "B", "D"],
-            "dialogue": "[The Baron]: Look at the companies on your screen. Central Pacific has track, but no shares available. O R and N has shares, but no track to build with. The Great Northern, however, has twenty dollars in its Treasury, three track segments, and one share available for twenty-five dollars. Spend your Personal Cash to buy that share now. This gives you controlling interest and puts cash in their Treasury.",
+            "dialogue": "[The Baron]: Look at the companies on your screen. Central Pacific has track but no shares available. OR&N has shares but no track to build with. The Great Northern, however, has twenty dollars in its Treasury, three track segments and one share available for twenty-five dollars. Spend your Personal Cash to buy that share now by clicking the share button. This gives you controlling interest and puts cash in its Treasury.",
             "locks": { "endYear": true, "buyStock": false, "buildTrack": true },
             "focusUI": ["company-card-bo"],
             "focusMinor": ["company-card-prr", "company-card-nyc"],
@@ -84,10 +85,12 @@ const TUTORIAL_STORYBOARD = {
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "A", "B", "D"],
-            "dialogue": "[The Baron]: Excellent. Your Cash is now $75, but because GN's stock price rose to $30, your Net Worth actually increased to $105! More importantly, GN's Treasury is now $45, and since you own a share, you have the controlling interest to spend it. We need to build East toward Chicago. Look at the map. Seattle connects to a gray Standard City. Building there will cost GN $13, but it guarantees $15 in yearly income for its shareholders.",
+            "dialogue": "[The Baron]: Excellent. Your Cash is now $75, but because GN's stock price rose to $30, your Net Worth actually increased to $105! More importantly, GN's Treasury is now $45, and since you own a share, you have the controlling interest to spend it. We need to build East toward Chicago. Look at the map. Seattle connects to a gray Standard City. Building there will cost GN $13, but it guarantees $15 in yearly income divided evenly amongst its shareholders. Mouse over the gray city to the right of the starting city for the Great Northern to see its income value.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "focusUI": ["player-cash-pill", "player-networth-pill", "company-card-bo", "stock-track-30"],
             "focusNodes": [0, 28],
+            "modalAnchor": { "x": 500, "y": 500 },
+            "arrowTarget": { "x": 300, "y": 405 },
             "trigger": { "type": "clickNext", "target": "" },
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
@@ -121,10 +124,12 @@ const TUTORIAL_STORYBOARD = {
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "A", "B", "D"],
-            "dialogue": "[The Baron]: It is time to expand. But there is a catch. The company pays the bank for labor, but it must buy the physical Steel from YOU. Look at the Conveyor Belt below. To lay one unit of track, you must consume the right-most card. Right now, that is 'Townsite Subsidy'.",
-            "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
-            "trigger": { "type": "clickNext", "target": "" },
-            "focusUI": ["steel-dashboard-container"],
+            "dialogue": "[The Baron]: Excellent. Great Northern now has the capital to expand East towards Chicago. But laying track requires materials. Look at the Conveyor Belt at the bottom of your screen. To build, you must consume the first card in the queue. Click the rail icon on GN, then click the gray Standard City to the right to build your first segment.",
+            "modalAnchor": { "x": 500, "y": 500 },
+            "focusUI": ["belt-slot-0"],
+            "focusNodes": [28],
+            "locks": { "endYear": true, "buyStock": true, "buildTrack": false },
+            "trigger": { "type": "onBuildIntercepted", "target": "28" },
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
                 { "id": 1, "c": 0, "r": 5, "type": "start", "subType": "start", "name": "Portland", "value": 5, "revealed": true },
@@ -157,10 +162,12 @@ const TUTORIAL_STORYBOARD = {
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "A", "B", "D"],
-            "dialogue": "[The Baron]: But wait! You can click and swap cards of the same color. Swap 'Townsite Subsidy' with 'Legacy Plate'!",
+            "dialogue": "[The Baron]: But wait! You can click and drag to swap cards of the same color. Drag the green 'Townsite Subsidy' and swap it with 'Legacy Plate'!",
+            "modalAnchor": { "x": 500, "y": 500 },
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "trigger": { "type": "onCardsSwapped", "target": "" },
-            "focusUI": ["steel-dashboard-container"],
+            "focusUI": ["belt-slot-0", "steel-dashboard-container"],
+            "focusNodes": [0, 28],
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
                 { "id": 1, "c": 0, "r": 5, "type": "start", "subType": "start", "name": "Portland", "value": 5, "revealed": true },
@@ -187,16 +194,18 @@ const TUTORIAL_STORYBOARD = {
             "id": 4.5,
             "ledger": { "year": 1, "playerCash": 75, "baronCash": 100 },
             "companies": {
-                "cp": { "treasury": 45, "track": 1, "price": 30, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 0 },
-                "gn": { "treasury": 45, "track": 3, "price": 30, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 1 },
-                "orn": { "treasury": 0, "track": 0, "price": 20, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 2 }
+                "cp": { "treasury": 45, "track": 1, "price": 30, "stockPrice": 30, "parValue": 30, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 0 },
+                "gn": { "treasury": 45, "track": 3, "price": 30, "stockPrice": 30, "parValue": 30, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 1 },
+                "orn": { "treasury": 0, "track": 0, "price": 20, "stockPrice": 20, "parValue": 20, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 2 }
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "D", "B", "A"],
-            "dialogue": "[The Baron]: Excellent! Legacy Plate is now loaded in the consumption slot. It pays you $25 if you build out of a Headquarters! Click \"Build Track\" on GN, then click the highlighted Standard City to expand your empire.",
+            "dialogue": "[The Baron]: Excellent! Legacy Plate is now loaded in the consumption slot. It pays you $25 if you build out of a Headquarters! Click the rail icon on GN, then click the highlighted Standard City to expand your empire.",
+            "modalAnchor": { "x": 500, "y": 500 },
+            "focusUI": ["belt-slot-0", "company-card-bo"],
+            "focusNodes": [0, 28],
             "locks": { "endYear": true, "buyStock": true, "buildTrack": false },
             "trigger": { "type": "onNodeBuilt", "target": "28" },
-            "focusNodes": [0, 28],
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
                 { "id": 1, "c": 0, "r": 5, "type": "start", "subType": "start", "name": "Portland", "value": 5, "revealed": true },

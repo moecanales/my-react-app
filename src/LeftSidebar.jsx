@@ -147,7 +147,7 @@ const LeftSidebar = () => {
       padding: '0px', 
       height: '100%', 
       overflow: 'visible',
-      zIndex: (gameState.tutorial?.isActive && gameState.tutorial.currentStepIndex === 0) ? 9600 : 10,
+      zIndex: gameState.tutorial?.isActive ? 9600 : 10,
       display: 'flex',
       flexDirection: 'column',
       position: 'relative'
@@ -182,6 +182,7 @@ const LeftSidebar = () => {
             background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 4px 8px; 
             display: flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; 
             transition: all 0.1s; will-change: transform; transform: translateZ(0);
+            z-index: 20;
           }
           .track-action-btn:hover { background: rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.6); transform: scale(1.05); }
           .track-action-btn:active { transform: scale(0.95); background: rgba(0,0,0,0.8); }
@@ -318,7 +319,7 @@ const LeftSidebar = () => {
             <div className={`mini-pill ${getTutClass('company-card-bo')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsBNOExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #39b54a 0%, #1c5e25 100%)', border: '3px solid #0f3d16', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer', overflow: 'visible', position: 'relative' }}>
               <img src="/gn.svg" alt="GN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative', zIndex: 20 }}>
                 {gameState.tutorial?.isActive && (gameState.tutorial.currentStepIndex === 1 || gameState.tutorial.currentStepIndex === 2) && (
                    <div style={{ position: 'absolute', top: '-35px', left: '50%', transform: 'translateX(-50%)', color: '#facc15', fontWeight: '900', fontSize: '14px', textShadow: '2px 2px 4px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 9999, pointerEvents: 'none' }}>
                        TREASURY <span style={{ fontSize: '20px', marginTop: '-6px' }}>⬇</span>
@@ -393,7 +394,7 @@ const LeftSidebar = () => {
             <div className={`mini-pill ${getTutClass('company-card-nyc')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsNYCExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #32b5cc 0%, #156d7d 100%)', border: '3px solid #0a4652', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer', overflow: 'visible', position: 'relative' }}>
               <img src="/orn.svg" alt="ORN Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative', zIndex: 20 }}>
                 <TreasureIcon fill="#8cfcff" width="24" height="18" style={{ marginRight: '6px', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }} />
                 <span style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>{nyc.cash}</span>
               </div>
@@ -453,7 +454,7 @@ const LeftSidebar = () => {
             <div className={`mini-pill ${getTutClass('company-card-prr')}`} onClick={() => { if (!gameState.tutorial?.isActive) setIsPRExpanded(true); }} style={{ background: 'linear-gradient(to bottom, #e31818 0%, #7a0909 100%)', border: '3px solid #4a0303', borderRadius: '20px', height: '52px', display: 'flex', alignItems: 'center', padding: '0 14px', boxShadow: '0 4px 6px rgba(0,0,0,0.6)', cursor: 'pointer', overflow: 'visible', position: 'relative' }}>
               <img src="/cpr.svg" alt="CPR Logo" style={{ width: '40px', height: '40px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))' }} />
               
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', marginRight: 'auto', position: 'relative', zIndex: 20 }}>
                 <TreasureIcon fill="#ff8c8c" width="24" height="18" style={{ marginRight: '6px', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }} />
                 <span style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>{prr.cash}</span>
               </div>
