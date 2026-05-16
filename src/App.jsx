@@ -581,7 +581,7 @@ const WealthTracker = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '36px' }} title="PROJECTED WEALTH: Estimates your Net Worth after this year's dividends. If you cross the $300 threshold, you MUST have a higher Net Worth than the Baron at year-end, or face a hostile takeover!">
             
             {/* Left Column: Badge Only */}
-            <div style={{
+            <div id="player-networth-pill" style={{
                 fontSize: '11px', fontWeight: '900', letterSpacing: '1px', padding: '0 12px', borderRadius: '4px',
                 backgroundColor: isExposed ? '#F44336' : '#4CAF50', color: isExposed ? '#fff' : '#000',
                 boxShadow: isExposed ? '0 0 10px rgba(244, 67, 54, 0.4)' : '0 0 10px rgba(76, 175, 80, 0.4)',
@@ -1028,7 +1028,7 @@ const TutorialOverlay = () => {
     const isVoicePaused = window.game?.audio?.isVoicePaused;
 
     const needsMapVisible = stepData.focusNodes && stepData.focusNodes.length > 0;
-    const needsBeltVisible = stepData.focusUI && stepData.focusUI.some(id => id.startsWith('belt-slot-'));
+    const needsBeltVisible = stepData.focusUI && stepData.focusUI.some(id => id.startsWith('belt-slot-') || id === 'steel-dashboard-container');
     const cleanDialogue = stepData.dialogue.replace('[The Baron]: ', '');
 
     const handleVoiceToggle = () => {
@@ -1116,6 +1116,7 @@ const TutorialOverlay = () => {
                 <span style={{ fontSize: '28px', marginTop: '-8px' }}>⬇</span>
             </div>
 
+            {/* This is the 9500 z-index wrapper for the rest of the dimming UI */}
             <div style={{
                 position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
                 pointerEvents: 'none', 
@@ -1142,106 +1143,107 @@ const TutorialOverlay = () => {
                     </defs>
                     <rect width="100%" height="100%" fill="rgba(0,0,0,0.85)" mask="url(#map-hole)" style={{ transition: 'all 0.5s ease-in-out' }} />
                 </svg>
+            </div>
 
-                {/* THE MAIN BARON MODAL WRAPPER */}
-                <div 
-                    id="tutorial-modal-wrapper"
-                    style={{
-                    position: 'absolute',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    transition: stepData?.modalAnchor ? 'none' : 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    ...(stepData?.modalAnchor 
-                        ? {} 
-                        : (needsMapVisible 
-                            ? { left: 'calc(275px + 34%)', top: 'calc(60px + 49%)', transform: 'none' } 
-                            : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
-                        )
+            {/* --- FIX: PULLED MODAL WRAPPER OUT OF 9500 CONTAINER SO IT FLOATS OVER BELT --- */}
+            <div 
+                id="tutorial-modal-wrapper"
+                style={{
+                position: 'fixed',
+                zIndex: 10000,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transition: stepData?.modalAnchor ? 'none' : 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                ...(stepData?.modalAnchor 
+                    ? {} 
+                    : (needsMapVisible 
+                        ? { left: 'calc(275px + 34%)', top: 'calc(60px + 49%)', transform: 'none' } 
+                        : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
                     )
-                }}>
+                )
+            }}>
 
-                    {stepData?.arrowTarget && (
-                        <svg style={{ 
-                            position: 'absolute', 
-                            top: 0, left: 0, 
-                            width: '1px', height: '1px', 
-                            pointerEvents: 'none', 
-                            overflow: 'visible', 
-                            animation: 'tutPointerGlow 1.5s infinite',
-                            zIndex: -1
-                        }}>
-                            <path id="tutorial-arrow-path" fill="transparent" stroke="#facc15" strokeWidth="4" strokeDasharray="8,6" />
-                            <polygon id="tutorial-arrow-head" points="-10,-10 10,0 -10,10" fill="#facc15" />
-                        </svg>
-                    )}
-
-                    <div style={{
-                        background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
-                        borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
-                        pointerEvents: 'auto', position: 'relative', width: '420px', padding: '20px',
-                        display: 'flex', flexDirection: 'column'
+                {stepData?.arrowTarget && (
+                    <svg style={{ 
+                        position: 'absolute', 
+                        top: 0, left: 0, 
+                        width: '1px', height: '1px', 
+                        pointerEvents: 'none', 
+                        overflow: 'visible', 
+                        animation: 'tutPointerGlow 1.5s infinite',
+                        zIndex: -1
                     }}>
-                        <div style={{
-                            width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
-                            border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
-                            justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
-                            flexShrink: 0
-                        }}>
-                            <canvas ref={canvasRef} width="65" height="65"></canvas>
-                        </div>
-                        
-                        <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
-                            THE BARON SAYS:
-                        </div>
-                        
-                        <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px', paddingBottom: '15px' }}>
-                            {cleanDialogue}
-                        </div>
-                        
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
-                            <button onClick={handleReplayVoice} style={{
-                                background: '#222', border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.85em', padding: '6px 12px', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '5px'
-                            }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; e.target.style.background = '#333'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; e.target.style.background = '#222'; }}>
-                                🔄 Replay
-                            </button>
-                            <button onClick={handleVoiceToggle} style={{
-                                background: '#222', border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.85em', padding: '6px 12px', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '5px'
-                            }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; e.target.style.background = '#333'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; e.target.style.background = '#222'; }}>
-                                {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
-                            </button>
-                        </div>
-                        
-                        {trigger.type === 'clickNext' ? (
-                            <button 
-                                className="tutorial-highlight" 
-                                onClick={(e) => {
-                                    if (tutLockTimer > 0) {
-                                        e.preventDefault();
-                                        return; 
-                                    }
-                                    handleNext();
-                                }} 
-                                disabled={tutLockTimer > 0} 
-                                style={{
-                                    background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
-                                    border: '2px solid #fff', fontWeight: 'bold', 
-                                    cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
-                                    borderRadius: '4px',
-                                    opacity: tutLockTimer > 0 ? 0.6 : 1
-                                }}
-                            >
-                                {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
-                            </button>
-                        ) : (
-                            <button onClick={handleGotIt} style={{
-                                background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
-                                fontSize: '1.0em', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
-                            }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
-                                GOT IT (Close to play)
-                            </button>
-                        )}
+                        <path id="tutorial-arrow-path" fill="transparent" stroke="#facc15" strokeWidth="4" strokeDasharray="8,6" />
+                        <polygon id="tutorial-arrow-head" points="-10,-10 10,0 -10,10" fill="#facc15" />
+                    </svg>
+                )}
+
+                <div style={{
+                    background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
+                    borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
+                    pointerEvents: 'auto', position: 'relative', width: '420px', padding: '20px',
+                    display: 'flex', flexDirection: 'column'
+                }}>
+                    <div style={{
+                        width: '75px', height: '75px', margin: '-55px auto 10px auto', background: '#0f3460',
+                        border: '2px solid #facc15', borderRadius: '50%', overflow: 'hidden', display: 'flex',
+                        justifyContent: 'center', alignItems: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
+                        flexShrink: 0
+                    }}>
+                        <canvas ref={canvasRef} width="65" height="65"></canvas>
                     </div>
+                    
+                    <div style={{ fontWeight: 900, color: '#c084fc', marginBottom: '8px', fontSize: '1.0em', letterSpacing: '2px' }}>
+                        THE BARON SAYS:
+                    </div>
+                    
+                    <div style={{ fontSize: '0.95em', color: '#ddd', lineHeight: 1.5, textAlign: 'left', borderTop: '1px solid #444', paddingTop: '12px', paddingBottom: '15px' }}>
+                        {cleanDialogue}
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
+                        <button onClick={handleReplayVoice} style={{
+                            background: '#222', border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.85em', padding: '6px 12px', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '5px'
+                        }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; e.target.style.background = '#333'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; e.target.style.background = '#222'; }}>
+                            🔄 Replay
+                        </button>
+                        <button onClick={handleVoiceToggle} style={{
+                            background: '#222', border: '1px solid #555', color: '#aaa', cursor: 'pointer', fontSize: '0.85em', padding: '6px 12px', borderRadius: '4px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '5px'
+                        }} onMouseOver={(e) => { e.target.style.color = '#fff'; e.target.style.borderColor = '#fff'; e.target.style.background = '#333'; }} onMouseOut={(e) => { e.target.style.color = '#aaa'; e.target.style.borderColor = '#555'; e.target.style.background = '#222'; }}>
+                            {isVoicePaused ? '▶️ Play Voice' : '⏸️ Pause Voice'}
+                        </button>
+                    </div>
+                    
+                    {trigger.type === 'clickNext' ? (
+                        <button 
+                            className="tutorial-highlight" 
+                            onClick={(e) => {
+                                if (tutLockTimer > 0) {
+                                    e.preventDefault();
+                                    return; 
+                                }
+                                handleNext();
+                            }} 
+                            disabled={tutLockTimer > 0} 
+                            style={{
+                                background: '#facc15', color: 'black', fontSize: '1.0em', padding: '10px', width: '100%',
+                                border: '2px solid #fff', fontWeight: 'bold', 
+                                cursor: tutLockTimer > 0 ? 'not-allowed' : 'pointer', 
+                                borderRadius: '4px',
+                                opacity: tutLockTimer > 0 ? 0.6 : 1
+                            }}
+                        >
+                            {currentStepIndex === totalSteps - 1 ? 'GOT IT (Return to Menu)' : (tutLockTimer > 0 ? `LISTEN... (${tutLockTimer})` : 'CONTINUE')}
+                        </button>
+                    ) : (
+                        <button onClick={handleGotIt} style={{
+                            background: '#333', color: '#fff', border: '1px solid #555', padding: '10px', width: '100%',
+                            fontSize: '1.0em', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold'
+                        }} onMouseOver={(e) => { e.target.style.background = '#444'; }} onMouseOut={(e) => { e.target.style.background = '#333'; }}>
+                            GOT IT (Close to play)
+                        </button>
+                    )}
                 </div>
             </div>
         </>

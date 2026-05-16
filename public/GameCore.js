@@ -311,11 +311,17 @@ class Game {
     }
 
     isRustBelt(nodeId) {
+        // --- NEW: Bypass terrain penalties during the tutorial ---
+        if (this.tutorial && this.tutorial.isActive) return false;
+        
         const node = this.nodes.find(n => n.id === nodeId);
         return node && node.c >= this.mapZones.rustStart;
     }
 
     isMountain(nodeId) {
+        // --- NEW: Bypass terrain penalties during the tutorial ---
+        if (this.tutorial && this.tutorial.isActive) return false;
+
         const node = this.nodes.find(n => n.id === nodeId);
         return node && node.c >= this.mapZones.mtnStart && node.c <= this.mapZones.mtnEnd;
     }
@@ -891,7 +897,9 @@ class Game {
         const variance = conn ? (conn.variance || 0) : 0;
         const isBaronOwned = conn ? (conn.owner === 'baron') : false;
         
-        const units = this.calculateUnits(fromId, toId); 
+        // Priority 1: Use explicitly defined units from connection data (JSON)
+        // Priority 2: Fallback to calculated distance math
+        const units = (conn && conn.units !== undefined) ? conn.units : this.calculateUnits(fromId, toId); 
         const steelRevenue = units * 10;
         
         let laborCost = (units * 5) + (units * variance);
@@ -913,16 +921,24 @@ class Game {
         let simWaivers = this.turnStats?.blueWaiversAvailable || 0;
         let simRedCount = (this.abacus && this.abacus.ledger.redCount) ? this.abacus.ledger.redCount : 0;
 
+        let greenCount = 0;
+        let blueCount = 0;
+        let redCount = 0;
+
         for (let i = 0; i < units; i++) {
             if (!this.abacus || !this.abacus.belt || !this.abacus.belt[i]) {
                 predSourcing += Math.max(1, (this.currentContractPrice || 15) - (this.priceModifiers?.blue || 0));
+                blueCount++;
                 continue;
             }
 
             const card = this.abacus.belt[i];
             const effectCard = card.proxy ? card.proxy : card;
 
-            // Simulate Card Consumption (Base Cost)
+            if (card.type === 'green') greenCount++;
+            else if (card.type === 'blue') blueCount++;
+            else if (card.type === 'red') redCount++;
+
             if (card.type === 'green') {
                 // Cost is 0
             } else if (card.type === 'blue') {
@@ -936,7 +952,6 @@ class Game {
                 simRedCount++;
             }
 
-            // Simulate Proxy Effects (Bonuses/Tolls)
             if (effectCard.type === 'blue') {
                 kickbackTotal += this.calculateBaronKickback(effectCard.label, companyId, toId, effectCard.level || 1);
             } else if (effectCard.type === 'green') {
@@ -976,8 +991,11 @@ class Game {
             }
         }
         
+        // CRITICAL FIX: The company 'total' MUST NOT include predSourcing. 
+        // predSourcing is the player's personal cash cost for the steel cards.
+        // It also MUST NOT include kickbackTotal, as the Bank pays those tolls.
         return { 
-            total: steelRevenue + finalLabor + toll + mountainTax + predSourcing, 
+            total: steelRevenue + finalLabor + toll + mountainTax, 
             labor: finalLabor, 
             toll: toll, 
             variance: variance, 
@@ -988,41 +1006,34 @@ class Game {
             sourcingCost: predSourcing, 
             baronConditionCost: kickbackTotal,
             cardCount: units,
-            playerBonus: playerBonus
+            playerBonus: playerBonus,
+            greenCount: greenCount,
+            blueCount: blueCount,
+            redCount: redCount
         };
     }
 
     calculateUnits(fromId, toId) {
         const n1 = this.nodes.find(n => n.id === fromId); 
         const n2 = this.nodes.find(n => n.id === toId);
-        
         const dx = n1.x - n2.x; 
         const dy = n1.y - n2.y; 
         let dist = Math.sqrt(dx * dx + dy * dy);
         
-        // Vertical penalty softened to 1.4x from 3x
-        if (n1.c === n2.c) {
-            dist *= 1.4; 
-        }
+        if (n1.c === n2.c) dist *= 1.4; 
 
         let units = 1;
-
-        // Tighten the threshold specifically for 1s and 2s to hit a near 51/49 balance
-        // Dropped the 1-cost bucket to 110 to ensure diagonals hit the 2 bucket
         if (dist <= 110) {
             units = 1;
-        } else if (dist <= 165) {
+        } else if (dist <= 215) { // FIX: Bumped to 215 so standard 200px columns cost 2 units
             units = 2;
         } else {
             units = 3;
         }
         
         const n2Config = this.getNodeConfig(n2);
-        if (n2Config && n2Config.trackCost) {
-            units += n2Config.trackCost; 
-        }
+        if (n2Config && n2Config.trackCost) units += n2Config.trackCost; 
         
-        // Hard-cap the unit cost at 3. The engine permanently bans 4-cost and 5-cost links.
         return Math.min(3, units);
     }
 

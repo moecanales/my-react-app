@@ -156,9 +156,40 @@ const ConveyorBelt = () => {
   const topDiscardInfo = topDiscardItem ? getNativeCardInfo(topDiscardItem) : null;
 
   const handleCardClick = (index) => {
-    if (selectedIndex === null) setSelectedIndex(index);
-    else if (selectedIndex === index) setSelectedIndex(null);
-    else { swapBeltCards(selectedIndex, index); setSelectedIndex(null); }
+    // --- TUTORIAL LOCK: Strict Global Swap Enforcement ---
+    const tutorial = gameState?.tutorial;
+    if (tutorial?.isActive) {
+        if (tutorial.stepData?.id === "4b") {
+            // Step 4b: Only allow interacting with slot 1 (index 0) and slot 3 (index 2)
+            if (index !== 0 && index !== 2) {
+                if (window.game?.audio) window.game.audio.playError();
+                return;
+            }
+        } else {
+            // ALL OTHER STEPS: Completely disable card selection/swapping.
+            // We return silently so the player can still click the '?' info button 
+            // on the card without picking the card up or triggering an error buzzer.
+            return;
+        }
+    }
+
+    if (selectedIndex === null) {
+        setSelectedIndex(index);
+    } else if (selectedIndex === index) {
+        setSelectedIndex(null);
+    } else { 
+        if (tutorial?.isActive && tutorial.stepData?.id === "4b") {
+            // Additional safety check: only allow swapping 0 with 2
+            if ((selectedIndex === 0 && index === 2) || (selectedIndex === 2 && index === 0)) {
+                swapBeltCards(selectedIndex, index);
+            } else {
+                if (window.game?.audio) window.game.audio.playError();
+            }
+        } else {
+            swapBeltCards(selectedIndex, index); 
+        }
+        setSelectedIndex(null); 
+    }
   };
 
   const MAX_SLOTS = 5;
@@ -345,10 +376,10 @@ const ConveyorBelt = () => {
                                     <div style={{ 
                                         position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', 
                                         marginBottom: '15px', zIndex: 1000, pointerEvents: 'none', 
-                                        opacity: financialData ? 1 : 0, transition: 'opacity 0.2s', 
+                                        opacity: (financialData && !tutorial?.isActive) ? 1 : 0, transition: 'opacity 0.2s', 
                                         display: 'flex', flexDirection: 'column', alignItems: 'center' 
                                     }}>
-                                        {financialData && (
+                                        {financialData && !tutorial?.isActive && (
                                             financialData.type === 'red' ? (
                                                 <div style={{ fontSize: '2.5em', fontWeight: '900', color: '#c084fc', textShadow: '0 0 15px #c084fc, 2px 2px 4px #000', borderBottom: '3px solid #94a3b8', paddingBottom: '4px' }}>
                                                     -${financialData.value}

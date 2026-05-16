@@ -121,11 +121,7 @@ class TutorialManager {
                 compData.playerShares = compData.playerShares || 0;
                 compData.baronShares = compData.baronShares || 0;
 
-                // Dialogue explicitly states Central Pacific ('prr') has "no shares available"
-                if (gameKey === 'prr') {
-                    compData.baronShares = compData.maxShares - compData.playerShares;
-                }
-                // --------------------------------------
+                // REMOVED: The 'prr' hack that was secretly assigning shares to the Baron has been purged.
 
                 comp.treasury = compData.treasury;
                 comp.trackSegments = compData.track;
@@ -196,14 +192,21 @@ class TutorialManager {
         }
         // --- END NEW ---
 
-        setTimeout(() => { if (this.game.renderer) this.game.renderer.snapToStartNodes(); }, 100);
-
-        // --- NEW: DISENGAGE BUILD MODE ---
-        this.game.activeCompanyForBuild = null;
-        if (this.game.renderer && this.game.renderer.canvas) {
-            this.game.renderer.canvas.style.cursor = 'default';
+        // --- NEW: AUTO-ARM ACTIVE COMPANY FOR BUILD STEPS ---
+        // This ensures the player is never caught unarmed when a tutorial step expects a map click.
+        if (stepData.trigger && (stepData.trigger.type === 'onNodeBuilt' || stepData.trigger.type === 'onBuildIntercepted')) {
+            let activeComp = 'bo'; // Great Northern
+            if (stepData.id >= 9 && stepData.id <= 11) activeComp = 'prr'; // Central Pacific
+            if (stepData.id >= 12 && stepData.id <= 15) activeComp = 'nyc'; // OR&N
+            
+            this.game.activeCompanyForBuild = activeComp;
+        } else {
+            // Safely disarm if the step is just dialogue, buying stock, or ending the year
+            this.game.activeCompanyForBuild = null;
         }
         // --- END NEW ---
+
+        setTimeout(() => { if (this.game.renderer) this.game.renderer.snapToStartNodes(); }, 100);
 
         this.currentLocks = stepData.locks;
         this.game.revealMap(); // FIXED: Map reveals AFTER tracks are injected
@@ -241,6 +244,7 @@ class TutorialManager {
     }
 
     handleAction(actionType, targetId) {
+        console.log(`[DIAGNOSTIC - Tutorial Intercept] Action: ${actionType}, Target: ${targetId}`);
         if (!this.isActive) return true;
         
         // CRITICAL BUG FIX: If we are currently transitioning to the next step, block all rapid-fire clicks
@@ -315,15 +319,18 @@ class TutorialManager {
             // Block wrong node clicks during an intercept phase
             if (currentTrigger.type === 'onBuildIntercepted' && target !== targetId.toString()) {
                 if (this.game.audio) this.game.audio.playError();
+                console.error("[DIAGNOSTIC - REJECTED] Blocked by onBuildIntercepted check.");
                 return false;
             }
 
             if (currentTrigger.type === 'onNodeBuilt' && target !== targetId.toString()) {
                 if (this.game.audio) this.game.audio.playError();
+                console.error(`[DIAGNOSTIC - REJECTED] Wrong node clicked. Expected ${target}, got ${targetId}`);
                 return false;
             }
             if (this.currentLocks.buildTrack) {
                 if (this.game.audio) this.game.audio.playError();
+                console.error("[DIAGNOSTIC - REJECTED] Blocked by currentLocks.buildTrack.");
                 return false;
             }
         }

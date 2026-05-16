@@ -157,7 +157,8 @@ const TelegramDispatch = () => {
     showStartMenu || showLedger || showTrashModal || showProxyModal || 
     showLiquidation || showGameOver || showAssetsModal || showAudit || 
     showDiscard || showAudioSettings || selectedNodeId !== null || 
-    (gameState?.parlorOffers?.length > 0) || (gameState?.inIPOPhase);
+    (gameState?.parlorOffers?.length > 0) || (gameState?.inIPOPhase) ||
+    (gameState?.tutorial?.isActive);
 
   const [activeMsg, setActiveMsg] = React.useState(null);
 
@@ -668,7 +669,7 @@ const NodeActionModal = () => {
                         const totalCost = b.total;
                         
                         const canAfford = comp.treasury >= totalCost;
-                        const hasFuel = comp.trackSegments >= b.units;
+                        const hasFuel = comp.trackSegments >= 1; // FIX: Allows building into a deficit as long as they have 1 segment
 
                         let statusText = `(Cost: $${totalCost})`;
                         let btnAction = null;
@@ -677,7 +678,7 @@ const NodeActionModal = () => {
                         let borderColor = comp.colorStr || '#555';
 
                         if (!hasFuel) {
-                            statusText = `(Needs ${b.units} Steel)`;
+                            statusText = `(Out of Steel)`;
                             textColor = '#f87171';
                         } else if (canAfford) {
                             btnAction = () => executeBuild(comp.id, selectedNodeId);

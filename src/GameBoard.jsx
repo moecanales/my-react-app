@@ -258,61 +258,35 @@ const GameBoard = () => {
     }
   };
 
+  // --- CRITICAL REPLACEMENT: Fast Build Integrity Check ---
   const attemptFastBuild = (targetNodeId) => {
-      const companyId = gameState.activeCompanyForBuild;
-      if (!companyId || !window.game) return;
+    const companyId = window.game?.activeCompanyForBuild || gameState.activeCompanyForBuild;
+    if (!companyId || !window.game) return;
 
-      const comp = gameState.companies[companyId];
-      if (!comp) return;
+    const comp = window.game.companies[companyId];
+    if (!comp) return;
 
-      const conn = connections.find(c => 
-          (comp.activeLines.includes(c.from) && c.to === targetNodeId) || 
-          (comp.activeLines.includes(c.to) && c.from === targetNodeId)
-      );
-      const alreadyBuilt = comp.builtNodes.includes(targetNodeId);
+    const conn = window.game.connections.find(c => 
+        (comp.activeLines.includes(c.from) && c.to === targetNodeId) || 
+        (comp.activeLines.includes(c.to) && c.from === targetNodeId)
+    );
 
-      if (!conn || alreadyBuilt) {
-          if (window.game.audio) window.game.audio.playError();
-          return;
-      }
+    if (conn) {
+        const sourceNodeId = comp.activeLines.includes(conn.from) ? conn.from : conn.to;
+        const b = window.game.getSegmentCostBreakdown(companyId, sourceNodeId, targetNodeId);
 
-      let sourceNodeId = comp.headNode;
-      if (conn) {
-          sourceNodeId = comp.activeLines.includes(conn.from) ? conn.from : conn.to;
-      }
+        console.log(`[DIAGNOSTIC - Fast Build] Target: ${targetNodeId}, Builder: ${companyId}`);
+        console.log(`[DIAGNOSTIC - Math] Treasury: $${comp.treasury}, Cost: $${b.total}. Has cash? ${comp.treasury >= b.total}`);
+        console.log(`[DIAGNOSTIC - Math] Tracks: ${comp.trackSegments}. Has tracks? ${comp.trackSegments >= 1}`);
 
-      const b = window.game.getSegmentCostBreakdown(comp.id, sourceNodeId, targetNodeId);
-      const totalCost = b.total;
-      const canAfford = comp.treasury >= totalCost;
-      const hasFuel = comp.trackSegments >= b.units;
-
-      if (!hasFuel) {
-          if (window.game.audio) window.game.audio.playError();
-          return;
-      }
-
-      if (canAfford) {
-          executeBuild(comp.id, targetNodeId);
-          return;
-      }
-
-      const deficit = totalCost - comp.treasury;
-      const marketTrack = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 225, 250, 275, 300, 350, 400, 450, 500];
-      const stockIndex = comp.stockIndex !== undefined ? comp.stockIndex : 4;
-      const sharePrice = marketTrack[stockIndex] || 15;
-      const sharesNeeded = Math.ceil(deficit / sharePrice);
-      const autoFundCost = sharesNeeded * sharePrice;
-      const sharesAvailable = comp.maxShares - comp.sharesIssued;
-
-      if (sharesNeeded > sharesAvailable || gameState.playerCash < autoFundCost) {
-          if (window.game.audio) window.game.audio.playError();
-          return;
-      }
-
-      for (let i = 0; i < sharesNeeded; i++) {
-          window.game.buyShare(comp.id);
-      }
-      executeBuild(comp.id, targetNodeId);
+        // SYNC FIX: Allow building into a deficit, as long as they have at least 1 track segment
+        if (comp.treasury >= b.total && comp.trackSegments >= 1) {
+            useGameStore.getState().executeBuild(companyId, targetNodeId);
+        } else {
+            console.error("[DIAGNOSTIC - REJECTED] attemptFastBuild failed the condition check!");
+            if (window.game && window.game.audio) window.game.audio.playError();
+        }
+    }
   };
 
   const handlePointerUpOrLeave = (e) => {
@@ -329,23 +303,24 @@ const GameBoard = () => {
         const clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / zoomScale;
         const clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / zoomScale;
 
+        // 1. Check if the user clicked directly on a Node
         const clickedNode = nodes.find(n => Math.sqrt((n.x - clickX) ** 2 + (n.y - clickY) ** 2) <= 25);
+        console.log("[DIAGNOSTIC - Map Click] Clicked Node:", clickedNode ? clickedNode.id : "None", "Active Builder:", gameState.activeCompanyForBuild);
 
         if (clickedNode && clickedNode.revealed && (!cleanMap || relevantNodes.has(clickedNode.id) || clickedNode.type === 'start')) {
           if (gameState.activeCompanyForBuild) {
               attemptFastBuild(clickedNode.id);
           } else {
-              // --- TUTORIAL SAFETY LOCK 1 ---
               if (gameState?.tutorial?.isActive) {
                   if (window.game?.audio) window.game.audio.playError();
                   return;
               }
-              // --- END TUTORIAL SAFETY LOCK 1 ---
               handleNodeClick(clickedNode.id);
           }
           return; 
         }
         
+        // 2. Check if the user clicked on a Connection Line
         let hitConn = null;
         for (const conn of connections) {
             const n1 = nodes.find(n => n.id === conn.from);
@@ -360,14 +335,16 @@ const GameBoard = () => {
 
         if (hitConn) {
             let targetNodeId = null;
-            const companyId = window.game?.activeCompanyForBuild;
+            const companyId = window.game?.activeCompanyForBuild || gameState.activeCompanyForBuild;
             
+            // Prefer the active builder's network logic
             if (companyId && window.game?.companies[companyId]) {
                 const comp = window.game.companies[companyId];
                 if (comp.activeLines.includes(hitConn.from) && !comp.activeLines.includes(hitConn.to)) targetNodeId = hitConn.to;
                 else if (comp.activeLines.includes(hitConn.to) && !comp.activeLines.includes(hitConn.from)) targetNodeId = hitConn.from;
             }
             
+            // Fallback to general active network
             if (!targetNodeId) {
                 const fromInNetwork = activeNetwork.has(hitConn.from);
                 const toInNetwork = activeNetwork.has(hitConn.to);
@@ -380,12 +357,10 @@ const GameBoard = () => {
                 if (gameState.activeCompanyForBuild) {
                     attemptFastBuild(targetNodeId);
                 } else {
-                    // --- TUTORIAL SAFETY LOCK 2 ---
                     if (gameState?.tutorial?.isActive) {
                         if (window.game?.audio) window.game.audio.playError();
                         return;
                     }
-                    // --- END TUTORIAL SAFETY LOCK 2 ---
                     handleNodeClick(targetNodeId);
                 }
                 return;

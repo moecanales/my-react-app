@@ -104,12 +104,6 @@ const LeftSidebar = () => {
   // Generic Handlers for the mini pill actions
   const handleMiniBuild = (e, compId, trackCount, setError) => {
     e.stopPropagation(); 
-    if (trackCount <= 0 && activeBuildComp !== compId) {
-      if (window.game && window.game.audio) window.game.audio.playError();
-      setError(true);
-      setTimeout(() => setError(false), 300);
-      return;
-    }
     // This acts as a toggle. 
     if (window.game) window.game.startBuildMode(compId);
   };
