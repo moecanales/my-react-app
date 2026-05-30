@@ -62,6 +62,35 @@ class TutorialManager {
         if (this.storyboard.length > 0) {
             this.storyboard[0].focusUI = ['player-cash-pill', 'player-networth-pill'];
         }
+
+        // --- NEW FIX: RIGGED DECK FOR OPTION 1 ---
+        // We override the native refill engine so it pulls the exact tutorial sequence 
+        // without TutorialManager having to brutally overwrite the belt state mid-animation.
+        this.riggedDraws = [
+            { type: 'blue', label: 'I' }, { type: 'red', label: 'C' }, 
+            { type: 'red', label: 'B' }, { type: 'red', label: 'A' }, 
+            { type: 'red', label: 'D' }, { type: 'red', label: 'E' }, 
+            { type: 'red', label: 'F' }, { type: 'red', label: 'G' }
+        ];
+        
+        if (!this.game.abacus._originalRefillBelt) {
+            this.game.abacus._originalRefillBelt = this.game.abacus.refillBelt;
+        }
+        
+        this.game.abacus.refillBelt = () => {
+            while (this.game.abacus.belt.length < 5 && this.riggedDraws.length > 0) {
+                const nextCard = this.riggedDraws.shift();
+                this.game.abacus.belt.push({
+                    type: nextCard.type,
+                    label: nextCard.label,
+                    level: 1,
+                    id: `tut-rigged-${nextCard.type}-${nextCard.label}-${Date.now()}-${Math.random()}`
+                });
+            }
+            if (this.game.abacus.belt.length < 5) {
+                this.game.abacus._originalRefillBelt.call(this.game.abacus);
+            }
+        };
         
         this.loadStep(this.storyboard[this.currentStepIndex]);
     }
@@ -96,9 +125,6 @@ class TutorialManager {
             if (n.x === undefined) n.x = OFFSET_X + (n.c * CELL_W);
             if (n.y === undefined) n.y = OFFSET_Y + (n.r * CELL_H);
             n.revealed = (n.type === 'start');
-
-            // REMOVED: The code that forced these to be named "Northern Hub", etc.
-            // Now it respects the "Seattle" name written in tutorial_data.js!
         });
 
         this.game.nodes = stepData.nodes;
@@ -120,8 +146,6 @@ class TutorialManager {
                 compData.maxShares = compData.maxShares || 5;
                 compData.playerShares = compData.playerShares || 0;
                 compData.baronShares = compData.baronShares || 0;
-
-                // REMOVED: The 'prr' hack that was secretly assigning shares to the Baron has been purged.
 
                 comp.treasury = compData.treasury;
                 comp.trackSegments = compData.track;
@@ -158,22 +182,30 @@ class TutorialManager {
             }
         });
 
-        // 4. OVERRIDE BELT & SANITIZE CORRUPT DATA
-        this.game.abacus.belt = [];
-        const reversedTypes = [...stepData.belt].reverse();
-        const reversedLabels = [...stepData.beltLabels].reverse();
-        
-        for (let i = 0; i < reversedTypes.length; i++) {
-            if (reversedTypes[i] === 'empty') continue;
+        // 4. OVERRIDE BELT (STEP 0 ONLY)
+        // The "Split Brain" fix: We only load the scripted belt on the first step.
+        // For all subsequent steps, the native engine handles the belt natively, 
+        // completely eliminating React key collisions and visual flashing.
+        if (this.currentStepIndex === 0) {
+            this.game.abacus.belt = [];
+            const reversedTypes = [...stepData.belt].reverse();
+            const reversedLabels = [...stepData.beltLabels].reverse();
             
-            let type = reversedTypes[i];
-            let label = reversedLabels[i];
-            
-            if (type === 'green' && label === 'S') label = 'A';
+            for (let i = 0; i < reversedTypes.length; i++) {
+                if (reversedTypes[i] === 'empty') continue;
+                
+                let type = reversedTypes[i];
+                let label = reversedLabels[i];
+                
+                if (type === 'green' && label === 'S') label = 'A'; // Sanitize legacy data
 
-            this.game.abacus.belt.push({
-                type: type, label: label, level: 1, id: `tut-card-${stepData.id}-${i}`
-            });
+                this.game.abacus.belt.push({
+                    type: type, 
+                    label: label, 
+                    level: 1, 
+                    id: `tut-card-${type}-${label}-${i}`
+                });
+            }
         }
 
         // --- NEW: AUTO-INJECT MISSING SPOTLIGHTS & TRIGGERS ---
@@ -190,7 +222,6 @@ class TutorialManager {
                 stepData.focusUI = [`company-card-${targetComp}`];
             }
         }
-        // --- END NEW ---
 
         // --- NEW: AUTO-ARM ACTIVE COMPANY FOR BUILD STEPS ---
         // This ensures the player is never caught unarmed when a tutorial step expects a map click.
@@ -204,7 +235,6 @@ class TutorialManager {
             // Safely disarm if the step is just dialogue, buying stock, or ending the year
             this.game.activeCompanyForBuild = null;
         }
-        // --- END NEW ---
 
         setTimeout(() => { if (this.game.renderer) this.game.renderer.snapToStartNodes(); }, 100);
 
@@ -247,11 +277,17 @@ class TutorialManager {
         console.log(`[DIAGNOSTIC - Tutorial Intercept] Action: ${actionType}, Target: ${targetId}`);
         if (!this.isActive) return true;
         
-        // CRITICAL BUG FIX: If we are currently transitioning to the next step, block all rapid-fire clicks
-        if (this.isTransitioning) return false; 
-
         const currentTrigger = this.storyboard[this.currentStepIndex].trigger;
-        
+
+        // CRITICAL BUG FIX: The UI requests permission first, locking the door. 1.45s later, the Engine 
+        // requests permission. We MUST give the Engine's delayed request a VIP pass through the lock!
+        if (this.isTransitioning) {
+            if (actionType === 'buildTrack' && currentTrigger.type === 'onNodeBuilt') {
+                return true; // Let the engine finish what the UI started
+            }
+            return false; 
+        }
+
         let mappedTriggerType = '';
         if (actionType === 'buyStock') mappedTriggerType = 'onStockBought';
         if (actionType === 'buildTrack') mappedTriggerType = 'onNodeBuilt';
@@ -290,7 +326,6 @@ class TutorialManager {
             
             return false; // IMPORTANT: Return false to block the engine from actually building the track!
         }
-        // --- END NEW ---
 
         if (currentTrigger.type === mappedTriggerType && target === targetId.toString()) {
             if (this.game.ui) this.game.ui.closeModal(); 
@@ -298,10 +333,15 @@ class TutorialManager {
             // LOCK THE ENGINE DOWN
             this.isTransitioning = true;
             
+            // --- NEW: EXTENDED TIMING ---
+            // 'buildTrack' triggers a 1.45-second React animation. We grant a 2400ms buffer 
+            // for it to finish natively before the tutorial script forcibly advances.
+            const transitionDelay = actionType === 'buildTrack' ? 2400 : 600;
+            
             setTimeout(() => {
                 this.isTransitioning = false; // RELEASE THE LOCK
-                this.advance();
-            }, 600); 
+                this.advance(); 
+            }, transitionDelay); 
             return true; 
         }
 
@@ -386,6 +426,12 @@ class TutorialManager {
 
     end() {
         try {
+            // Restore native engine
+            if (this.game.abacus && this.game.abacus._originalRefillBelt) {
+                this.game.abacus.refillBelt = this.game.abacus._originalRefillBelt;
+                delete this.game.abacus._originalRefillBelt;
+            }
+            
             if (this.game.audio) this.game.audio.stopVoiceover();
             
             this.isActive = false;

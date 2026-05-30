@@ -1,5 +1,5 @@
 // GameBoard.jsx
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import { Stage } from '@pixi/react';
 import { useGameStore } from './App';
 import { GrantLine, RustBeltLine, ConnectionLines, BuiltLines, NodeItem } from './MapPixiElements';
@@ -38,7 +38,8 @@ const GameBoard = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
   const [ripples, setRipples] = useState([]);
 
-  const isTutInit = gameState?.tutorial?.isActive && gameState.tutorial.currentStepIndex === 0;
+  // --- TUTORIAL STATUS FLAGS ---
+  const isTutorial = gameState?.tutorial?.isActive;
 
   const connections = gameState?.connections || [];
   const companies = gameState?.companies || {};
@@ -58,48 +59,39 @@ const GameBoard = () => {
   const [zoomScale, setZoomScale] = useState(() => getMinZoom());
   const [showGrid, setShowGrid] = useState(false);
 
+  // --- BIGGER, STRICTER CAMERA LOCK ---
+  const TUTORIAL_ZOOM = 1.4; // BIGGER NODES
+  const TUTORIAL_SCROLL_TOP = 340; // Pulled much higher to lift nodes up
+  const currentZoom = isTutorial ? TUTORIAL_ZOOM : zoomScale;
+
+  useLayoutEffect(() => {
+      if (isTutorial && containerRef.current) {
+          containerRef.current.scrollLeft = 0;
+          containerRef.current.scrollTop = TUTORIAL_SCROLL_TOP; 
+      }
+  }, [isTutorial, nodes]);
+
+  // Handle standard zoom boundaries when NOT in tutorial
   useEffect(() => {
-    if (gameState?.tutorial?.isActive && gameState.tutorial.currentStepIndex === 0) {
-      setZoomScale(1.3);
-      // Wait just 10ms for React to apply the layout without CSS transitions
-      setTimeout(() => {
-        if (containerRef.current) {
-          // Find the actual start nodes on the map
-          const startNodes = nodes.filter(n => n.type === 'start');
-          if (startNodes.length > 0) {
-            // Get their exact average Y coordinate
-            const avgY = startNodes.reduce((sum, n) => sum + n.y, 0) / startNodes.length;
-            
-            // Calculate where the scrollbar needs to be to put avgY in the center of the screen
-            const targetScroll = (avgY * 1.3) - (containerRef.current.clientHeight / 2);
-            
-            // Clamp it to 0 so we don't break the top boundary of the map
-            containerRef.current.scrollTop = Math.max(0, targetScroll);
-            containerRef.current.scrollLeft = 0; 
-          }
-        }
-      }, 10); 
+    if (!isTutorial) {
+        const handleResize = () => {
+          const newMinZoom = getMinZoom();
+          setZoomScale(prev => Math.max(prev, newMinZoom));
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }
-  }, [gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex, nodes]);
+  }, [getMinZoom, isTutorial]);
 
   useEffect(() => {
-    const handleResize = () => {
-      const newMinZoom = getMinZoom();
-      setZoomScale(prev => Math.max(prev, newMinZoom));
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [getMinZoom]);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      const targetContentHeight = dynamicBoardHeight * zoomScale;
+    if (containerRef.current && !isTutorial) {
+      const targetContentHeight = dynamicBoardHeight * currentZoom;
       const maxScrollTop = Math.max(0, targetContentHeight - containerRef.current.clientHeight);
       if (containerRef.current.scrollTop > maxScrollTop) {
         containerRef.current.scrollTop = maxScrollTop;
       }
     }
-  }, [zoomScale, dynamicBoardHeight]);
+  }, [currentZoom, dynamicBoardHeight, isTutorial]);
 
   // --- NETWORK STATE HELPERS ---
   const activeNetwork = new Set();
@@ -165,14 +157,14 @@ const GameBoard = () => {
                   const comp = b.comp;
                   const dotColor = comp.id === 'nyc' ? '#34B3D1' : (comp.colorStr || '#fff');
 
-                  // 1. Calculate Track Revenue (I-Beam) - GOES TO PLAYER (GOLD)
+                  // 1. Calculate Track Revenue
                   const trackRev = 10;
                   const trackKey = `+${trackRev}`;
                   if (!trackGroups[trackKey]) trackGroups[trackKey] = { colors: [], shortNames: [], value: trackRev, isPositive: true, recipientColor: '#dfb127', recipientTag: '[ TO YOU ]' };
                   trackGroups[trackKey].colors.push(dotColor);
                   trackGroups[trackKey].shortNames.push(comp.short);
 
-                  // 2. Calculate Card Effect (Circle)
+                  // 2. Calculate Card Effect
                   let value = 0;
                   let isPositive = true;
                   let recipientColor = '#ffffff';
@@ -200,7 +192,7 @@ const GameBoard = () => {
                           recipientColor = '#ffffff';
                           recipientTag = '[ TO TREASURY ]';
                       } else if (char === 'C') { 
-                          value = 0; // Master Rebate grants waivers, not cash. Hide the bubble.
+                          value = 0; 
                           recipientColor = '#ffffff';
                           recipientTag = '[ TO TREASURY ]';
                       } else if (char === 'D') { 
@@ -240,14 +232,17 @@ const GameBoard = () => {
   };
 
   const handlePointerDown = (e) => {
+    // --- KILL DRAGGING IN TUTORIAL ---
+    if (isTutorial) return;
+
     if (!containerRef.current) return;
     setIsDragging(true);
     setHasDragged(false);
     setDragStart({ x: e.pageX, y: e.pageY, scrollLeft: containerRef.current.scrollLeft, scrollTop: containerRef.current.scrollTop });
 
     const rect = containerRef.current.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / zoomScale;
-    const clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / zoomScale;
+    const clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / currentZoom;
+    const clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / currentZoom;
 
     if (clickX < 143) {
       const newRipple = { id: Date.now(), x: clickX, y: clickY };
@@ -258,7 +253,6 @@ const GameBoard = () => {
     }
   };
 
-  // --- CRITICAL REPLACEMENT: Fast Build Integrity Check ---
   const attemptFastBuild = (targetNodeId) => {
     const companyId = window.game?.activeCompanyForBuild || gameState.activeCompanyForBuild;
     if (!companyId || !window.game) return;
@@ -275,15 +269,9 @@ const GameBoard = () => {
         const sourceNodeId = comp.activeLines.includes(conn.from) ? conn.from : conn.to;
         const b = window.game.getSegmentCostBreakdown(companyId, sourceNodeId, targetNodeId);
 
-        console.log(`[DIAGNOSTIC - Fast Build] Target: ${targetNodeId}, Builder: ${companyId}`);
-        console.log(`[DIAGNOSTIC - Math] Treasury: $${comp.treasury}, Cost: $${b.total}. Has cash? ${comp.treasury >= b.total}`);
-        console.log(`[DIAGNOSTIC - Math] Tracks: ${comp.trackSegments}. Has tracks? ${comp.trackSegments >= 1}`);
-
-        // SYNC FIX: Allow building into a deficit, as long as they have at least 1 track segment
         if (comp.treasury >= b.total && comp.trackSegments >= 1) {
             useGameStore.getState().executeBuild(companyId, targetNodeId);
         } else {
-            console.error("[DIAGNOSTIC - REJECTED] attemptFastBuild failed the condition check!");
             if (window.game && window.game.audio) window.game.audio.playError();
         }
     }
@@ -300,12 +288,18 @@ const GameBoard = () => {
 
     if (!hasDragged && containerRef.current && e.type === 'pointerup') {
         const rect = containerRef.current.getBoundingClientRect();
-        const clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / zoomScale;
-        const clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / zoomScale;
+        
+        // --- BULLETPROOF CLICK MATH ---
+        let clickX, clickY;
+        if (isTutorial) {
+            clickX = (e.clientX - rect.left) / TUTORIAL_ZOOM;
+            clickY = (e.clientY - rect.top + TUTORIAL_SCROLL_TOP) / TUTORIAL_ZOOM;
+        } else {
+            clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / currentZoom;
+            clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / currentZoom;
+        }
 
-        // 1. Check if the user clicked directly on a Node
         const clickedNode = nodes.find(n => Math.sqrt((n.x - clickX) ** 2 + (n.y - clickY) ** 2) <= 25);
-        console.log("[DIAGNOSTIC - Map Click] Clicked Node:", clickedNode ? clickedNode.id : "None", "Active Builder:", gameState.activeCompanyForBuild);
 
         if (clickedNode && clickedNode.revealed && (!cleanMap || relevantNodes.has(clickedNode.id) || clickedNode.type === 'start')) {
           if (gameState.activeCompanyForBuild) {
@@ -320,7 +314,6 @@ const GameBoard = () => {
           return; 
         }
         
-        // 2. Check if the user clicked on a Connection Line
         let hitConn = null;
         for (const conn of connections) {
             const n1 = nodes.find(n => n.id === conn.from);
@@ -337,14 +330,12 @@ const GameBoard = () => {
             let targetNodeId = null;
             const companyId = window.game?.activeCompanyForBuild || gameState.activeCompanyForBuild;
             
-            // Prefer the active builder's network logic
             if (companyId && window.game?.companies[companyId]) {
                 const comp = window.game.companies[companyId];
                 if (comp.activeLines.includes(hitConn.from) && !comp.activeLines.includes(hitConn.to)) targetNodeId = hitConn.to;
                 else if (comp.activeLines.includes(hitConn.to) && !comp.activeLines.includes(hitConn.from)) targetNodeId = hitConn.from;
             }
             
-            // Fallback to general active network
             if (!targetNodeId) {
                 const fromInNetwork = activeNetwork.has(hitConn.from);
                 const toInNetwork = activeNetwork.has(hitConn.to);
@@ -370,7 +361,8 @@ const GameBoard = () => {
   };
 
   const handlePointerMove = (e) => {
-    if (isDragging && containerRef.current) {
+    // --- KILL DRAGGING IN TUTORIAL ---
+    if (isDragging && !isTutorial && containerRef.current) {
       e.preventDefault();
       const moveX = Math.abs(e.pageX - dragStart.x);
       const moveY = Math.abs(e.pageY - dragStart.y);
@@ -379,7 +371,7 @@ const GameBoard = () => {
       containerRef.current.scrollLeft = dragStart.scrollLeft - (e.pageX - dragStart.x);
       
       const newScrollTop = dragStart.scrollTop - (e.pageY - dragStart.y);
-      const targetContentHeight = dynamicBoardHeight * zoomScale;
+      const targetContentHeight = dynamicBoardHeight * currentZoom;
       const maxScrollTop = Math.max(0, targetContentHeight - containerRef.current.clientHeight);
       
       containerRef.current.scrollTop = Math.min(maxScrollTop, Math.max(0, newScrollTop));
@@ -388,8 +380,16 @@ const GameBoard = () => {
 
     if (!containerRef.current || !gameState) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const hoverX = (e.clientX - rect.left + containerRef.current.scrollLeft) / zoomScale;
-    const hoverY = (e.clientY - rect.top + containerRef.current.scrollTop) / zoomScale;
+    
+    // --- BULLETPROOF HOVER MATH ---
+    let hoverX, hoverY;
+    if (isTutorial) {
+        hoverX = (e.clientX - rect.left) / TUTORIAL_ZOOM;
+        hoverY = (e.clientY - rect.top + TUTORIAL_SCROLL_TOP) / TUTORIAL_ZOOM;
+    } else {
+        hoverX = (e.clientX - rect.left + containerRef.current.scrollLeft) / currentZoom;
+        hoverY = (e.clientY - rect.top + containerRef.current.scrollTop) / currentZoom;
+    }
     const p = { x: hoverX, y: hoverY };
 
     let hitNode = nodes.find(n => n.revealed && (!cleanMap || relevantNodes.has(n.id) || n.type === 'start') && Math.sqrt((n.x - hoverX)**2 + (n.y - hoverY)**2) <= 20);
@@ -628,68 +628,92 @@ const GameBoard = () => {
       cursorStyle = getGlowingHandCursor(compColor);
   }
 
-  return (
-    <div className="tut-allow-clicks" style={{ gridArea: '2 / 2 / 3 / 3', position: 'relative', overflow: 'hidden', backgroundColor: '#0f172a' }}>
-      <div style={{ position: 'absolute', top: '20px', right: '20px', width: '40px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e293b', border: '2px solid #334155', borderRadius: '8px', zIndex: 1000, boxShadow: '0 4px 6px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
-         <button onClick={() => setZoomScale(prev => Math.min(prev + 0.2, 2.0))} style={{ padding: '8px 0', color: 'white', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>+</button>
-         <button onClick={() => setZoomScale(getMinZoom())} style={{ padding: '8px 0', color: '#94a3b8', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>FIT</button>
-         <button onClick={() => setZoomScale(prev => Math.max(prev - 0.2, getMinZoom()))} style={{ padding: '8px 0', color: 'white', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>-</button>
-         <button onClick={() => setShowGrid(prev => !prev)} style={{ padding: '8px 0', color: showGrid ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>GRID</button>
-         <button onClick={() => setShowLinkCosts(prev => (prev + 1) % 3)} style={{ padding: '8px 0', color: showLinkCosts !== 0 ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>
-             {showLinkCosts === 1 ? '$ COSTS' : showLinkCosts === 2 ? 'LINKS' : 'COSTS OFF'}
-         </button>
-         <button onClick={() => setCleanMap(prev => !prev)} style={{ padding: '8px 0', color: cleanMap ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>CITIES</button>
-         <button onClick={() => setShowOnlyRailheads(prev => !prev)} style={{ padding: '8px 0', color: showOnlyRailheads ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>LINES</button>
-         {Object.values(companies).map(comp => {
-            const isMuted = mutedCompanies.includes(comp.id);
-            return (
-              <button key={comp.id} onClick={() => setMutedCompanies(prev => isMuted ? prev.filter(id => id !== comp.id) : [...prev, comp.id])} style={{ padding: '8px 0', color: isMuted ? '#94a3b8' : comp.colorStr, background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>{comp.short}</button>
-            );
-         })}
-      </div>
+  // --- ABSTRACTED MAP CONTENTS ---
+  const mapContents = (
+      <>
+        {/* THE FLUFF IS DEAD DURING TUTORIAL */}
+        {!isTutorial && <PacificOceanOverlay height={dynamicBoardHeight} ripples={ripples} />}
+        {!isTutorial && <CartographicMountainRange height={dynamicBoardHeight} />}
+        {!isTutorial && <RustBeltLandscape height={dynamicBoardHeight} />}
+        
+        <Stage width={5200} height={dynamicBoardHeight} options={{ backgroundAlpha: 0 }} style={{ position: 'relative', zIndex: 2 }}>
+          
+          {!isTutorial && <GrantLine height={dynamicBoardHeight} />}
+          {!isTutorial && <RustBeltLine height={dynamicBoardHeight} />}
+          
+          <ConnectionLines connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} />
+          <BuiltLines companies={companies} nodes={nodes} mutedCompanies={mutedCompanies} />
+          {nodes.map(node => {
+              if (cleanMap && !relevantNodes.has(node.id) && node.type !== 'start') return null;
+              return <NodeItem key={node.id} node={node} isFrontier={frontierNodes.has(node.id)} />
+          })}
+        </Stage>
+        
+        <CostBubblesHTMLOverlay connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} showLinkCosts={showLinkCosts} zoomScale={currentZoom} />
+        <HTMLOverlayLayer nodes={nodes} privateCompanies={privateCompanies} companies={companies} height={dynamicBoardHeight} cleanMap={cleanMap} relevantNodes={relevantNodes} />
+        {showGrid && <DevGridOverlay width={5200} height={dynamicBoardHeight} />}
+        
+        {isTutorial && gameState.tutorial.stepData?.focusNodes && (
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 100 }}>
+                {gameState.tutorial.stepData.focusNodes.map(nodeId => {
+                    const node = nodes.find(n => n.id === nodeId);
+                    if (!node) return null;
+                    return (
+                        <div key={`spotlight-${nodeId}`} className="tutorial-spotlight" style={{
+                            position: 'absolute',
+                            left: `${node.x - 40}px`,
+                            top: `${node.y - 40}px`,
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            pointerEvents: 'none'
+                        }} />
+                    );
+                })}
+            </div>
+        )}
+      </>
+  );
 
-      <div id="map-container" ref={containerRef} style={{ width: '100%', height: '100%', overflowX: 'auto', overflowY: 'hidden', cursor: cursorStyle, scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'none' }} onPointerDown={handlePointerDown} onPointerLeave={(e) => { handlePointerUpOrLeave(e); setTooltip(null); }} onPointerUp={handlePointerUpOrLeave} onPointerMove={handlePointerMove}>
-        <div style={{ width: `${5200 * zoomScale}px`, height: `${dynamicBoardHeight * zoomScale}px`, position: 'relative', transition: isTutInit ? 'none' : 'width 0.3s ease-out, height 0.3s ease-out' }}>
-          <div className="map-layer" style={{ width: '5200px', height: `${dynamicBoardHeight}px`, position: 'relative', transform: `scale(${zoomScale})`, transformOrigin: 'top left', transition: isTutInit ? 'none' : 'transform 0.3s ease-out' }}>
-            <PacificOceanOverlay height={dynamicBoardHeight} ripples={ripples} />
-            <CartographicMountainRange height={dynamicBoardHeight} />
-            <RustBeltLandscape height={dynamicBoardHeight} />
-            <Stage width={5200} height={dynamicBoardHeight} options={{ backgroundAlpha: 0 }} style={{ position: 'relative', zIndex: 2 }}>
-              <GrantLine height={dynamicBoardHeight} />
-              <RustBeltLine height={dynamicBoardHeight} />
-              <ConnectionLines connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} />
-              <BuiltLines companies={companies} nodes={nodes} mutedCompanies={mutedCompanies} />
-              {nodes.map(node => {
-                  if (cleanMap && !relevantNodes.has(node.id) && node.type !== 'start') return null;
-                  return <NodeItem key={node.id} node={node} isFrontier={frontierNodes.has(node.id)} />
-              })}
-            </Stage>
-            <CostBubblesHTMLOverlay connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} showLinkCosts={showLinkCosts} zoomScale={zoomScale} />
-            <HTMLOverlayLayer nodes={nodes} privateCompanies={privateCompanies} companies={companies} height={dynamicBoardHeight} cleanMap={cleanMap} relevantNodes={relevantNodes} />
-            {showGrid && <DevGridOverlay width={5200} height={dynamicBoardHeight} />}
-            
-            {/* --- NEW: TUTORIAL NODE SPOTLIGHTS --- */}
-            {gameState?.tutorial?.isActive && gameState.tutorial.stepData?.focusNodes && (
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 100 }}>
-                    {gameState.tutorial.stepData.focusNodes.map(nodeId => {
-                        const node = nodes.find(n => n.id === nodeId);
-                        if (!node) return null;
-                        return (
-                            <div key={`spotlight-${nodeId}`} className="tutorial-spotlight" style={{
-                                position: 'absolute',
-                                left: `${node.x - 40}px`,
-                                top: `${node.y - 40}px`,
-                                width: '80px',
-                                height: '80px',
-                                borderRadius: '50%',
-                                pointerEvents: 'none'
-                            }} />
-                        );
-                    })}
-                </div>
-            )}
+  return (
+    <div id="game-board-root" className="tut-allow-clicks" style={{ gridArea: '2 / 2 / 3 / 3', position: 'relative', overflow: 'hidden', backgroundColor: '#0f172a' }}>
+      
+      {!isTutorial && (
+          <div style={{ position: 'absolute', top: '20px', right: '20px', width: '40px', display: 'flex', flexDirection: 'column', backgroundColor: '#1e293b', border: '2px solid #334155', borderRadius: '8px', zIndex: 1000, boxShadow: '0 4px 6px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+             <button onClick={() => setZoomScale(prev => Math.min(prev + 0.2, 2.0))} style={{ padding: '8px 0', color: 'white', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>+</button>
+             <button onClick={() => setZoomScale(getMinZoom())} style={{ padding: '8px 0', color: '#94a3b8', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>FIT</button>
+             <button onClick={() => setZoomScale(prev => Math.max(prev - 0.2, getMinZoom()))} style={{ padding: '8px 0', color: 'white', background: 'transparent', border: 'none', borderBottom: '1px solid #334155', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}>-</button>
+             <button onClick={() => setShowGrid(prev => !prev)} style={{ padding: '8px 0', color: showGrid ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>GRID</button>
+             <button onClick={() => setShowLinkCosts(prev => (prev + 1) % 3)} style={{ padding: '8px 0', color: showLinkCosts !== 0 ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>
+                 {showLinkCosts === 1 ? '$ COSTS' : showLinkCosts === 2 ? 'LINKS' : 'COSTS OFF'}
+             </button>
+             <button onClick={() => setCleanMap(prev => !prev)} style={{ padding: '8px 0', color: cleanMap ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>CITIES</button>
+             <button onClick={() => setShowOnlyRailheads(prev => !prev)} style={{ padding: '8px 0', color: showOnlyRailheads ? '#0ea5e9' : '#94a3b8', background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>LINES</button>
+             {Object.values(companies).map(comp => {
+                const isMuted = mutedCompanies.includes(comp.id);
+                return (
+                  <button key={comp.id} onClick={() => setMutedCompanies(prev => isMuted ? prev.filter(id => id !== comp.id) : [...prev, comp.id])} style={{ padding: '8px 0', color: isMuted ? '#94a3b8' : comp.colorStr, background: 'transparent', border: 'none', borderTop: '1px solid #334155', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>{comp.short}</button>
+                );
+             })}
+          </div>
+      )}
+
+      {/* THE VOID LOCK CONTAINER */}
+      <div id="map-container" ref={containerRef} style={{ 
+          width: '100%', height: '100%', 
+          overflowX: isTutorial ? 'hidden' : 'auto', 
+          overflowY: 'hidden', 
+          cursor: isTutorial ? 'default' : cursorStyle, 
+          scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'none',
+          backgroundColor: isTutorial ? '#0f172a' : 'transparent' 
+      }} onPointerDown={handlePointerDown} onPointerLeave={(e) => { handlePointerUpOrLeave(e); setTooltip(null); }} onPointerUp={handlePointerUpOrLeave} onPointerMove={handlePointerMove}>
+        
+        <div style={{ width: `${5200 * currentZoom}px`, height: `${dynamicBoardHeight * currentZoom}px`, position: 'relative', transition: isTutorial ? 'none' : 'width 0.3s ease-out, height 0.3s ease-out' }}>
+          <div className="map-layer" style={{ width: '5200px', height: `${dynamicBoardHeight}px`, position: 'relative', transform: `scale(${currentZoom})`, transformOrigin: 'top left', transition: isTutorial ? 'none' : 'transform 0.3s ease-out' }}>
+            {mapContents}
           </div>
         </div>
+
       </div>
     </div>
   );
