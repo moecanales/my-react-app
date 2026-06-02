@@ -968,47 +968,96 @@ const TutorialOverlay = () => {
                 }
 
                 if (modalWrapper && currentStepData?.modalAnchor) {
-                    const targetX = currentStepData.modalAnchor.x;
-                    const targetY = currentStepData.modalAnchor.y;
                     
-                    const finalX = (targetX * currentZoom) - mapContainer.scrollLeft + rect.left;
-                    const finalY = (targetY * currentZoom) - mapContainer.scrollTop + rect.top;
+                    if (typeof currentStepData.modalAnchor === 'string' && currentStepData.modalAnchor === 'right-center') {
+                        // Modal is anchored by CSS, we only need to draw the arrow dynamically based on its DOM position
+                        if (currentStepData.arrowTarget) {
+                            const arrowPath = document.getElementById('tutorial-arrow-path');
+                            const arrowHead = document.getElementById('tutorial-arrow-head');
+                            
+                            if (arrowPath && arrowHead) {
+                                // 1. Get the Modal's exact Screen position
+                                const modalRect = modalWrapper.getBoundingClientRect();
+                                
+                                // 2. Convert Target World coords to Screen coords
+                                const mapScreenX = (currentStepData.arrowTarget.x * currentZoom) - mapContainer.scrollLeft + mapContainer.getBoundingClientRect().left;
+                                const mapScreenY = (currentStepData.arrowTarget.y * currentZoom) - mapContainer.scrollTop + mapContainer.getBoundingClientRect().top;
+                                
+                                // 3. The SVG container is positioned absolutely over the modalWrapper.
+                                // We need to draw the line FROM the modal TO the screen target.
+                                // Because the SVG 0,0 is at the top-left of the modal, we calculate offsets.
+                                
+                                // Start at the left-middle of the modal
+                                const startX = 0; 
+                                const startY = modalRect.height / 2; 
+                                
+                                // Calculate distance to the target city
+                                const targetDx = mapScreenX - modalRect.left;
+                                const targetDy = mapScreenY - modalRect.top;
 
-                    modalWrapper.style.left = `${finalX}px`;
-                    modalWrapper.style.top = `${finalY}px`;
-                    modalWrapper.style.transform = 'translate(0, 0)'; 
-                    
-                    if (currentStepData.arrowTarget) {
-                        const arrowPath = document.getElementById('tutorial-arrow-path');
-                        const arrowHead = document.getElementById('tutorial-arrow-head');
+                                // Stop slightly short (85%) so the arrowhead doesn't cover the city
+                                const endX = targetDx * 0.85;
+                                const endY = targetDy * 0.85;
+                                
+                                // Create a gentle bezier curve upwards
+                                const curveFactor = -0.2; 
+                                const midX = startX + (endX - startX) / 2;
+                                const midY = startY + (endY - startY) / 2;
+                                
+                                const cpX = midX - (endY - startY) * curveFactor;
+                                const cpY = midY + (endX - startX) * curveFactor;
+                                
+                                arrowPath.setAttribute('d', `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`);
+                                
+                                // Rotate the arrowhead to match the end of the curve
+                                const angle = Math.atan2(endY - cpY, endX - cpX) * (180 / Math.PI);
+                                arrowHead.setAttribute('transform', `translate(${endX}, ${endY}) rotate(${angle})`);
+                            }
+                        }
+                    } else {
+                        // Fallback for old object-based coordinates (if any remain)
+                        const targetX = currentStepData.modalAnchor.x;
+                        const targetY = currentStepData.modalAnchor.y;
                         
-                        if (arrowPath && arrowHead) {
-                            const worldDx = currentStepData.arrowTarget.x - targetX;
-                            const worldDy = currentStepData.arrowTarget.y - targetY;
-                            
-                            const screenDx = worldDx * currentZoom;
-                            const screenDy = worldDy * currentZoom;
-                            
-                            const startX = 0;
-                            const startY = 40; 
-                            
-                            const totalDx = screenDx - startX;
-                            const totalDy = screenDy - startY;
+                        const finalX = (targetX * currentZoom) - mapContainer.scrollLeft + rect.left;
+                        const finalY = (targetY * currentZoom) - mapContainer.scrollTop + rect.top;
 
-                            const endX = startX + (totalDx * 0.8);
-                            const endY = startY + (totalDy * 0.8);
+                        modalWrapper.style.left = `${finalX}px`;
+                        modalWrapper.style.top = `${finalY}px`;
+                        modalWrapper.style.transform = 'translate(0, 0)'; 
+                        
+                        if (currentStepData.arrowTarget) {
+                            const arrowPath = document.getElementById('tutorial-arrow-path');
+                            const arrowHead = document.getElementById('tutorial-arrow-head');
                             
-                            const curveFactor = -0.2; 
-                            const midX = startX + (endX - startX) / 2;
-                            const midY = startY + (endY - startY) / 2;
-                            
-                            const cpX = midX - (endY - startY) * curveFactor;
-                            const cpY = midY + (endX - startX) * curveFactor;
-                            
-                            arrowPath.setAttribute('d', `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`);
-                            
-                            const angle = Math.atan2(endY - cpY, endX - cpX) * (180 / Math.PI);
-                            arrowHead.setAttribute('transform', `translate(${endX}, ${endY}) rotate(${angle})`);
+                            if (arrowPath && arrowHead) {
+                                const worldDx = currentStepData.arrowTarget.x - targetX;
+                                const worldDy = currentStepData.arrowTarget.y - targetY;
+                                
+                                const screenDx = worldDx * currentZoom;
+                                const screenDy = worldDy * currentZoom;
+                                
+                                const startX = 0;
+                                const startY = 40; 
+                                
+                                const totalDx = screenDx - startX;
+                                const totalDy = screenDy - startY;
+
+                                const endX = startX + (totalDx * 0.8);
+                                const endY = startY + (totalDy * 0.8);
+                                
+                                const curveFactor = -0.2; 
+                                const midX = startX + (endX - startX) / 2;
+                                const midY = startY + (endY - startY) / 2;
+                                
+                                const cpX = midX - (endY - startY) * curveFactor;
+                                const cpY = midY + (endX - startX) * curveFactor;
+                                
+                                arrowPath.setAttribute('d', `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`);
+                                
+                                const angle = Math.atan2(endY - cpY, endX - cpX) * (180 / Math.PI);
+                                arrowHead.setAttribute('transform', `translate(${endX}, ${endY}) rotate(${angle})`);
+                            }
                         }
                     }
                 }
@@ -1155,11 +1204,14 @@ const TutorialOverlay = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 transition: stepData?.modalAnchor ? 'none' : 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                ...(stepData?.modalAnchor 
-                    ? {} 
-                    : (needsMapVisible 
-                        ? { left: 'calc(275px + 34%)', top: 'calc(60px + 49%)', transform: 'none' } 
-                        : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+                ...(typeof stepData?.modalAnchor === 'string' && stepData.modalAnchor === 'right-center'
+                    ? { right: '8vw', top: '50%', transform: 'translateY(-50%)', left: 'auto' }
+                    : (stepData?.modalAnchor 
+                        ? {} 
+                        : (needsMapVisible 
+                            ? { left: 'calc(275px + 34%)', top: 'calc(60px + 49%)', transform: 'none' } 
+                            : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+                        )
                     )
                 )
             }}>
@@ -1182,7 +1234,7 @@ const TutorialOverlay = () => {
                 <div style={{
                     background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
                     borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
-                    pointerEvents: 'auto', position: 'relative', width: '420px', padding: '20px',
+                    pointerEvents: 'auto', position: 'relative', width: '380px', padding: '20px',
                     display: 'flex', flexDirection: 'column'
                 }}>
                     <div style={{
