@@ -392,33 +392,28 @@ export const useGameStore = create((set, get) => ({
             }
         }
 
-        const boardEl = document.getElementById('map-container');
-        let boardOffset = { left: 0, top: 0, scrollLeft: 0, scrollTop: 0 };
-        let currentZoom = 1;
-
-        if (boardEl) {
-            const rect = boardEl.getBoundingClientRect();
-            boardOffset = { left: rect.left, top: rect.top, scrollLeft: boardEl.scrollLeft, scrollTop: boardEl.scrollTop };
-            
-            const mapLayer = boardEl.querySelector('.map-layer');
-            if (mapLayer) {
-                const transform = mapLayer.style.transform;
-                if (transform) {
-                    const match = transform.match(/scale\(([^)]+)\)/);
-                    if (match) {
-                        currentZoom = parseFloat(match[1]);
-                    }
-                }
-            }
-        }
-
         const sourceNode = gameInstance.nodes.find(n => n.id === sourceNodeId);
         const targetNode = gameInstance.nodes.find(n => n.id === targetNodeId);
 
-        const sX = (sourceNode.x * currentZoom) - boardOffset.scrollLeft + boardOffset.left;
-        const sY = (sourceNode.y * currentZoom) - boardOffset.scrollTop + boardOffset.top;
-        const eX = (targetNode.x * currentZoom) - boardOffset.scrollLeft + boardOffset.left;
-        const eY = (targetNode.y * currentZoom) - boardOffset.scrollTop + boardOffset.top;
+        let currentZoom = 1;
+        let layerRect = { left: 0, top: 0 };
+        
+        const mapLayer = document.querySelector('.map-layer');
+        if (mapLayer) {
+            layerRect = mapLayer.getBoundingClientRect();
+            const transform = mapLayer.style.transform;
+            if (transform) {
+                const match = transform.match(/scale\(([^)]+)\)/);
+                if (match) currentZoom = parseFloat(match[1]);
+            }
+        }
+
+        // --- NEW UNIFIED MATH ---
+        // Natively accounts for all Flexbox centering and negative margins
+        const sX = layerRect.left + (sourceNode.x * currentZoom);
+        const sY = layerRect.top + (sourceNode.y * currentZoom);
+        const eX = layerRect.left + (targetNode.x * currentZoom);
+        const eY = layerRect.top + (targetNode.y * currentZoom);
 
         const newPlayedCards = cardsToPlay.map((card, idx) => {
             const progress = (idx + 1) / (cost + 1);
@@ -854,19 +849,32 @@ const BaronAvatar = () => {
 
 const BaronOverlay = () => {
     return (
-        <div id="baron-overlay" style={{ display: 'none', position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 10002, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
+        <div id="baron-overlay" style={{ display: 'none', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10002, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' }}>
             <canvas id="baron-overlay-canvas" width="300" height="300"></canvas>
             <div id="baron-overlay-text" style={{ position: 'absolute', top: '70%', color: 'white', fontSize: '3em', fontWeight: 'bold', textShadow: '2px 2px 10px black', textAlign: 'center', width: '100%' }}></div>
         </div>
     );
 };
 
-const TutorialOverlay = () => {
+const TutorialOverlay = ({ uiScale = 1 }) => {
     const gameState = useGameStore(state => state.gameState);
     const [hideModal, setHideModal] = React.useState(false);
     const [voiceToggled, setVoiceToggled] = React.useState(false);
     const [tutLockTimer, setTutLockTimer] = React.useState(0);
     const canvasRef = React.useRef(null);
+
+    // --- NEW: THREE-TIERED MODAL OFFSET ---
+    // Shoves the modal to the right to expose the center of the map on small screens.
+    // Laptops get a 150px nudge. Steam Decks get an aggressive 175px nudge.
+    let offsetPx = 0;
+    if (typeof window !== 'undefined') {
+        const w = window.innerWidth;
+        if (w <= 1280) {
+            offsetPx = 175; // Steam Deck
+        } else if (w <= 1600) {
+            offsetPx = 150; // Laptop
+        }
+    }
 
     const tutorial = gameState?.tutorial;
     const stepData = tutorial?.stepData;
@@ -916,10 +924,6 @@ const TutorialOverlay = () => {
         const updatePosition = () => {
             const state = useGameStore.getState().gameState;
             const currentStepData = state.tutorial?.stepData;
-
-            const modalWrapper = document.getElementById('tutorial-modal-wrapper');
-            const mapContainer = document.getElementById('map-container');
-            const mapLayer = document.querySelector('.map-layer');
             
             // 1. Dynamic Stock Track Arrow Targeting
             const stockTargetId = currentStepData?.focusUI?.find(id => id.startsWith('stock-track-'));
@@ -957,111 +961,6 @@ const TutorialOverlay = () => {
                 }
             }
 
-            if (mapContainer && mapLayer) {
-                const rect = mapContainer.getBoundingClientRect();
-                let currentZoom = 1;
-                
-                const transform = window.getComputedStyle(mapLayer).transform;
-                if (transform !== 'none') {
-                    const matrix = transform.match(/^matrix\((.+)\)$/);
-                    if (matrix) currentZoom = parseFloat(matrix[1].split(', ')[0]);
-                }
-
-                if (modalWrapper && currentStepData?.modalAnchor) {
-                    
-                    if (typeof currentStepData.modalAnchor === 'string' && currentStepData.modalAnchor === 'right-center') {
-                        // Modal is anchored by CSS, we only need to draw the arrow dynamically based on its DOM position
-                        if (currentStepData.arrowTarget) {
-                            const arrowPath = document.getElementById('tutorial-arrow-path');
-                            const arrowHead = document.getElementById('tutorial-arrow-head');
-                            
-                            if (arrowPath && arrowHead) {
-                                // 1. Get the Modal's exact Screen position
-                                const modalRect = modalWrapper.getBoundingClientRect();
-                                
-                                // 2. Convert Target World coords to Screen coords
-                                const mapScreenX = (currentStepData.arrowTarget.x * currentZoom) - mapContainer.scrollLeft + mapContainer.getBoundingClientRect().left;
-                                const mapScreenY = (currentStepData.arrowTarget.y * currentZoom) - mapContainer.scrollTop + mapContainer.getBoundingClientRect().top;
-                                
-                                // 3. The SVG container is positioned absolutely over the modalWrapper.
-                                // We need to draw the line FROM the modal TO the screen target.
-                                // Because the SVG 0,0 is at the top-left of the modal, we calculate offsets.
-                                
-                                // Start at the left-middle of the modal
-                                const startX = 0; 
-                                const startY = modalRect.height / 2; 
-                                
-                                // Calculate distance to the target city
-                                const targetDx = mapScreenX - modalRect.left;
-                                const targetDy = mapScreenY - modalRect.top;
-
-                                // Stop slightly short (85%) so the arrowhead doesn't cover the city
-                                const endX = targetDx * 0.85;
-                                const endY = targetDy * 0.85;
-                                
-                                // Create a gentle bezier curve upwards
-                                const curveFactor = -0.2; 
-                                const midX = startX + (endX - startX) / 2;
-                                const midY = startY + (endY - startY) / 2;
-                                
-                                const cpX = midX - (endY - startY) * curveFactor;
-                                const cpY = midY + (endX - startX) * curveFactor;
-                                
-                                arrowPath.setAttribute('d', `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`);
-                                
-                                // Rotate the arrowhead to match the end of the curve
-                                const angle = Math.atan2(endY - cpY, endX - cpX) * (180 / Math.PI);
-                                arrowHead.setAttribute('transform', `translate(${endX}, ${endY}) rotate(${angle})`);
-                            }
-                        }
-                    } else {
-                        // Fallback for old object-based coordinates (if any remain)
-                        const targetX = currentStepData.modalAnchor.x;
-                        const targetY = currentStepData.modalAnchor.y;
-                        
-                        const finalX = (targetX * currentZoom) - mapContainer.scrollLeft + rect.left;
-                        const finalY = (targetY * currentZoom) - mapContainer.scrollTop + rect.top;
-
-                        modalWrapper.style.left = `${finalX}px`;
-                        modalWrapper.style.top = `${finalY}px`;
-                        modalWrapper.style.transform = 'translate(0, 0)'; 
-                        
-                        if (currentStepData.arrowTarget) {
-                            const arrowPath = document.getElementById('tutorial-arrow-path');
-                            const arrowHead = document.getElementById('tutorial-arrow-head');
-                            
-                            if (arrowPath && arrowHead) {
-                                const worldDx = currentStepData.arrowTarget.x - targetX;
-                                const worldDy = currentStepData.arrowTarget.y - targetY;
-                                
-                                const screenDx = worldDx * currentZoom;
-                                const screenDy = worldDy * currentZoom;
-                                
-                                const startX = 0;
-                                const startY = 40; 
-                                
-                                const totalDx = screenDx - startX;
-                                const totalDy = screenDy - startY;
-
-                                const endX = startX + (totalDx * 0.8);
-                                const endY = startY + (totalDy * 0.8);
-                                
-                                const curveFactor = -0.2; 
-                                const midX = startX + (endX - startX) / 2;
-                                const midY = startY + (endY - startY) / 2;
-                                
-                                const cpX = midX - (endY - startY) * curveFactor;
-                                const cpY = midY + (endX - startX) * curveFactor;
-                                
-                                arrowPath.setAttribute('d', `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`);
-                                
-                                const angle = Math.atan2(endY - cpY, endX - cpX) * (180 / Math.PI);
-                                arrowHead.setAttribute('transform', `translate(${endX}, ${endY}) rotate(${angle})`);
-                            }
-                        }
-                    }
-                }
-            }
             rafId = requestAnimationFrame(updatePosition);
         };
         
@@ -1126,7 +1025,7 @@ const TutorialOverlay = () => {
             <div 
                 id="tutorial-stock-arrow"
                 style={{
-                    position: 'fixed', 
+                    position: 'absolute', 
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -1147,7 +1046,7 @@ const TutorialOverlay = () => {
             <div 
                 id="tutorial-belt-arrow"
                 style={{
-                    position: 'fixed',
+                    position: 'absolute',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -1167,7 +1066,7 @@ const TutorialOverlay = () => {
 
             {/* This is the 9500 z-index wrapper for the rest of the dimming UI */}
             <div style={{
-                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9500,
                 pointerEvents: 'none', 
                 background: 'transparent',
                 transition: 'background 0.5s ease-in-out'
@@ -1179,14 +1078,14 @@ const TutorialOverlay = () => {
                         <mask id="map-hole">
                             <rect width="100%" height="100%" fill="white" />
                             
-                            {/* Map Hole: standard calc width/height works perfectly here */}
+                            {/* Map Hole: Scale the x/y and height down based on the UI shrink */}
                             {needsMapVisible && (
-                                <rect x="275" y="60" width="100%" height="calc(100% - 240px)" fill="black" />
+                                <rect x={275 * uiScale} y={60 * uiScale} width="100%" height={`calc(100% - ${(60 + 180) * uiScale}px)`} fill="black" />
                             )}
                             
-                            {/* Belt Hole: Bulletproof SVG anchoring to the bottom */}
+                            {/* Belt Hole: Scale the height and the negative Y translation */}
                             {needsBeltVisible && (
-                                <rect x="275" y="100%" width="100%" height="180" fill="black" transform="translate(0, -180)" />
+                                <rect x={275 * uiScale} y="100%" width="100%" height={180 * uiScale} fill="black" transform={`translate(0, -${180 * uiScale})`} />
                             )}
                         </mask>
                     </defs>
@@ -1194,47 +1093,29 @@ const TutorialOverlay = () => {
                 </svg>
             </div>
 
-            {/* --- FIX: PULLED MODAL WRAPPER OUT OF 9500 CONTAINER SO IT FLOATS OVER BELT --- */}
             <div 
                 id="tutorial-modal-wrapper"
                 style={{
-                position: 'fixed',
+                position: 'absolute',
                 zIndex: 10000,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                transition: stepData?.modalAnchor ? 'none' : 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                ...(typeof stepData?.modalAnchor === 'string' && stepData.modalAnchor === 'right-center'
-                    ? { right: '8vw', top: '50%', transform: 'translateY(-50%)', left: 'auto' }
-                    : (stepData?.modalAnchor 
-                        ? {} 
-                        : (needsMapVisible 
-                            ? { left: 'calc(275px + 34%)', top: 'calc(60px + 49%)', transform: 'none' } 
-                            : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
-                        )
-                    )
+                transition: 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                ...(stepData?.modalAnchor === 'absolute-center'
+                    ? { left: '50%', top: '50%', transform: `translate(-50%, -50%) scale(${uiScale})`, right: 'auto', width: '420px' }
+                    : stepData?.modalAnchor === 'soft-right' 
+                        ? { right: `calc(25% - ${offsetPx}px)`, top: '50%', transform: `translateY(-50%) scale(${uiScale})`, left: 'auto', width: '380px' }
+                        : stepData?.modalAnchor === 'hard-right'
+                            ? { right: '5%', top: '50%', transform: `translateY(-50%) scale(${uiScale})`, left: 'auto', width: '380px' }
+                            : { left: `calc(50% + ${offsetPx}px)`, top: '50%', transform: `translate(-50%, -50%) scale(${uiScale})`, right: 'auto', width: '420px' } // Default to offset 'center'
                 )
             }}>
-
-                {stepData?.arrowTarget && (
-                    <svg style={{ 
-                        position: 'absolute', 
-                        top: 0, left: 0, 
-                        width: '1px', height: '1px', 
-                        pointerEvents: 'none', 
-                        overflow: 'visible', 
-                        animation: 'tutPointerGlow 1.5s infinite',
-                        zIndex: -1
-                    }}>
-                        <path id="tutorial-arrow-path" fill="transparent" stroke="#facc15" strokeWidth="4" strokeDasharray="8,6" />
-                        <polygon id="tutorial-arrow-head" points="-10,-10 10,0 -10,10" fill="#facc15" />
-                    </svg>
-                )}
 
                 <div style={{
                     background: '#16213e', border: '3px solid #facc15', textAlign: 'center',
                     borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.9)',
-                    pointerEvents: 'auto', position: 'relative', width: '380px', padding: '20px',
+                    pointerEvents: 'auto', position: 'relative', width: '100%', padding: '20px',
                     display: 'flex', flexDirection: 'column'
                 }}>
                     <div style={{
@@ -1306,6 +1187,24 @@ export default function App() {
   const initGame = useGameStore(state => state.initGame);
   const isReady = useGameStore(state => state.isReady);
   const gameState = useGameStore(state => state.gameState); 
+  const isAnimatingPlay = useGameStore(state => state.isAnimatingPlay);
+
+  // --- NEW: GLOBAL UI SCALING ---
+  const getUIScale = () => {
+      if (typeof window === 'undefined') return 1;
+      const w = window.innerWidth;
+      if (w <= 1280) return 0.75; // Steam Deck / Smallest
+      if (w <= 1600) return 0.85; // Average Laptops
+      return 1.0;                 // Standard Desktop & Ultrawide (The Golden Ratio)
+  };
+
+  const [uiScale, setUiScale] = useState(getUIScale());
+
+  useEffect(() => {
+      const handleResize = () => setUiScale(getUIScale());
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
  useEffect(() => {
     const timer = setTimeout(() => { initGame(); }, 100);
@@ -1337,9 +1236,19 @@ export default function App() {
   if (!isReady) return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#1e1e1e' }}><h2>Loading Engine...</h2></div>;
 
   const isActiveTutorial = gameState && gameState.tutorial && gameState.tutorial.isActive;
+  const stepData = gameState?.tutorial?.stepData;
+
+  // --- NEW: DYNAMIC Z-INDEX ELEVATION ---
+  // We must elevate the scaled wrappers above the 9500 SVG mask if they contain a spotlighted item.
+  const tutFocus = stepData?.focusUI || [];
+  const elevateTopBar = isActiveTutorial && tutFocus.some(c => c.startsWith('stock-track-') || c === 'btn-end-year');
+  const elevateLeftSidebar = isActiveTutorial && tutFocus.some(c => c.startsWith('company-card-'));
+  const elevateBottomLeft = isActiveTutorial && tutFocus.includes('hud-right-panel');
+  const elevateBelt = isActiveTutorial && tutFocus.some(c => c.startsWith('belt-slot-') || c === 'steel-dashboard-container');
 
   return (
-    <>
+    <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+      <div id="game-pillarbox" style={{ width: '100%', maxWidth: '1920px', height: '100%', position: 'relative', overflow: 'hidden', backgroundColor: '#1e1e1e' }}>
       <style dangerouslySetInnerHTML={{__html: `
         html, body, #root { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #1e1e1e; } 
         .hidden { display: none !important; }
@@ -1401,14 +1310,56 @@ export default function App() {
       <HudOverlays />
       <BaronAvatar />
       <BaronOverlay /> 
-      <TutorialOverlay /> 
-      <div className={isActiveTutorial ? 'tut-strict-lock' : ''} style={{ display: 'grid', gridTemplateColumns: 'max-content minmax(0, 1fr)', gridTemplateRows: '60px minmax(0, 1fr) 180px', width: '100vw', height: '100vh', backgroundColor: '#111' }}>
-        <TopBar />
-        <LeftSidebar />
+      <TutorialOverlay uiScale={uiScale} /> 
+      <div className={isActiveTutorial ? 'tut-strict-lock' : ''} style={{ 
+          display: 'grid', 
+          gridTemplateColumns: `${275 * uiScale}px minmax(0, 1fr)`, // NEW: Forces the column to shrink, closing the gap
+          gridTemplateRows: `${60 * uiScale}px minmax(0, 1fr) ${180 * uiScale}px`, 
+          width: '100%', height: '100%', backgroundColor: '#111',
+          '--ui-scale': uiScale 
+      }}>
+        <div style={{ gridArea: '1 / 1 / 2 / 3', transform: `scale(${uiScale})`, transformOrigin: 'top left', width: `${100 / uiScale}%`, height: `${100 / uiScale}%`, zIndex: elevateTopBar ? 9600 : 10 }}>
+            <TopBar />
+        </div>
+        
+        <div style={{ 
+            gridArea: '2 / 1 / 3 / 2', 
+            transform: `scale(${uiScale})`, 
+            transformOrigin: 'top left', 
+            height: `${100 / uiScale}%`, 
+            width: `${100 / uiScale}%`, /* NEW: Prevents the internal contents from double-squishing */
+            zIndex: elevateLeftSidebar ? 9600 : 10 
+        }}>
+            <LeftSidebar />
+        </div>
+        
         <GameBoard />
-        <BottomLeftPanel />
-        <ConveyorBelt />
+        
+        <div style={{ 
+            gridArea: '3 / 1 / 4 / 2', 
+            transform: `scale(${uiScale})`, 
+            transformOrigin: 'bottom left', 
+            width: `${100 / uiScale}%`, 
+            height: `${100 / uiScale}%`, 
+            alignSelf: 'end', /* NEW: Pins wrapper to the floor of the grid cell to stop downward clipping */
+            zIndex: elevateBottomLeft ? 9600 : 10 
+        }}>
+            <BottomLeftPanel />
+        </div>
+        
+        <div style={{ 
+            gridArea: '3 / 2 / 4 / 3', 
+            transform: `scale(${uiScale})`, 
+            transformOrigin: 'bottom left', 
+            width: `${100 / uiScale}%`, 
+            height: `${100 / uiScale}%`, 
+            alignSelf: 'end', 
+            zIndex: elevateBelt ? 9600 : 10
+        }}>
+            <ConveyorBelt />
+        </div>
       </div>
-    </>
+      </div>
+    </div>
   );
 }

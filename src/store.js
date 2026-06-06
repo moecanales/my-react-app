@@ -18,6 +18,29 @@ const syncState = (set) => {
   snap.privateCompanies = gameInstance.privateCompanies ? JSON.parse(JSON.stringify(gameInstance.privateCompanies)) : {};
   
   if (gameInstance.abacus) {
+      // --- NEW: STAMP PERMANENT IDs ---
+      const stampIds = (arr) => {
+          if (!arr) return;
+          arr.forEach(c => {
+              if (!c.id) c.id = `card-${c.type}-${c.label}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          });
+      };
+      
+      stampIds(gameInstance.abacus.inventory?.green);
+      stampIds(gameInstance.abacus.inventory?.blue);
+      stampIds(gameInstance.abacus.inventory?.red);
+      stampIds(gameInstance.abacus.discards?.green);
+      stampIds(gameInstance.abacus.discards?.blue);
+      stampIds(gameInstance.abacus.discards?.red);
+      stampIds(gameInstance.abacus.belt);
+      // --- END NEW ---
+
+      // CRITICAL FIX: The ConveyorBelt UI reads from snap.abacus.belt.
+      // We must overwrite the snapshot's nested belt with the newly stamped cards!
+      if (snap.abacus) {
+          snap.abacus.belt = cloneArray(gameInstance.abacus.belt);
+      }
+
       snap.abacusState = gameInstance.abacus.getInventoryState();
       
       snap.inventory = {
@@ -386,33 +409,28 @@ export const useGameStore = create((set, get) => ({
             }
         }
 
-        const boardEl = document.getElementById('map-container');
-        let boardOffset = { left: 0, top: 0, scrollLeft: 0, scrollTop: 0 };
-        let currentZoom = 1;
-
-        if (boardEl) {
-            const rect = boardEl.getBoundingClientRect();
-            boardOffset = { left: rect.left, top: rect.top, scrollLeft: boardEl.scrollLeft, scrollTop: boardEl.scrollTop };
-            
-            const mapLayer = boardEl.querySelector('.map-layer');
-            if (mapLayer) {
-                const transform = mapLayer.style.transform;
-                if (transform) {
-                    const match = transform.match(/scale\(([^)]+)\)/);
-                    if (match) {
-                        currentZoom = parseFloat(match[1]);
-                    }
-                }
-            }
-        }
-
         const sourceNode = gameInstance.nodes.find(n => n.id === sourceNodeId);
         const targetNode = gameInstance.nodes.find(n => n.id === targetNodeId);
 
-        const sX = (sourceNode.x * currentZoom) - boardOffset.scrollLeft + boardOffset.left;
-        const sY = (sourceNode.y * currentZoom) - boardOffset.scrollTop + boardOffset.top;
-        const eX = (targetNode.x * currentZoom) - boardOffset.scrollLeft + boardOffset.left;
-        const eY = (targetNode.y * currentZoom) - boardOffset.scrollTop + boardOffset.top;
+        let currentZoom = 1;
+        let layerRect = { left: 0, top: 0 };
+        
+        const mapLayer = document.querySelector('.map-layer');
+        if (mapLayer) {
+            layerRect = mapLayer.getBoundingClientRect();
+            const transform = mapLayer.style.transform;
+            if (transform) {
+                const match = transform.match(/scale\(([^)]+)\)/);
+                if (match) currentZoom = parseFloat(match[1]);
+            }
+        }
+
+        // --- NEW UNIFIED MATH ---
+        // Natively accounts for all Flexbox centering and negative margins
+        const sX = layerRect.left + (sourceNode.x * currentZoom);
+        const sY = layerRect.top + (sourceNode.y * currentZoom);
+        const eX = layerRect.left + (targetNode.x * currentZoom);
+        const eY = layerRect.top + (targetNode.y * currentZoom);
 
         const newPlayedCards = cardsToPlay.map((card, idx) => {
             const progress = (idx + 1) / (cost + 1);

@@ -59,17 +59,22 @@ const GameBoard = () => {
   const [zoomScale, setZoomScale] = useState(() => getMinZoom());
   const [showGrid, setShowGrid] = useState(false);
 
-  // --- BIGGER, STRICTER CAMERA LOCK ---
-  const TUTORIAL_ZOOM = 1.4; // BIGGER NODES
-  const TUTORIAL_SCROLL_TOP = 340; // Pulled much higher to lift nodes up
-  const currentZoom = isTutorial ? TUTORIAL_ZOOM : zoomScale;
+  // --- RESPONSIVE VECTOR SCALING ---
+  // Pure dynamic multiplier so the map proportionally shrinks on small screens
+  const optimalTutorialZoom = typeof getMinZoom === 'function' ? getMinZoom() * 1.3 : 1.3;
+  const currentZoom = isTutorial ? optimalTutorialZoom : zoomScale;
 
   useLayoutEffect(() => {
       if (isTutorial && containerRef.current) {
-          containerRef.current.scrollLeft = 0;
-          containerRef.current.scrollTop = TUTORIAL_SCROLL_TOP; 
+          const tutCameraX = gameState?.tutorial?.stepData?.cameraX || 0;
+          // Scale the pan distance by the current zoom to maintain consistent framing
+          containerRef.current.scrollTo({
+              left: tutCameraX * currentZoom,
+              top: 0, // Flexbox handles vertical centering natively now
+              behavior: 'smooth'
+          });
       }
-  }, [isTutorial, nodes]);
+  }, [isTutorial, nodes, gameState?.tutorial?.stepData?.cameraX, currentZoom]);
 
   // Handle standard zoom boundaries when NOT in tutorial
   useEffect(() => {
@@ -240,9 +245,11 @@ const GameBoard = () => {
     setHasDragged(false);
     setDragStart({ x: e.pageX, y: e.pageY, scrollLeft: containerRef.current.scrollLeft, scrollTop: containerRef.current.scrollTop });
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / currentZoom;
-    const clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / currentZoom;
+    // --- NEW UNIFIED HITBOX MATH ---
+    const mapLayer = document.querySelector('.map-layer');
+    const layerRect = mapLayer ? mapLayer.getBoundingClientRect() : { left: 0, top: 0 };
+    const clickX = (e.clientX - layerRect.left) / currentZoom;
+    const clickY = (e.clientY - layerRect.top) / currentZoom;
 
     if (clickX < 143) {
       const newRipple = { id: Date.now(), x: clickX, y: clickY };
@@ -287,17 +294,11 @@ const GameBoard = () => {
     }
 
     if (!hasDragged && containerRef.current && e.type === 'pointerup') {
-        const rect = containerRef.current.getBoundingClientRect();
-        
-        // --- BULLETPROOF CLICK MATH ---
-        let clickX, clickY;
-        if (isTutorial) {
-            clickX = (e.clientX - rect.left) / TUTORIAL_ZOOM;
-            clickY = (e.clientY - rect.top + TUTORIAL_SCROLL_TOP) / TUTORIAL_ZOOM;
-        } else {
-            clickX = (e.clientX - rect.left + containerRef.current.scrollLeft) / currentZoom;
-            clickY = (e.clientY - rect.top + containerRef.current.scrollTop) / currentZoom;
-        }
+        // --- NEW UNIFIED HITBOX MATH ---
+        const mapLayer = document.querySelector('.map-layer');
+        const layerRect = mapLayer ? mapLayer.getBoundingClientRect() : { left: 0, top: 0 };
+        const clickX = (e.clientX - layerRect.left) / currentZoom;
+        const clickY = (e.clientY - layerRect.top) / currentZoom;
 
         const clickedNode = nodes.find(n => Math.sqrt((n.x - clickX) ** 2 + (n.y - clickY) ** 2) <= 25);
 
@@ -379,17 +380,12 @@ const GameBoard = () => {
     }
 
     if (!containerRef.current || !gameState) return;
-    const rect = containerRef.current.getBoundingClientRect();
     
-    // --- BULLETPROOF HOVER MATH ---
-    let hoverX, hoverY;
-    if (isTutorial) {
-        hoverX = (e.clientX - rect.left) / TUTORIAL_ZOOM;
-        hoverY = (e.clientY - rect.top + TUTORIAL_SCROLL_TOP) / TUTORIAL_ZOOM;
-    } else {
-        hoverX = (e.clientX - rect.left + containerRef.current.scrollLeft) / currentZoom;
-        hoverY = (e.clientY - rect.top + containerRef.current.scrollTop) / currentZoom;
-    }
+    // --- NEW UNIFIED HITBOX MATH ---
+    const mapLayer = document.querySelector('.map-layer');
+    const layerRect = mapLayer ? mapLayer.getBoundingClientRect() : { left: 0, top: 0 };
+    const hoverX = (e.clientX - layerRect.left) / currentZoom;
+    const hoverY = (e.clientY - layerRect.top) / currentZoom;
     const p = { x: hoverX, y: hoverY };
 
     let hitNode = nodes.find(n => n.revealed && (!cleanMap || relevantNodes.has(n.id) || n.type === 'start') && Math.sqrt((n.x - hoverX)**2 + (n.y - hoverY)**2) <= 20);
@@ -705,12 +701,62 @@ const GameBoard = () => {
           overflowY: 'hidden', 
           cursor: isTutorial ? 'default' : cursorStyle, 
           scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'none',
-          backgroundColor: isTutorial ? '#0f172a' : 'transparent' 
+          backgroundColor: isTutorial ? '#0f172a' : 'transparent',
+          
+          // CONDITIONAL LAYOUT: Flexbox for Tutorial, Block for Regular Game
+          display: isTutorial ? 'flex' : 'block',
+          alignItems: isTutorial ? 'center' : 'normal'
       }} onPointerDown={handlePointerDown} onPointerLeave={(e) => { handlePointerUpOrLeave(e); setTooltip(null); }} onPointerUp={handlePointerUpOrLeave} onPointerMove={handlePointerMove}>
         
-        <div style={{ width: `${5200 * currentZoom}px`, height: `${dynamicBoardHeight * currentZoom}px`, position: 'relative', transition: isTutorial ? 'none' : 'width 0.3s ease-out, height 0.3s ease-out' }}>
-          <div className="map-layer" style={{ width: '5200px', height: `${dynamicBoardHeight}px`, position: 'relative', transform: `scale(${currentZoom})`, transformOrigin: 'top left', transition: isTutorial ? 'none' : 'transform 0.3s ease-out' }}>
+        <div style={{ 
+            minWidth: `${5200 * currentZoom}px`, 
+            height: `${dynamicBoardHeight * currentZoom}px`, 
+            
+            // CONDITIONAL MARGIN: Only chop off the ocean in the tutorial
+            marginLeft: isTutorial ? `${-180 * currentZoom}px` : '0px', 
+            
+            position: 'relative', 
+            transition: isTutorial ? 'none' : 'width 0.3s ease-out, height 0.3s ease-out' 
+        }}>
+          <div className="map-layer" style={{ 
+              width: '5200px', 
+              height: `${dynamicBoardHeight}px`, 
+              position: 'absolute', 
+              
+              // CONDITIONAL CENTERING: True vertical center for tutorial, top for regular
+              top: isTutorial ? '50%' : '0', 
+              marginTop: isTutorial ? `${-dynamicBoardHeight / 2}px` : '0px', 
+              
+              transform: `scale(${currentZoom})`, 
+              
+              // CONDITIONAL ORIGIN: Center scale for tutorial, top-left for regular
+              transformOrigin: isTutorial ? 'left center' : 'top left', 
+              
+              transition: isTutorial ? 'none' : 'transform 0.3s ease-out' 
+          }}>
             {mapContents}
+            
+            {/* NEW: IN-MAP BOUNCING ARROW FOR TUTORIAL */}
+            {isTutorial && gameState.tutorial?.stepData?.arrowTarget && (
+                <div style={{
+                    position: 'absolute',
+                    left: `${gameState.tutorial.stepData.arrowTarget.x}px`,
+                    top: `${gameState.tutorial.stepData.arrowTarget.y - 30}px`,
+                    zIndex: 1000,
+                    pointerEvents: 'none',
+                    animation: 'tutMapBounce 1s infinite'
+                }}>
+                    <svg width="40" height="50" viewBox="0 0 40 50" style={{ transform: 'translate(-50%, -100%)' }}>
+                        <path d="M20 50 L0 20 L10 20 L10 0 L30 0 L30 20 L40 20 Z" fill="#facc15" stroke="#000" strokeWidth="2" filter="drop-shadow(0px 4px 4px rgba(0,0,0,0.5))" />
+                    </svg>
+                    <style>
+                        {`@keyframes tutMapBounce {
+                            0%, 100% { transform: translateY(0); }
+                            50% { transform: translateY(-15px); }
+                        }`}
+                    </style>
+                </div>
+            )}
           </div>
         </div>
 

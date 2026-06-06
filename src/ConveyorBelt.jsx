@@ -1,66 +1,61 @@
 // ConveyorBelt.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useGameStore } from './App';
 import { getNativeCardInfo } from './NewCardsData';
 import GameCard from './GameCard';
 
 const AnimatedCardWrapper = ({ item, index, children }) => {
-    const [flyStyle, setFlyStyle] = useState({});
+    const wrapperRef = useRef(null);
+    const prevRect = useRef(null);
     const prevIndex = useRef(index);
     const isFirstMount = useRef(true);
 
-    const gameState = useGameStore(state => state.gameState);
-
-    useEffect(() => {
-        if (!item) return;
+    useLayoutEffect(() => {
+        if (!item || !wrapperRef.current) return;
 
         if (isFirstMount.current) {
             isFirstMount.current = false;
-
-            // --- TUTORIAL ANTI-REBUILD PATCH ---
-            // If the tutorial is active and past Step 0, abort the fly-in animation.
-            if (gameState?.tutorial?.isActive && gameState.tutorial.currentStepIndex > 0) {
-                return;
-            }
-
-            const deckEl = document.querySelector('.deck-box'); 
-            const targetEl = document.getElementById(`belt-slot-container-${index}`);
+        } else if (prevIndex.current !== index && prevRect.current) {
+            const currentRect = wrapperRef.current.getBoundingClientRect();
             
-            if (deckEl && targetEl) {
-                const dRect = deckEl.getBoundingClientRect();
-                const tRect = targetEl.getBoundingClientRect();
-                
-                setFlyStyle({ transform: `translate(${dRect.left - tRect.left}px, ${dRect.top - tRect.top}px)`, transition: 'none', zIndex: 100 });
+            // Calculate exact physical distance moved
+            const dx = prevRect.current.left - currentRect.left;
+            const dy = prevRect.current.top - currentRect.top;
 
+            if (dx !== 0 || dy !== 0) {
+                const el = wrapperRef.current;
+                
+                // INVERT: Instantly teleport card back to its old physical position
+                el.style.transition = 'none';
+                el.style.transform = `translate(${dx}px, ${dy}px)`;
+                el.style.zIndex = '50';
+
+                // PLAY: Force browser paint, then glide to 0,0
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
-                        setFlyStyle({ transform: 'translate(0px, 0px)', transition: 'transform 1000ms cubic-bezier(0.25, 0.1, 0.25, 1)', zIndex: 100 });
-                        setTimeout(() => setFlyStyle({}), 1050);
-                    });
-                });
-            }
-        } else if (prevIndex.current !== index) {
-            const oldSlotEl = document.getElementById(`belt-slot-container-${prevIndex.current}`);
-            const newSlotEl = document.getElementById(`belt-slot-container-${index}`);
-            
-            if (oldSlotEl && newSlotEl) {
-                const oRect = oldSlotEl.getBoundingClientRect();
-                const nRect = newSlotEl.getBoundingClientRect();
-                
-                setFlyStyle({ transform: `translate(${oRect.left - nRect.left}px, ${oRect.top - nRect.top}px)`, transition: 'none', zIndex: 50 });
-
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        setFlyStyle({ transform: 'translate(0px, 0px)', transition: 'transform 400ms cubic-bezier(0.25, 0.8, 0.25, 1)', zIndex: 50 });
-                        setTimeout(() => setFlyStyle({}), 450);
+                        el.style.transition = 'transform 400ms cubic-bezier(0.25, 0.8, 0.25, 1)';
+                        el.style.transform = 'translate(0px, 0px)';
+                        
+                        // Cleanup z-index
+                        setTimeout(() => {
+                            if (el) el.style.zIndex = 'auto';
+                        }, 450);
                     });
                 });
             }
             prevIndex.current = index;
         }
-    }, [item, index, gameState?.tutorial?.isActive, gameState?.tutorial?.currentStepIndex]);
+        
+        // Save the raw physical coordinates for the next render shift
+        prevRect.current = wrapperRef.current.getBoundingClientRect();
+        
+    }, [item, index]);
 
-    return <div style={{ position: 'relative', ...flyStyle, width: '100%', display: 'flex', justifyContent: 'center' }}>{children}</div>;
+    return (
+        <div ref={wrapperRef} style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+            {children}
+        </div>
+    );
 };
 
 const ConveyorBelt = () => {
@@ -92,7 +87,7 @@ const ConveyorBelt = () => {
       };
   }, [selectedIndex]);
 
-  const belt = gameState?.abacus?.belt || [];
+  const belt = gameState?.belt || [];
 
   const windowRef = useRef(null);
   const trackRef = useRef(null);
