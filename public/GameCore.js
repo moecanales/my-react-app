@@ -821,6 +821,12 @@ class Game {
             this.initCompanies();
             this.calculateMapConfig();
 
+            // --- THE MISSING MAP GENERATION ---
+            // This ensures a pristine map is waiting quietly behind the Start Menu curtain
+            this.generateMap();
+            this.resetTurnState(false);
+            this.revealMap();
+
             if (this.renderer) {
                 this.renderer.animations = [];
                 this.renderer.selectedBeltIndex = null;

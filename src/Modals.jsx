@@ -1269,8 +1269,15 @@ export const IPOModal = () => {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: 'rgba(15, 23, 42, 0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', backdropFilter: 'blur(6px)', pointerEvents: 'auto', overflowY: 'auto' }}>
-      <style>{`.ipo-btn:active { transform: scale(0.95) !important; box-shadow: inset 0 4px 8px rgba(0,0,0,0.5) !important; }`}</style>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: 'rgba(15, 23, 42, 0.98)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', pointerEvents: 'auto', overflowY: 'auto' }}>
+      <style>{`
+        .ipo-btn:active { transform: scale(0.95) !important; box-shadow: inset 0 4px 8px rgba(0,0,0,0.5) !important; }
+        .ipo-card { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .ipo-card:hover { transform: translateY(-10px) scale(1.03); z-index: 10; }
+        ${gameState.currentPackages.map((pkg, idx) => `
+          .ipo-card-${idx}:hover { box-shadow: 0 25px 40px rgba(0,0,0,0.9), 0 0 30px ${getCardTheme(pkg.profile.high).glow}, inset 0 2px 6px rgba(255,255,255,0.6) !important; }
+        `).join('')}
+      `}</style>
       
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zoom: scale, padding: '40px 20px' }}>
         <button 
@@ -1304,10 +1311,13 @@ export const IPOModal = () => {
             return (
               <div 
                 key={idx} 
+                className={`ipo-card ipo-card-${idx}`}
                 onPointerDown={(e) => handleIPOClick(e, idx)} 
-                style={{ width: '320px', background: theme.background, border: theme.border, borderRadius: '16px', padding: '25px', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)', boxShadow: `0 15px 30px rgba(0,0,0,0.8), inset 0 2px 6px rgba(255,255,255,0.4)`, display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }} 
-                onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-10px) scale(1.03)'; e.currentTarget.style.boxShadow = `0 25px 40px rgba(0,0,0,0.9), 0 0 30px ${theme.glow}, inset 0 2px 6px rgba(255,255,255,0.6)`; }} 
-                onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = `0 15px 30px rgba(0,0,0,0.8), inset 0 2px 6px rgba(255,255,255,0.4)`; }}
+                style={{ 
+                    width: '320px', background: theme.background, border: theme.border, borderRadius: '16px', padding: '25px', cursor: 'pointer', 
+                    boxShadow: `0 15px 30px rgba(0,0,0,0.8), inset 0 2px 6px rgba(255,255,255,0.4)`, 
+                    display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative' 
+                }} 
               >
                 <h2 style={{ color: '#fef08a', margin: '0 0 20px 0', textTransform: 'uppercase', fontSize: '26px', letterSpacing: '2px', textShadow: '2px 2px 0px #000, 0 4px 8px rgba(0,0,0,0.8)', textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: '900' }}>
                     {pkg.profile.name}

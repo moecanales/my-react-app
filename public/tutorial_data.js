@@ -168,12 +168,51 @@ const TUTORIAL_STORYBOARD = {
             },
             "belt": ["blue", "blue", "green", "green", "green"],
             "beltLabels": ["E", "S", "A", "B", "D"],
-            "dialogue": "[The Baron]: But wait! You can click and drag to swap cards of the same color. Drag the green 'Townsite Subsidy' and swap it with 'Legacy Plate'!",
+            "dialogue": "[The Baron]: But wait! You can swap cards of the same color to change what gets consumed next. Simply click the green 'Townsite Subsidy', and then click 'Legacy Plate' to trade their places!",
             "modalAnchor": "center",
             "cameraX": 0,
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "trigger": { "type": "onCardsSwapped", "target": "" },
             "focusUI": ["belt-slot-0", "belt-slot-2", "company-card-bo"],
+            "focusNodes": [0, 28],
+            "nodes": [
+                { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
+                { "id": 1, "c": 0, "r": 5, "type": "start", "subType": "start", "name": "Portland", "value": 5, "revealed": true },
+                { "id": 2, "c": 0, "r": 7, "type": "start", "subType": "start", "name": "San Francisco", "value": 5, "revealed": true },
+                { "id": 10, "c": 2, "r": 3, "type": "city", "subType": "regional_hq", "name": "Reg. HQ", "value": 15, "revealed": true },
+                { "id": 13, "c": 3, "r": 3, "type": "city", "subType": "supply", "name": "Supply Depot", "value": 5, "revealed": true },
+                { "id": 15, "c": 4, "r": 3, "type": "city", "subType": "fed_exchange", "name": "Fed. Exch", "value": 20, "revealed": true },
+                { "id": 17, "c": 2, "r": 7, "type": "city", "subType": "union_yard", "name": "Union Yard", "value": 10, "revealed": true },
+                { "id": 19, "c": 1, "r": 5, "type": "city", "subType": "parlor", "name": "Parlor", "value": 15, "revealed": true },
+                { "id": 28, "c": 1, "r": 3, "type": "city", "subType": "standard", "name": "Standard City", "value": 15, "revealed": true },
+                { "id": 29, "c": 1, "r": 7, "type": "city", "subType": "supply", "name": "Supply Depot", "value": 5, "revealed": true }
+            ],
+            "connections": [
+                { "from": 0, "to": 28, "cost": 1, "variance": -2, "units": 1 },
+                { "from": 10, "to": 28, "cost": 1, "variance": 1, "units": 1 },
+                { "from": 10, "to": 13, "cost": 2, "variance": 3, "units": 2 },
+                { "from": 13, "to": 15, "units": 1 },
+                { "from": 1, "to": 19, "cost": 1, "variance": 0, "units": 1 },
+                { "from": 2, "to": 29, "cost": 2, "variance": 1, "units": 1 },
+                { "from": 17, "to": 29, "cost": 3, "variance": 2, "units": 1 }
+            ]
+        },
+        {
+            "id": "4c",
+            "ledger": { "year": 1, "playerCash": 75, "baronCash": 100 },
+            "companies": {
+                "prr": { "treasury": 45, "track": 1, "price": 30, "stockPrice": 30, "parValue": 30, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 0 },
+                "bo": { "treasury": 45, "track": 3, "price": 30, "stockPrice": 30, "parValue": 30, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 1 },
+                "nyc": { "treasury": 0, "track": 0, "price": 20, "stockPrice": 20, "parValue": 20, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 2 }
+            },
+            "belt": ["blue", "blue", "green", "green", "green"],
+            "beltLabels": ["E", "S", "A", "B", "D"],
+            "dialogue": "[The Baron]: Knowledge is power, and ignorance will bankrupt you. Always click the yellow '?' icon on a card to inspect its abilities. Inspect the 'Legacy Plate' card currently sitting in your consumption slot. Hover your mouse over the dotted text 'S.N.H.' to reveal its full meaning!",
+            "modalAnchor": "center",
+            "cameraX": 0,
+            "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
+            "trigger": { "type": "clickNext" },
+            "focusUI": ["belt-slot-0", "player-cash-pill", "player-networth-pill", "company-card-bo"],
             "focusNodes": [0, 28],
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
@@ -315,6 +354,45 @@ const TUTORIAL_STORYBOARD = {
             ]
         },
         {
+            "id": 6.5,
+            "ledger": { "year": 1, "playerCash": 120, "baronCash": 100 },
+            "companies": {
+                "prr": { "treasury": 45, "track": 1, "price": 30, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 0 },
+                "bo": { "treasury": 31, "track": 1, "price": 20, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 3 },
+                "nyc": { "treasury": 0, "track": 0, "price": 20, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 2 }
+            },
+            "belt": ["red", "blue", "blue", "blue", "green"],
+            "beltLabels": ["C", "I", "E", "S", "D"],
+            "dialogue": "[The Baron]: Remember what I told you about inspecting cards! Building to the Supply Depot will consume TWO cards. Inspect both 'Townsite Subsidy' and 'CP Acquisition' before you build, so you understand the consequences of this route.",
+            "locks": { "endYear": true, "buyStock": false, "buildTrack": true },
+            "trigger": { "type": "clickNext" },
+            "modalAnchor": "soft-right",
+            "cameraX": 0,
+            "focusUI": ["belt-slot-0", "belt-slot-1", "player-cash-pill", "player-networth-pill", "company-card-bo"],
+            "focusNodes": [10, 13],
+            "nodes": [
+                { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
+                { "id": 1, "c": 0, "r": 5, "type": "start", "subType": "start", "name": "Portland", "value": 5, "revealed": true },
+                { "id": 2, "c": 0, "r": 7, "type": "start", "subType": "start", "name": "San Francisco", "value": 5, "revealed": true },
+                { "id": 10, "c": 2, "r": 3, "type": "city", "subType": "regional_hq", "name": "Reg. HQ", "value": 15, "revealed": true },
+                { "id": 13, "c": 3, "r": 3, "type": "city", "subType": "supply", "name": "Supply Depot", "value": 5, "revealed": true },
+                { "id": 15, "c": 4, "r": 3, "type": "city", "subType": "fed_exchange", "name": "Fed. Exch", "value": 20, "revealed": true },
+                { "id": 17, "c": 2, "r": 7, "type": "city", "subType": "union_yard", "name": "Union Yard", "value": 10, "revealed": true },
+                { "id": 19, "c": 1, "r": 5, "type": "city", "subType": "parlor", "name": "Parlor", "value": 15, "revealed": true },
+                { "id": 28, "c": 1, "r": 3, "type": "city", "subType": "standard", "name": "Standard City", "value": 15, "revealed": true },
+                { "id": 29, "c": 1, "r": 7, "type": "city", "subType": "supply", "name": "Supply Depot", "value": 5, "revealed": true }
+            ],
+            "connections": [
+                { "from": 0, "to": 28, "cost": 1, "variance": -2, "units": 1 },
+                { "from": 10, "to": 28, "cost": 1, "variance": 1, "units": 1 },
+                { "from": 10, "to": 13, "cost": 2, "variance": 3, "units": 2 },
+                { "from": 13, "to": 15, "units": 1 },
+                { "from": 1, "to": 19, "cost": 1, "variance": 0, "units": 1 },
+                { "from": 2, "to": 29, "cost": 2, "variance": 1, "units": 1 },
+                { "from": 17, "to": 29, "cost": 3, "variance": 2, "units": 1 }
+            ]
+        },
+        {
             "id": 7,
             "ledger": { "year": 1, "playerCash": 100, "baronCash": 100 },
             "companies": {
@@ -362,8 +440,8 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 15, "track": 2, "price": 20, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 3 },
                 "nyc": { "treasury": 0, "track": 0, "price": 20, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 2 }
             },
-            "belt": ["red", "red", "red", "blue", "blue"],
-            "beltLabels": ["A", "B", "C", "I", "E"],
+            "belt": ["blue", "blue", "green", "red", "red"],
+            "beltLabels": ["E", "S", "D", "C", "B"],
             "dialogue": "[The Baron]: Did you notice that? Great Northern only had one track segment, but the route required two! As long as a company has at least one track, the bank allows you to build into a track deficit. Fortunately, arriving at a Supply Depot immediately grants three track segments, wiping out your debt and leaving you with a surplus of two.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "trigger": { "type": "clickNext", "target": "" },
@@ -401,8 +479,8 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 15, "track": 2, "price": 20, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 3 },
                 "nyc": { "treasury": 0, "track": 0, "price": 20, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 2 }
             },
-            "belt": ["red", "red", "red", "blue", "blue"],
-            "beltLabels": ["A", "B", "C", "I", "E"],
+            "belt": ["blue", "blue", "green", "red", "red"],
+            "beltLabels": ["E", "S", "D", "C", "B"],
             "dialogue": "[The Baron]: That blue CP Acquisition card just triggered! But wait... Central Pacific has no shares available to issue! The card fizzled and I got nothing! You got lucky. However, the other card consumed was your Townsite Subsidy, which paid you $5 for the standard gray city in Great Northern's network. Now you see why card order matters! Maximize your green benefits, and try to burn my blue tolls when their conditions can't be met. Next, build GN to the Federal Exchange. This node forces every company to issue a new share to the market, diluting their stock and instantly dropping their share prices.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": false },
             "trigger": { "type": "onNodeBuilt", "target": "15" },
@@ -441,8 +519,8 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 1, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "blue"],
-            "beltLabels": ["D", "A", "B", "C", "I"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: The Exchange did its job, but my Maintenance Fee card just triggered! Don't worry—my blue card tolls are paid directly by the Bank. They don't come out of the company's treasury. It is time to pivot. CP and OR&N just issued new shares. OR&N is cheap, but it has no track to build with. Central Pacific, however, has track ready in San Francisco. Buy a share of CP so we can take control of it.",
             "locks": { "endYear": true, "buyStock": false, "buildTrack": true },
             "trigger": { "type": "onStockBought", "target": "prr" },
@@ -480,8 +558,8 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 1, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "blue"],
-            "beltLabels": ["D", "A", "B", "C", "I"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: You now control Central Pacific! There is a powerful Union Yard hidden further East down this line—it gives 1 free track to EVERY company, which will jumpstart OR&N later. Build CP from San Francisco to the nearby Supply Depot to push through the fog and gather the track segments we will need.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": false },
             "modalAnchor": "soft-right",
@@ -519,8 +597,8 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 1, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["E", "D", "A", "B", "C"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: Central Pacific reached the Depot, and the Depot Rent card just triggered! The Bank just printed a massive $50 and handed it directly to me! Since the Bank pays my tolls, CP's treasury is perfectly fine. Now, build from the Supply Depot to the Union Yard. The Union Yard is incredibly powerful; it grants 1 free track segment to every single company on the board.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": false },
             "modalAnchor": "soft-right",
@@ -558,13 +636,14 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 2, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 1, "price": 15, "playerShares": 0, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["F", "E", "D", "A", "B"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: The Union Yard did its job! Look at the OR&N dashboard—it now has 1 track segment, even though it hasn't built anything yet! To start building with OR&N, you need to be a shareholder. Spend $15 to buy a share of OR&N now.",
             "locks": { "endYear": true, "buyStock": false, "buildTrack": true },
             "modalAnchor": "soft-right",
             "cameraX": 0,
             "focusUI": ["company-card-nyc", "company-card-prr", "company-card-bo", "steel-dashboard-container"],
+            "focusNodes": [17],
             "trigger": { "type": "onStockBought", "target": "nyc" },
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
@@ -596,8 +675,8 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 2, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 15, "track": 1, "price": 15, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["F", "E", "D", "A", "B"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: Now that you control O R and N and have its treasury funded, build straight out of Portland to the adjacent pink Parlor node. The connection costs exactly $15, which is all the money the company has! The card in the firing line is 'Industrial Espionage'.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": false },
             "modalAnchor": "soft-right",
@@ -635,13 +714,14 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 2, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["G", "F", "E", "D", "A"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: Welcome to the Parlor! O R and N survived the build with exactly $0 in its treasury! Normally, a menu would appear here allowing you to upgrade your cards. But more importantly, the Espionage card triggered, stealing $50 straight from my wallet into yours! How infuriating. Click 'END YEAR' to finish your turn.",
             "locks": { "endYear": false, "buyStock": true, "buildTrack": true },
             "modalAnchor": "soft-right",
             "cameraX": 0,
-            "focusUI": ["btn-end-year"],
+            "focusNodes": [19],
+            "focusUI": ["company-card-nyc", "player-cash-pill", "belt-slot-0", "btn-end-year"],
             "trigger": { "type": "onEndYear", "target": "" },
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
@@ -673,12 +753,12 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 2, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["G", "F", "E", "D", "A"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: That brings us to the end of the year! Now that you've completed the tutorial, here is what you need to know for a real game. Before Year 1 even begins, you will pick your I.P.O. selection.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "trigger": { "type": "clickNext", "target": "" },
-            "modalAnchor": "center",
+            "modalAnchor": "absolute-center",
             "cameraX": 0,
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
@@ -710,12 +790,12 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 2, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["G", "F", "E", "D", "A"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: Your I.P.O. package dictates your starting stock prices, a special bonus, and your Steel Contract. This contract tells you exactly how many blue Contract cards you are mandatory to buy each year.",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "trigger": { "type": "clickNext", "target": "" },
-            "modalAnchor": "center",
+            "modalAnchor": "absolute-center",
             "cameraX": 0,
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },
@@ -747,12 +827,12 @@ const TUTORIAL_STORYBOARD = {
                 "bo": { "treasury": 0, "track": 2, "price": 15, "playerShares": 2, "baronShares": 0, "income": 0, "maxShares": 4 },
                 "nyc": { "treasury": 0, "track": 0, "price": 15, "playerShares": 1, "baronShares": 0, "income": 0, "maxShares": 3 }
             },
-            "belt": ["red", "red", "red", "red", "red"],
-            "beltLabels": ["G", "F", "E", "D", "A"],
+            "belt": ["blue", "green", "red", "red", "red"],
+            "beltLabels": ["S", "D", "C", "B", "A"],
             "dialogue": "[The Baron]: Aggressive contracts push stock prices higher, but force you into painful purple cards if you fall behind. You are now ready to face the real iron network. Click 'Got it' to return to the main menu!",
             "locks": { "endYear": true, "buyStock": true, "buildTrack": true },
             "trigger": { "type": "clickNext", "target": "" },
-            "modalAnchor": "center",
+            "modalAnchor": "absolute-center",
             "cameraX": 0,
             "nodes": [
                 { "id": 0, "c": 0, "r": 3, "type": "start", "subType": "start", "name": "Seattle", "value": 5, "revealed": true },

@@ -122,6 +122,7 @@ const syncState = (set) => {
 };
 
 export const useGameStore = create((set, get) => ({
+  showCinematicBoot: false,
   showStartMenu: true, 
   closeStartMenu: () => set({ showStartMenu: false }),
   startTutorial: () => {
@@ -261,6 +262,30 @@ export const useGameStore = create((set, get) => ({
         gameInstance.ui.showCharterPurchaseModal = () => { syncState(set); };
         gameInstance.ui.showLiquidationModal = () => { syncState(set); set({ showLiquidation: true }); };
 
+        // --- NEW: Cinematic Boot Hooks ---
+        gameInstance.ui.triggerCinematicBoot = () => {
+            set({ 
+                showCinematicBoot: true, 
+                showStartMenu: false, 
+                showLedger: false, 
+                showAudit: false, 
+                showLiquidation: false, 
+                selectedNodeId: null, 
+                showGameOver: false, 
+                gameOverData: null, 
+                showTrashModal: false, 
+                showProxyModal: false, 
+                targetedCardIndices: [],
+                telegramQueue: [] // NEW: Clear the telegram queue so tutorial lore doesn't spam a new run
+            });
+            syncState(set);
+        };
+
+        gameInstance.ui.completeCinematicBoot = () => {
+            set({ showCinematicBoot: false, showStartMenu: true });
+            syncState(set);
+        };
+
         const origShowGameOver = gameInstance.showGameOver.bind(gameInstance);
         gameInstance.showGameOver = (bScore, pScore, reason) => {
             origShowGameOver(bScore, pScore, reason);
@@ -273,6 +298,7 @@ export const useGameStore = create((set, get) => ({
         };
 
         gameInstance.startNewRun();
+        gameInstance.inIPOPhase = false; // SUPPRESSOR: Ensure the boot sequence stays quiet behind the Main Menu
         if (gameInstance.abacus && gameInstance.abacus.belt.length === 0) {
             gameInstance.abacus.refillBelt();
         }
@@ -470,6 +496,12 @@ export const useGameStore = create((set, get) => ({
 
                 syncState(set);
                 set({ isAnimatingPlay: false, animatingCards: [] });
+
+                // --- ALTERNATE UNIVERSE: TUTORIAL SYNC ---
+                // Exactly when the animation finishes and math executes, tell the tutorial to advance.
+                if (gameInstance.tutorial && gameInstance.tutorial.isActive && typeof gameInstance.tutorial.advanceFromReact === 'function') {
+                    gameInstance.tutorial.advanceFromReact();
+                }
             }, 450); 
         }, 1000); 
     }

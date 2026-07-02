@@ -1,3 +1,4 @@
+// MapBuildings.jsx
 import React from 'react';
 import { mapStrokeFilter } from './GameBoardUtils';
 
@@ -557,12 +558,15 @@ const BoomtownSaloon = ({ x, y }) => (
 );
 
 // --- THE FIX: Massive layered drop shadow to simulate extreme altitude
-const StartNodeLiving = ({ node }) => {
+const StartNodeLiving = ({ node, mutedCompanies = [] }) => {
   let logo = '';
+  let compId = '';
   // CHANGED: Support generic tutorial hub names alongside real city names, matching ID as well
-  if (node.name === 'Seattle' || node.name === 'Northern Hub' || node.id == 0) logo = '/gn.svg'; 
-  else if (node.name === 'Portland' || node.name === 'Central Hub' || node.id == 1) logo = '/orn.svg'; 
-  else if (node.name === 'San Francisco' || node.name === 'Southern Hub' || node.id == 2) logo = '/cpr.svg'; 
+  if (node.name === 'Seattle' || node.name === 'Northern Hub' || node.id == 0) { logo = '/gn.svg'; compId = 'bo'; }
+  else if (node.name === 'Portland' || node.name === 'Central Hub' || node.id == 1) { logo = '/orn.svg'; compId = 'nyc'; }
+  else if (node.name === 'San Francisco' || node.name === 'Southern Hub' || node.id == 2) { logo = '/cpr.svg'; compId = 'prr'; }
+
+  if (mutedCompanies.includes(compId)) return null;
 
   return (
     <div style={{ 
@@ -602,12 +606,13 @@ const PrivateAssetHTMLMarker = ({ asset, node, companies }) => {
   );
 };
 
-export const CostBubblesHTMLOverlay = ({ connections, nodes, activeNetwork, companies, showOnlyRailheads, showLinkCosts, zoomScale = 1 }) => {
+export const CostBubblesHTMLOverlay = ({ connections, nodes, activeNetwork, companies, showOnlyRailheads, showLinkCosts, zoomScale = 1, mutedCompanies = [] }) => {
   const builtConnSet = new Set();
   const activeRailheads = new Set();
 
   if (companies) {
-      Object.values(companies).forEach(c => {
+      Object.entries(companies).forEach(([compId, c]) => {
+          if (mutedCompanies.includes(compId)) return;
           if (c.builtConnections) c.builtConnections.forEach(str => builtConnSet.add(str));
           if (c.activeLines) c.activeLines.forEach(nId => activeRailheads.add(nId));
       });
@@ -709,17 +714,19 @@ export const CostBubblesHTMLOverlay = ({ connections, nodes, activeNetwork, comp
   );
 };
 
-export const HTMLOverlayLayer = ({ nodes, privateCompanies, companies, height = 800, cleanMap, relevantNodes }) => {
+export const HTMLOverlayLayer = ({ nodes, privateCompanies, companies, height = 800, cleanMap, relevantNodes, mutedCompanies = [], mutedNodes = new Set() }) => {
   if (!nodes) return null;
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, width: 5200, height: height, pointerEvents: 'none', zIndex: 3 }}>
       <SharedMapAnimations />
       {nodes.map(node => {
+        if (mutedNodes.has(node.id)) return null;
+
         const isStartNode = node.type === 'start';
         if (!node.revealed && !isStartNode) return null;
         if (cleanMap && !relevantNodes.has(node.id) && !isStartNode) return null;
 
-        if (isStartNode) return <StartNodeLiving key={node.id} node={node} />;
+        if (isStartNode) return <StartNodeLiving key={node.id} node={node} mutedCompanies={mutedCompanies} />;
         if (node.subType === 'standard' || node.subType === 'mountain' || (node.type === 'city' && !node.subType)) return <StandardCityLiving key={node.id} x={node.x} y={node.y} />;
         if (node.subType === 'fed_exchange') return <FedExchangeLiving key={node.id} x={node.x} y={node.y} />;
         if (node.subType === 'parlor') return <ParlorLiving key={node.id} x={node.x} y={node.y} />;
@@ -735,6 +742,7 @@ export const HTMLOverlayLayer = ({ nodes, privateCompanies, companies, height = 
       {Object.values(privateCompanies || {}).map(asset => {
          const node = nodes.find(n => n.id === asset.railheadId);
          if (!node || !node.revealed) return null;
+         if (mutedNodes.has(node.id)) return null;
          if (cleanMap && !relevantNodes.has(node.id) && node.type !== 'start') return null;
          return <PrivateAssetHTMLMarker key={`asset-${asset.id}`} asset={asset} node={node} companies={companies} />;
       })}

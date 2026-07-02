@@ -1,4 +1,5 @@
 // TutorialManager.js
+
 class TutorialManager {
     constructor(game) {
         this.game = game;
@@ -91,6 +92,18 @@ class TutorialManager {
                 this.game.abacus._originalRefillBelt.call(this.game.abacus);
             }
         };
+
+        // --- NEW FIX: UNIVERSAL MATH OVERRIDE ---
+        // The React UI uses physical distance via calculateUnits() for hover targets, ignoring the JSON. 
+        // We temporarily hijack the native math to force the UI to read our JSON overrides.
+        if (!this.game._originalCalculateUnits) {
+            this.game._originalCalculateUnits = this.game.calculateUnits;
+        }
+        this.game.calculateUnits = (fromId, toId) => {
+            const conn = this.game.connections.find(c => (c.from === fromId && c.to === toId) || (c.from === toId && c.to === fromId));
+            if (conn && conn.units !== undefined) return conn.units;
+            return this.game._originalCalculateUnits.call(this.game, fromId, toId);
+        };
         
         this.loadStep(this.storyboard[this.currentStepIndex]);
     }
@@ -143,19 +156,28 @@ class TutorialManager {
                 // --- BRUTE FORCE TUTORIAL PATCH V3 ---
                 // The raw JSON is missing maxShares, causing NaN math errors in the UI.
                 // We forcefully sanitize the data before the engine loads it.
-                compData.maxShares = compData.maxShares || 5;
-                compData.playerShares = compData.playerShares || 0;
-                compData.baronShares = compData.baronShares || 0;
+                compData.maxShares = compData.maxShares ?? 5;
+                compData.playerShares = compData.playerShares ?? 0;
+                compData.baronShares = compData.baronShares ?? 0;
 
                 comp.treasury = compData.treasury;
                 comp.trackSegments = compData.track;
                 comp.stockIndex = Math.max(0, CONFIG.marketTrack.indexOf(compData.price));
                 comp.income = compData.income;
-                comp.maxShares = compData.maxShares;
 
                 this.game.playerShares[gameKey] = compData.playerShares;
                 this.game.baron.shares[gameKey] = compData.baronShares;
-                comp.sharesIssued = compData.playerShares + compData.baronShares;
+                
+                // --- THE VOID SHARE BYPASS ---
+                // React UI guards against maxShares=0 by defaulting to 1 (preventing divide-by-zero).
+                // If it is truly 0, we give it 1 max share and 1 ghost issued share to trick the UI math (1-1=0).
+                if (compData.maxShares === 0) {
+                    comp.maxShares = 1;
+                    comp.sharesIssued = 1;
+                } else {
+                    comp.maxShares = compData.maxShares;
+                    comp.sharesIssued = compData.playerShares + compData.baronShares;
+                }
 
                 let startNodeId = startNodeMap[gameKey];
                 let active = startNodeId;
@@ -333,15 +355,17 @@ class TutorialManager {
             // LOCK THE ENGINE DOWN
             this.isTransitioning = true;
             
-            // --- NEW: EXTENDED TIMING ---
-            // 'buildTrack' triggers a 1.45-second React animation. We grant a 2400ms buffer 
-            // for it to finish natively before the tutorial script forcibly advances.
-            const transitionDelay = actionType === 'buildTrack' ? 2400 : 600;
+            // --- THE ALTERNATE UNIVERSE BRANCH ---
+            // If this is a track build, we skip the blind timer completely. 
+            // We wait patiently for the React animation in App.jsx to tell us it is finished.
+            if (actionType === 'buildTrack') {
+                return true; 
+            }
             
             setTimeout(() => {
                 this.isTransitioning = false; // RELEASE THE LOCK
                 this.advance(); 
-            }, transitionDelay); 
+            }, 600); 
             return true; 
         }
 
@@ -354,6 +378,15 @@ class TutorialManager {
                     if (this.game.audio) this.game.audio.playError();
                     return false; // Block the build
                 }
+            }
+
+            // --- NEW: THE DELAYED NATIVE VIP PASS ---
+            // The React UI takes ~1.5s to animate cards before natively calling buildTrack.
+            // If the user's browser is slow, advance() might fire and lock the game BEFORE 
+            // the native engine finishes. This grants a VIP pass to the delayed native execution.
+            const prevStep = this.currentStepIndex > 0 ? this.storyboard[this.currentStepIndex - 1] : null;
+            if (prevStep && prevStep.trigger.type === 'onNodeBuilt' && targetId.toString() === prevStep.trigger.target) {
+                return true; 
             }
 
             // Block wrong node clicks during an intercept phase
@@ -375,9 +408,18 @@ class TutorialManager {
             }
         }
 
-        if (actionType === 'buyStock' && this.currentLocks.buyStock) {
-            if (this.game.audio) this.game.audio.playError();
-            return false;
+        if (actionType === 'buyStock') {
+            // STRICT TUTORIAL RAILS: Block unscripted stock purchases
+            if (currentTrigger.type === 'onStockBought' && target !== targetId.toString()) {
+                if (this.game.audio) this.game.audio.playError();
+                console.error(`[DIAGNOSTIC - REJECTED] Wrong stock clicked. Expected ${target}, got ${targetId}`);
+                return false;
+            }
+            
+            if (this.currentLocks.buyStock) {
+                if (this.game.audio) this.game.audio.playError();
+                return false;
+            }
         }
         
         if (actionType === 'endYear' && this.currentLocks.endYear) {
@@ -424,47 +466,112 @@ class TutorialManager {
         }
     }
 
+    advanceFromReact() {
+        // --- ALTERNATE UNIVERSE ---
+        // This is the direct hook triggered from App.jsx's animation loop.
+        if (!this.isActive) return;
+        this.isTransitioning = false; // Explicitly drop the vault lock
+        this.advance();
+    }
+
     end() {
         try {
-            // Restore native engine
-            if (this.game.abacus && this.game.abacus._originalRefillBelt) {
-                this.game.abacus.refillBelt = this.game.abacus._originalRefillBelt;
-                delete this.game.abacus._originalRefillBelt;
+            // 1. Instantly stop audio
+            if (this.game && this.game.audio && typeof this.game.audio.stopVoiceover === 'function') {
+                this.game.audio.stopVoiceover();
             }
             
-            if (this.game.audio) this.game.audio.stopVoiceover();
-            
-            this.isActive = false;
-            this.isTransitioning = false;
-            
-            // 1. Scrub CSS Locks
-            document.body.classList.remove('tut-strict-lock'); 
-            document.body.classList.remove('tut-reading-mode'); 
-            document.body.classList.remove('tut-highlight-stats');
-            
-            // 2. Scrub Spotlights & Glows
-            document.querySelectorAll('.tutorial-spotlight').forEach(el => el.classList.remove('tutorial-spotlight'));
-            document.querySelectorAll('.tutorial-spotlight-silver').forEach(el => el.classList.remove('tutorial-spotlight-silver'));
-            document.querySelectorAll('.tutorial-glow-minor').forEach(el => el.classList.remove('tutorial-glow-minor'));
+            // PERMANENT LOCK
+            this.isTransitioning = true; 
 
-            // 3. Remove Overlays
-            document.getElementById('tutorial-center-modal')?.remove();
-            document.getElementById('tutorial-hard-blocker')?.remove(); 
-            
-            // 4. Restore UI
-            const topControls = document.querySelector('.top-bar-controls');
-            if (topControls) topControls.style.display = 'flex';
-            
-            if (this.game.onStateChanged) this.game.onStateChanged();
-            
-            // 5. Execute Seamless Hard Reload
-            window.location.reload(); 
+            // 2. Hide the tutorial modal
+            const wrapper = document.getElementById('tutorial-modal-wrapper');
+            if (wrapper) wrapper.style.display = 'none';
+
+            // 3. THROW THE REACT CURTAIN
+            // Instantly tell React to cover the screen with the completely opaque Cinematic Boot Sequence
+            try {
+                const uiTarget = window.game?.ui || this.game?.ui;
+                if (uiTarget && typeof uiTarget.triggerCinematicBoot === 'function') {
+                    uiTarget.triggerCinematicBoot();
+                }
+            } catch (bridgeErr) {
+                console.error("React cinematic boot execution failed:", bridgeErr);
+            }
+
+            // 4. SECRET ENGINE REBUILD
+            // With the screen perfectly hidden by the React component, we silently rebuild the engine
+            setTimeout(() => {
+                this.isActive = false;
+                if (this.game) this.game.tutorial = null;
+                if (window.game) window.game.tutorial = null;
+
+                const targetGame = this.game || window.game;
+                if (targetGame) {
+                    delete targetGame.gridCols;
+                    delete targetGame.gridRows;
+                    
+                    // --- CRITICAL CRASH FIX: RESTORE, DON'T JUST DELETE ---
+                    if (targetGame._originalCalculateUnits) {
+                        targetGame.calculateUnits = targetGame._originalCalculateUnits;
+                        delete targetGame._originalCalculateUnits;
+                    }
+                    if (targetGame.abacus && targetGame.abacus._originalRefillBelt) {
+                        targetGame.abacus.refillBelt = targetGame.abacus._originalRefillBelt;
+                        delete targetGame.abacus._originalRefillBelt;
+                    }
+                    
+                    // --- THE AIRLOCK PROTOCOL ---
+                    // 1. Sever the React Bridge
+                    const cachedSync = targetGame.onStateChanged;
+                    targetGame.onStateChanged = null;
+
+                    try {
+                        // 2. The Silent Scrub
+                        if (typeof targetGame.softReset === 'function') {
+                            targetGame.softReset();
+                        }
+                    } catch (resetErr) {
+                        console.error("Native softReset execution failed:", resetErr);
+                    }
+
+                    // 3. State Sanitization
+                    targetGame.inIPOPhase = false;
+                    targetGame.eventQueue = [];
+                    
+                    // 4. Reconnect and Sync
+                    targetGame.onStateChanged = cachedSync;
+                    if (typeof targetGame.onStateChanged === 'function') {
+                        targetGame.onStateChanged();
+                    }
+                }
+
+                // Native DOM Cleanup & Interval Scrubber (Fixes hidden Start Menu bugs)
+                try {
+                    document.body.classList.remove('tut-strict-lock', 'tut-reading-mode', 'tut-highlight-stats'); 
+                    const els = document.querySelectorAll('.tutorial-spotlight, .tutorial-spotlight-silver, .tutorial-glow-minor');
+                    for (let i = 0; i < els.length; i++) {
+                        els[i].classList.remove('tutorial-spotlight', 'tutorial-spotlight-silver', 'tutorial-glow-minor');
+                    }
+                    
+                    let attempts = 0;
+                    const scrubber = setInterval(() => {
+                        const startOverlay = document.getElementById('start-modal-overlay');
+                        if (startOverlay) {
+                            startOverlay.classList.remove('hidden');
+                            clearInterval(scrubber);
+                        }
+                        attempts++;
+                        if (attempts > 20) clearInterval(scrubber); 
+                    }, 100);
+                } catch (domErr) {}
+
+            }, 500);
+
         } catch (e) {
-            console.error("Critical Error during tutorial cleanup:", e);
-            window.location.reload(); // Absolute fallback
+            console.error("Critical Error during tutorial cleanup choreography:", e);
         }
     }
 }
 
-// --- NEW: Expose class globally for React/Vite ---
 window.TutorialManager = TutorialManager;

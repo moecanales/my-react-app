@@ -127,6 +127,48 @@ const GameBoard = () => {
       if (asset.railheadId) relevantNodes.add(asset.railheadId);
   });
 
+  // --- NEW: MUTED NODES (GHOSTING) ---
+  const mutedNodes = new Set();
+  nodes.forEach(n => {
+      if (n.type === 'start') {
+          let compId = '';
+          if (n.id == 0 || n.name === 'Seattle' || n.name === 'Northern Hub') compId = 'bo';
+          else if (n.id == 1 || n.name === 'Portland' || n.name === 'Central Hub') compId = 'nyc';
+          else if (n.id == 2 || n.name === 'San Francisco' || n.name === 'Southern Hub') compId = 'prr';
+          if (mutedCompanies.includes(compId)) mutedNodes.add(n.id);
+      } else {
+          let builtByMuted = false;
+          let builtByUnmuted = false;
+          let frontierOfMuted = false;
+          let frontierOfUnmuted = false;
+
+          Object.entries(companies).forEach(([compId, c]) => {
+              const isMuted = mutedCompanies.includes(compId);
+              if (c.builtNodes && c.builtNodes.includes(n.id)) {
+                  if (isMuted) builtByMuted = true;
+                  else builtByUnmuted = true;
+              }
+              if (c.activeLines) {
+                  const isFrontier = connections.some(conn => 
+                      (conn.from === n.id && c.activeLines.includes(conn.to)) ||
+                      (conn.to === n.id && c.activeLines.includes(conn.from))
+                  );
+                  if (isFrontier) {
+                      if (isMuted) frontierOfMuted = true;
+                      else frontierOfUnmuted = true;
+                  }
+              }
+          });
+
+          // Ghost the node if ONLY muted companies have reached or scouted it
+          if (builtByMuted && !builtByUnmuted) {
+              mutedNodes.add(n.id);
+          } else if (!builtByMuted && !builtByUnmuted && frontierOfMuted && !frontierOfUnmuted) {
+              mutedNodes.add(n.id);
+          }
+      }
+  });
+
   const distToSegment = (p, v, w) => {
       const l2 = Math.pow(v.x - w.x, 2) + Math.pow(v.y - w.y, 2);
       if (l2 === 0) return Math.sqrt(Math.pow(p.x - v.x, 2) + Math.pow(p.y - v.y, 2));
@@ -300,7 +342,8 @@ const GameBoard = () => {
         const clickX = (e.clientX - layerRect.left) / currentZoom;
         const clickY = (e.clientY - layerRect.top) / currentZoom;
 
-        const clickedNode = nodes.find(n => Math.sqrt((n.x - clickX) ** 2 + (n.y - clickY) ** 2) <= 25);
+        // Ignore clicks on muted nodes
+        const clickedNode = nodes.find(n => !mutedNodes.has(n.id) && Math.sqrt((n.x - clickX) ** 2 + (n.y - clickY) ** 2) <= 25);
 
         if (clickedNode && clickedNode.revealed && (!cleanMap || relevantNodes.has(clickedNode.id) || clickedNode.type === 'start')) {
           if (gameState.activeCompanyForBuild) {
@@ -317,6 +360,8 @@ const GameBoard = () => {
         
         let hitConn = null;
         for (const conn of connections) {
+            if (mutedNodes.has(conn.from) || mutedNodes.has(conn.to)) continue; // Ignore ghosted connections
+            
             const n1 = nodes.find(n => n.id === conn.from);
             const n2 = nodes.find(n => n.id === conn.to);
             if (n1 && n2 && (activeNetwork.has(conn.from) || activeNetwork.has(conn.to))) {
@@ -381,6 +426,18 @@ const GameBoard = () => {
 
     if (!containerRef.current || !gameState) return;
     
+    // --- NEW: TUTORIAL HOVER SHIELD ---
+    // If the tutorial is active and the map is veiled (no focusNodes), kill all hover interaction.
+    if (isTutorial) {
+        const focusNodes = gameState.tutorial?.stepData?.focusNodes;
+        if (!focusNodes || focusNodes.length === 0) {
+            setTooltip(null);
+            setTargetedCardIndices([]);
+            useGameStore.getState().setHoveredCardFinancials([]);
+            return;
+        }
+    }
+
     // --- NEW UNIFIED HITBOX MATH ---
     const mapLayer = document.querySelector('.map-layer');
     const layerRect = mapLayer ? mapLayer.getBoundingClientRect() : { left: 0, top: 0 };
@@ -388,7 +445,8 @@ const GameBoard = () => {
     const hoverY = (e.clientY - layerRect.top) / currentZoom;
     const p = { x: hoverX, y: hoverY };
 
-    let hitNode = nodes.find(n => n.revealed && (!cleanMap || relevantNodes.has(n.id) || n.type === 'start') && Math.sqrt((n.x - hoverX)**2 + (n.y - hoverY)**2) <= 20);
+    // Ignore hovers on muted nodes
+    let hitNode = nodes.find(n => !mutedNodes.has(n.id) && n.revealed && (!cleanMap || relevantNodes.has(n.id) || n.type === 'start') && Math.sqrt((n.x - hoverX)**2 + (n.y - hoverY)**2) <= 20);
     
     if (hitNode) {
         
@@ -523,6 +581,8 @@ const GameBoard = () => {
 
     let hitConn = null;
     for (const conn of connections) {
+        if (mutedNodes.has(conn.from) || mutedNodes.has(conn.to)) continue; // Ignore ghosted connections
+        
         const n1 = nodes.find(n => n.id === conn.from);
         const n2 = nodes.find(n => n.id === conn.to);
         if (n1 && n2 && (n1.revealed || n2.revealed)) {
@@ -637,16 +697,17 @@ const GameBoard = () => {
           {!isTutorial && <GrantLine height={dynamicBoardHeight} />}
           {!isTutorial && <RustBeltLine height={dynamicBoardHeight} />}
           
-          <ConnectionLines connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} />
+          <ConnectionLines connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} mutedCompanies={mutedCompanies} />
           <BuiltLines companies={companies} nodes={nodes} mutedCompanies={mutedCompanies} />
           {nodes.map(node => {
+              if (mutedNodes.has(node.id)) return null;
               if (cleanMap && !relevantNodes.has(node.id) && node.type !== 'start') return null;
               return <NodeItem key={node.id} node={node} isFrontier={frontierNodes.has(node.id)} />
           })}
         </Stage>
         
-        <CostBubblesHTMLOverlay connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} showLinkCosts={showLinkCosts} zoomScale={currentZoom} />
-        <HTMLOverlayLayer nodes={nodes} privateCompanies={privateCompanies} companies={companies} height={dynamicBoardHeight} cleanMap={cleanMap} relevantNodes={relevantNodes} />
+        <CostBubblesHTMLOverlay connections={connections} nodes={nodes} activeNetwork={activeNetwork} companies={companies} showOnlyRailheads={showOnlyRailheads} showLinkCosts={showLinkCosts} zoomScale={currentZoom} mutedCompanies={mutedCompanies} />
+        <HTMLOverlayLayer nodes={nodes} privateCompanies={privateCompanies} companies={companies} height={dynamicBoardHeight} cleanMap={cleanMap} relevantNodes={relevantNodes} mutedCompanies={mutedCompanies} mutedNodes={mutedNodes} />
         {showGrid && <DevGridOverlay width={5200} height={dynamicBoardHeight} />}
         
         {isTutorial && gameState.tutorial.stepData?.focusNodes && (

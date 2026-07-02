@@ -4,7 +4,7 @@ import { useGameStore } from './App';
 import { getNativeCardInfo } from './NewCardsData';
 import GameCard from './GameCard';
 
-const AnimatedCardWrapper = ({ item, index, children }) => {
+const AnimatedCardWrapper = ({ item, index, isHovered, children }) => {
     const wrapperRef = useRef(null);
     const prevRect = useRef(null);
     const prevIndex = useRef(index);
@@ -52,7 +52,15 @@ const AnimatedCardWrapper = ({ item, index, children }) => {
     }, [item, index]);
 
     return (
-        <div ref={wrapperRef} style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div ref={wrapperRef} style={{ 
+            position: 'relative', 
+            width: '100%', 
+            display: 'flex', 
+            justifyContent: 'center',
+            // NEW: Force the wrapper to punch through the ::after pseudo-element glow
+            // when hovered, ensuring the expanded card is never clipped by the tutorial mask.
+            zIndex: isHovered ? 9999 : 1
+        }}>
             {children}
         </div>
     );
@@ -67,7 +75,6 @@ const ConveyorBelt = () => {
   const targetedCardIndices = useGameStore(state => state.targetedCardIndices);
   
   const hoveredCardFinancials = useGameStore(state => state.hoveredCardFinancials) || [];
-  console.log("Hover Data:", hoveredCardFinancials);
   
   const toggleDiscard = toggleDiscardAction || (() => console.log('Discard inspector not wired yet'));
   
@@ -306,7 +313,8 @@ const ConveyorBelt = () => {
       </div>
 
       {/* --- THE MEAT: THE CONCRETE CAROUSEL WINDOW --- */}
-      <div style={{ flex: '0 0 820px', position: 'relative', height: '240px', boxSizing: 'border-box' }}>
+      {/* THE FIX: Added zIndex: 20 so the carousel area safely overlays the background spotlight mask */}
+      <div style={{ flex: '0 0 820px', position: 'relative', height: '240px', boxSizing: 'border-box', zIndex: 20 }}>
         
         <button 
             disabled={!canScrollLeft} 
@@ -343,7 +351,7 @@ const ConveyorBelt = () => {
                 return (
                   <div key={uniqueAnimKey} id={`belt-slot-container-${index}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {item ? (
-                        <AnimatedCardWrapper item={item} index={index}>
+                        <AnimatedCardWrapper item={item} index={index} isHovered={hoverIndex === index || selectedIndex === index || isTargeted}>
                             <div 
                                 id={`belt-slot-${index}`}
                                 onClick={() => handleCardClick(index)}

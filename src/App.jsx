@@ -1,5 +1,5 @@
 // App.jsx
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React, { useRef, useCallback, useState, useEffect, useLayoutEffect } from 'react';
 import { create } from 'zustand';
 import { toPng } from 'html-to-image';
 import { AllModals } from './Modals';
@@ -8,6 +8,73 @@ import ConveyorBelt from './ConveyorBelt';
 import LeftSidebar from './LeftSidebar';
 import AnimationOverlay from './AnimationOverlay';
 import { generateTownLore } from './LoreGenerator';
+
+// --- NEW: THE CINEMATIC BOOT SEQUENCE ---
+const CinematicBootSequence = () => {
+    const show = useGameStore(state => state.showCinematicBoot);
+    const [phase, setPhase] = useState('black'); // 'black', 'text-in', 'text-out', 'confidential'
+
+    useEffect(() => {
+        if (show) {
+            setPhase('black');
+            setTimeout(() => setPhase('text-in'), 1000);
+            setTimeout(() => setPhase('text-out'), 4000);
+            setTimeout(() => setPhase('confidential'), 5500);
+        }
+    }, [show]);
+
+    if (!show) return null;
+
+    if (phase !== 'confidential') {
+        return (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: '#000', zIndex: 9999999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{
+                    color: '#fff', fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 'bold', letterSpacing: '4px', textAlign: 'center', lineHeight: '1.5',
+                    opacity: phase === 'text-in' ? 1 : 0, transition: 'opacity 1.5s ease-in-out', textShadow: '0 0 20px rgba(255,255,255,0.5)'
+                }}>
+                    PREPARE FOR THE FINANCIAL FIGHT<br/>OF YOUR LIFE.
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: '#040404', zIndex: 9999999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'monospace' }}>
+            <h1 style={{ fontSize: '32px', marginBottom: '5px', letterSpacing: '2px', fontWeight: 'normal', fontFamily: 'sans-serif' }}>RIGHT OF WAY: EASTWARD BOUND</h1>
+            <p style={{ color: '#888', marginBottom: '50px', letterSpacing: '1px', fontSize: '14px' }}>INTERNAL DESIGN PROTOTYPE / VERTICAL SLICE</p>
+            
+            <div style={{ border: '4px solid #ef4444', color: '#ef4444', padding: '10px 30px', fontSize: '48px', fontWeight: 'bold', transform: 'rotate(-4deg)', letterSpacing: '5px', marginBottom: '50px', fontFamily: 'sans-serif' }}>
+                CONFIDENTIAL
+            </div>
+
+            <p style={{ color: '#ccc', textAlign: 'center', maxWidth: '600px', lineHeight: '1.8', marginBottom: '30px', fontSize: '14px' }}>
+                This software is a proof-of-concept demonstration intended<br/>for publisher review and internal testing only.
+            </p>
+            
+            <p style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '40px', fontSize: '14px' }}>
+                NOT FOR COMMERCIAL DISTRIBUTION
+            </p>
+
+            <p style={{ color: '#666', textAlign: 'center', maxWidth: '600px', fontSize: '13px', marginBottom: '80px', lineHeight: '1.5' }}>
+                This build demonstrates core mechanics, economic logic, and AI systems. It is<br/>not a final commercial product.<br/>
+                &copy; 2026 Armando Canales. All Rights Reserved.
+            </p>
+
+            <button 
+                onClick={() => {
+                    if (window.game && window.game.ui && window.game.ui.completeCinematicBoot) {
+                        window.game.ui.completeCinematicBoot();
+                    }
+                }}
+                style={{ background: 'none', border: 'none', color: '#4ade80', fontSize: '22px', fontWeight: 'bold', cursor: 'pointer', letterSpacing: '3px', transition: 'all 0.2s' }}
+                onMouseOver={(e) => e.target.style.textShadow = '0 0 15px rgba(74, 222, 128, 0.8)'}
+                onMouseOut={(e) => e.target.style.textShadow = 'none'}
+            >
+                [ CLICK TO INITIALIZE ]
+            </button>
+        </div>
+    );
+};
 
 let gameInstance = null;
 
@@ -105,6 +172,7 @@ const syncState = (set) => {
 };
 
 export const useGameStore = create((set, get) => ({
+  showCinematicBoot: false,
   showStartMenu: true, 
   closeStartMenu: () => set({ showStartMenu: false }),
   startTutorial: () => {
@@ -243,6 +311,29 @@ export const useGameStore = create((set, get) => ({
 
         gameInstance.ui.showCharterPurchaseModal = () => { syncState(set); };
         gameInstance.ui.showLiquidationModal = () => { syncState(set); set({ showLiquidation: true }); };
+
+        // --- NEW: Cinematic Boot Hooks ---
+        gameInstance.ui.triggerCinematicBoot = () => {
+            set({ 
+                showCinematicBoot: true, 
+                showStartMenu: false, 
+                showLedger: false, 
+                showAudit: false, 
+                showLiquidation: false, 
+                selectedNodeId: null, 
+                showGameOver: false, 
+                gameOverData: null, 
+                showTrashModal: false, 
+                showProxyModal: false, 
+                targetedCardIndices: [] 
+            });
+            syncState(set);
+        };
+
+        gameInstance.ui.completeCinematicBoot = () => {
+            set({ showCinematicBoot: false, showStartMenu: true });
+            syncState(set);
+        };
 
         const origShowGameOver = gameInstance.showGameOver.bind(gameInstance);
         gameInstance.showGameOver = (bScore, pScore, reason) => {
@@ -453,6 +544,12 @@ export const useGameStore = create((set, get) => ({
 
                 syncState(set);
                 set({ isAnimatingPlay: false, animatingCards: [] });
+
+                // --- ALTERNATE UNIVERSE: TUTORIAL SYNC ---
+                // Exactly when the animation finishes and math executes, tell the tutorial to advance.
+                if (gameInstance.tutorial && gameInstance.tutorial.isActive && typeof gameInstance.tutorial.advanceFromReact === 'function') {
+                    gameInstance.tutorial.advanceFromReact();
+                }
             }, 450); 
         }, 1000); 
     }
@@ -791,9 +888,9 @@ const BaronAvatar = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // NEW LOGIC: Return null if no game state OR if tutorial is active
-    if (!gameState || gameState.tutorial?.isActive) return null;
-
+    // NEW LOGIC: Use CSS to hide during tutorial so the canvas survives and doesn't sever the JS engine connection!
+    if (!gameState) return null;
+    const isTutorialActive = gameState.tutorial?.isActive;
     const isDanger = gameState.playerNetWorth >= 300;
 
     return (
@@ -802,7 +899,7 @@ const BaronAvatar = () => {
             bottom: '160px', 
             right: '20px',
             zIndex: 1000,
-            display: 'flex',
+            display: isTutorialActive ? 'none' : 'flex',
             alignItems: 'center',
             gap: '15px',
             animation: isDanger ? 'pulseRed 1.5s infinite' : 'none',
@@ -968,7 +1065,7 @@ const TutorialOverlay = ({ uiScale = 1 }) => {
         return () => cancelAnimationFrame(rafId);
     }, [tutorial?.isActive]);
 
-    if (!tutorial || !tutorial.isActive || !stepData || hideModal) return null;
+    if (!tutorial || !tutorial.isActive || !stepData) return null;
 
     const { currentStepIndex } = tutorial;
     const totalSteps = window.game?.tutorial?.storyboard?.length || 0;
@@ -1073,9 +1170,9 @@ const TutorialOverlay = ({ uiScale = 1 }) => {
             }}>
 
                 {/* THE ULTIMATE SHADOW & MASK (Window Frame) --- */}
-                <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, zIndex: -1 }}>
+                <svg key={`tut-mask-${currentStepIndex}`} width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, zIndex: -1 }}>
                     <defs>
-                        <mask id="map-hole">
+                        <mask id={`map-hole-${currentStepIndex}`}>
                             <rect width="100%" height="100%" fill="white" />
                             
                             {/* Map Hole: Scale the x/y and height down based on the UI shrink */}
@@ -1089,7 +1186,7 @@ const TutorialOverlay = ({ uiScale = 1 }) => {
                             )}
                         </mask>
                     </defs>
-                    <rect width="100%" height="100%" fill="rgba(0,0,0,0.85)" mask="url(#map-hole)" style={{ transition: 'all 0.5s ease-in-out' }} />
+                    <rect width="100%" height="100%" fill="rgba(0,0,0,0.85)" mask={`url(#map-hole-${currentStepIndex})`} style={{ transition: 'all 0.5s ease-in-out' }} />
                 </svg>
             </div>
 
@@ -1098,7 +1195,7 @@ const TutorialOverlay = ({ uiScale = 1 }) => {
                 style={{
                 position: 'absolute',
                 zIndex: 10000,
-                display: 'flex',
+                display: hideModal ? 'none' : 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 transition: 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
@@ -1233,7 +1330,15 @@ export default function App() {
     };
   }, [initGame]);
 
-  if (!isReady) return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#1e1e1e' }}><h2>Loading Engine...</h2></div>;
+  if (!isReady) {
+      return (
+          <>
+              <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#1e1e1e' }}>
+                  <h2>Loading Engine...</h2>
+              </div>
+          </>
+      );
+  }
 
   const isActiveTutorial = gameState && gameState.tutorial && gameState.tutorial.isActive;
   const stepData = gameState?.tutorial?.stepData;
@@ -1241,13 +1346,23 @@ export default function App() {
   // --- NEW: DYNAMIC Z-INDEX ELEVATION ---
   // We must elevate the scaled wrappers above the 9500 SVG mask if they contain a spotlighted item.
   const tutFocus = stepData?.focusUI || [];
-  const elevateTopBar = isActiveTutorial && tutFocus.some(c => c.startsWith('stock-track-') || c === 'btn-end-year');
-  const elevateLeftSidebar = isActiveTutorial && tutFocus.some(c => c.startsWith('company-card-'));
+  const elevateTopBar = isActiveTutorial && tutFocus.some(c => 
+      c.startsWith('stock-track-') || 
+      c === 'btn-end-year' || 
+      c === 'player-cash-pill' || 
+      c === 'player-networth-pill'
+  );
+  const elevateLeftSidebar = isActiveTutorial && tutFocus.some(c => 
+      c.startsWith('company-card-') || 
+      c === 'player-cash-pill' || 
+      c === 'player-networth-pill'
+  );
   const elevateBottomLeft = isActiveTutorial && tutFocus.includes('hud-right-panel');
   const elevateBelt = isActiveTutorial && tutFocus.some(c => c.startsWith('belt-slot-') || c === 'steel-dashboard-container');
 
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+      <CinematicBootSequence />
       <div id="game-pillarbox" style={{ width: '100%', maxWidth: '1920px', height: '100%', position: 'relative', overflow: 'hidden', backgroundColor: '#1e1e1e' }}>
       <style dangerouslySetInnerHTML={{__html: `
         html, body, #root { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background-color: #1e1e1e; } 

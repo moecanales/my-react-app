@@ -38,6 +38,9 @@ class SoundManager {
         this.isVoicePaused = false; 
         this.voiceVolume = 0.8; 
         this.musicUnlocked = false; 
+        this.voiceBuffers = {}; // Holds decoded audio data
+        this.activeVoiceSource = null; // Replaces voiceAudio
+        this.isVoicePreloading = false;
 
         // Task 12 & 13: Absolute path setup and Sledgehammer detection fix
         this.themeAudio = new Audio('/audio/theme.mp3');
@@ -90,6 +93,9 @@ class SoundManager {
             this.initialized = true;
             console.log("Audio System Initialized");
 
+            // Kick off background preloading
+            this.preloadVoiceovers();
+
             // --- Task 13: Silence the init() Method ---
             const isTutorialActive = window.game && window.game.tutorial && window.game.tutorial.isActive;
 
@@ -105,11 +111,43 @@ class SoundManager {
         }
     }
 
+    async preloadVoiceovers() {
+        if (this.isVoicePreloading) return;
+        this.isVoicePreloading = true;
+
+        const files = [
+            'tut_scene_1', 'tut_scene_2', 'tut_scene_3', 'tut_scene_4.5', 'tut_scene_4a2',
+            'tut_scene_4c', // NEW
+            'tut_scene_5', 'tut_scene_6', 'tut_scene_6.5', // NEW
+            'tut_scene_7.5', 'tut_scene_7', 'tut_scene_8',
+            'tut_scene_9', 'tut_scene_10', 'tut_scene_11', 'tut_scene_12', 'tut_scene_13',
+            'tut_scene_14', 'tut_scene_15', 'tut_scene_16', 'tut_scene_17',
+            'tut_step_4a', 'tut_step_4b'
+        ];
+
+        // We must ensure the context exists to decode
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+
+        for (const file of files) {
+            try {
+                const response = await fetch(`/audio/voice/${file}.mp3`);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+                this.voiceBuffers[file] = audioBuffer;
+            } catch (e) {
+                console.warn(`[Audio Notice]: Failed to preload voice file: ${file}.mp3`, e);
+            }
+        }
+        console.log("Voiceover preloading complete.");
+    }
+
     setVoiceVolume(val) {
         this.voiceVolume = parseFloat(val);
-        if (this.voiceAudio) {
-            this.voiceAudio.volume = this.voiceVolume;
-        }
+        // Note: Dynamic volume changes on an active buffer source require a dedicated gain node.
+        // For simplicity in this fix, it applies to the next played file via sfxGain.
     }
 
     // Task 12: Ensure synchronous update for both APIs
@@ -447,48 +485,66 @@ class SoundManager {
         if (!this.initialized || this.isMuted) return;
 
         try {
-            // MATCHES SCREENSHOT: 4a/4b use 'tut_step_', everything else uses 'tut_scene_'
             let prefix = 'tut_scene_';
             if (sceneId === '4a' || sceneId === '4b') {
                 prefix = 'tut_step_';
             }
-            const path = `audio/voice/${prefix}${sceneId}.mp3`;
+            const fileKey = `${prefix}${sceneId}`;
             
-            this.voiceAudio = new Audio(path);
-            
-            // Catch 404s so the tutorial engine doesn't crash or hang
-            this.voiceAudio.onerror = () => {
-                console.warn(`[Audio Notice]: Missing voice file: ${path}. Step ID was: ${sceneId}`);
-                this.voiceAudio = null;
-            };
+            const buffer = this.voiceBuffers[fileKey];
 
-            this.voiceAudio.volume = this.voiceVolume; 
-            
-            if (!this.isVoicePaused) {
-                this.voiceAudio.play().catch(e => {
-                    if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') {
-                        console.log("Audio playback deferred safely.");
-                    }
-                });
+            if (buffer) {
+                if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+                
+                this.activeVoiceSource = this.ctx.createBufferSource();
+                this.activeVoiceSource.buffer = buffer;
+                
+                // Create a temporary gain node for voice volume control
+                const voiceGain = this.ctx.createGain();
+                voiceGain.gain.value = this.voiceVolume;
+                
+                this.activeVoiceSource.connect(voiceGain);
+                voiceGain.connect(this.masterGain); // Connect direct to master so SFX volume slider doesn't crush voices
+                
+                this.activeVoiceSource.start(0);
+                this.isVoicePaused = false;
+            } else {
+                 console.warn(`[Audio Notice]: Voice buffer not found for: ${fileKey}. Did it finish preloading?`);
+                 // Fallback to old method just in case preloader failed or hasn't finished
+                 this._fallbackPlayVoiceover(sceneId);
             }
         } catch (e) {
             console.warn("Critical Error playing voiceover:", e);
         }
     }
 
+    _fallbackPlayVoiceover(sceneId) {
+         let prefix = 'tut_scene_';
+         if (sceneId === '4a' || sceneId === '4b') prefix = 'tut_step_';
+         const path = `audio/voice/${prefix}${sceneId}.mp3`;
+         this.voiceAudio = new Audio(path);
+         this.voiceAudio.volume = this.voiceVolume; 
+         this.voiceAudio.play().catch(e => console.log("Fallback audio deferred."));
+    }
+
     toggleVoicePause() {
+        // AudioBufferSourceNode doesn't support native pause/resume easily.
+        // For this implementation, we will just stop it if they try to pause.
         this.isVoicePaused = !this.isVoicePaused;
-        if (this.voiceAudio) {
-            if (this.isVoicePaused) {
-                this.voiceAudio.pause();
-            } else {
-                this.voiceAudio.play().catch(e => console.warn("Voiceover play failed:", e));
-            }
-        }
+        if (this.isVoicePaused) {
+             this.stopVoiceover();
+        } 
         return this.isVoicePaused;
     }
 
     stopVoiceover() {
+        if (this.activeVoiceSource) {
+            try {
+                this.activeVoiceSource.stop();
+            } catch(e) {}
+            this.activeVoiceSource.disconnect();
+            this.activeVoiceSource = null;
+        }
         if (this.voiceAudio) {
             this.voiceAudio.pause();
             this.voiceAudio.currentTime = 0;

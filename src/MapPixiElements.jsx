@@ -1,3 +1,4 @@
+// MapPixiElements.jsx
 import React, { useCallback } from 'react';
 import { Graphics, Text } from '@pixi/react';
 import * as PIXI from 'pixi.js';
@@ -55,12 +56,13 @@ export const RustBeltLine = ({ height }) => {
   );
 };
 
-export const ConnectionLines = ({ connections, nodes, activeNetwork, companies, showOnlyRailheads }) => {
+export const ConnectionLines = ({ connections, nodes, activeNetwork, companies, showOnlyRailheads, mutedCompanies = [] }) => {
   const builtConnSet = new Set();
   const activeRailheads = new Set();
 
   if (companies) {
-      Object.values(companies).forEach(c => {
+      Object.entries(companies).forEach(([compId, c]) => {
+          if (mutedCompanies.includes(compId)) return;
           if (c.builtConnections) c.builtConnections.forEach(str => builtConnSet.add(str));
           if (c.activeLines) c.activeLines.forEach(nId => activeRailheads.add(nId));
       });
