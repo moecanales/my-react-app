@@ -1,0 +1,3702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tequila Distillery — 6-Station Flag-Pole, 6 NPCs (I–VI), Tether Tracks & On-Call Studio</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f17;
+      --panel-bg: #151d2a;
+      --panel-border: #2a364f;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-gold: #f59e0b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 10px 14px 28px;
+    }
+
+    /* TOP HEADER */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--panel-border);
+      margin-bottom: 8px;
+    }
+    header h1 {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #fde047;
+    }
+    header p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    /* TURN ORDER & ON-CALL SETUP BAR */
+    .setup-bar {
+      background: linear-gradient(90deg, #1e1b4b, #0f172a, #1e1b4b);
+      border: 1.5px solid #6366f1;
+      border-radius: 10px;
+      padding: 7px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+    }
+
+    /* GLOBAL STAGE BAR */
+    .stage-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 7px 10px;
+      margin-bottom: 8px;
+      position: sticky;
+      top: 6px;
+      z-index: 60;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
+    }
+    .stage-btn {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1.5px solid #475569;
+      padding: 6px 10px;
+      border-radius: 7px;
+      font-weight: 800;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .stage-btn:hover:not(:disabled) {
+      border-color: #94a3b8;
+      color: #ffffff;
+    }
+    .stage-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .stage-btn.active {
+      background: #f59e0b;
+      color: #0f172a;
+      border-color: #fde047;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+    }
+    .stage-btn.step-ready {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      border-color: #93c5fd;
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.55);
+    }
+    .stage-btn.done {
+      background: #064e3b;
+      color: #a7f3d0;
+      border-color: #10b981;
+    }
+    .stage-btn.util {
+      background: #312e81;
+      color: #e0e7ff;
+      border-color: #6366f1;
+    }
+    .stage-btn.reset {
+      background: #7f1d1d;
+      color: #fecaca;
+      border-color: #ef4444;
+    }
+
+    /* EMERGENCY CALL-IN ALERT BANNER */
+    .callin-alert {
+      background: linear-gradient(90deg, #7f1d1d, #450a0a);
+      border: 2px solid #f87171;
+      border-radius: 10px;
+      padding: 9px 13px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+
+    /* TURN & HARVEST SUPPLY FORECAST BANNER */
+    .turn-banner {
+      background: linear-gradient(90deg, #1e293b, #0f172a);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    /* 4 PLAYERS BAR */
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 1280px) {
+      .players-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 700px) {
+      .players-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .p-card {
+      background: var(--panel-bg);
+      border: 2px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 8px;
+      transition: all 0.15s ease;
+    }
+    .p-card.current-turn {
+      border-color: #fde047;
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.22);
+    }
+    .p-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #263248;
+      gap: 4px;
+    }
+    .p-name {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 900;
+      font-size: 12.5px;
+    }
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1.5px solid #fff;
+      display: inline-block;
+    }
+    .paycheck-pill {
+      background: #064e3b;
+      border: 1px solid #10b981;
+      color: #6ee7b7;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+
+    .oncall-player-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 3px 6px;
+      margin-bottom: 5px;
+      font-size: 10px;
+      gap: 4px;
+    }
+    .oncall-badge {
+      background: #422006;
+      border: 1px solid #f59e0b;
+      color: #fde047;
+      font-weight: 900;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 9.5px;
+    }
+    .oncall-badge.removed {
+      background: #1e293b;
+      border-color: #475569;
+      color: #64748b;
+      text-decoration: line-through;
+    }
+
+    .p-bot-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 5px;
+    }
+    .bot-btn {
+      flex: 1;
+      background: #312e81;
+      color: #e0e7ff;
+      border: 1px solid #6366f1;
+      border-radius: 5px;
+      padding: 3px 5px;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .bot-btn:hover:not(:disabled) {
+      background: #4338ca;
+      color: #fff;
+    }
+    .bot-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .hood-btn {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .hood-btn.open {
+      background: #065f46;
+      color: #a7f3d0;
+      border-color: #10b981;
+    }
+
+    .public-circ-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      padding: 3px;
+      margin-bottom: 5px;
+    }
+    .pub-chip {
+      font-size: 9px;
+      font-weight: 900;
+      text-align: center;
+      padding: 2px 1px;
+      border-radius: 3px;
+      border: 1px solid rgba(0,0,0,0.4);
+    }
+
+    /* 4 CIRCADIAN SLOTS PER PLAYER */
+    .circadian-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin: 5px 0;
+    }
+    .circ-slot {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 7px;
+      padding: 4px 3px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .circ-slot:hover:not(.deployed):not(.locked-slot) {
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
+    .circ-slot.selected {
+      border-color: #fde047;
+      background: #292524;
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
+    }
+    .circ-slot.deployed {
+      opacity: 0.42;
+      cursor: default;
+      background: #090d14;
+    }
+    .circ-slot.locked-slot {
+      opacity: 0.35;
+      cursor: not-allowed;
+      background: #450a0a;
+      border-color: #ef4444;
+    }
+    .circ-slot-title {
+      font-size: 9.5px;
+      font-weight: 900;
+      color: #cbd5e1;
+    }
+    .circ-allowed-tag {
+      font-size: 8.5px;
+      color: #fbbf24;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .quick-send-row {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-top: 3px;
+    }
+    .q-send-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      font-size: 8.5px;
+      font-weight: 900;
+      padding: 2px 3px;
+      cursor: pointer;
+    }
+    .q-send-btn:hover:not(:disabled) {
+      background: #f59e0b;
+      color: #0f172a;
+      border-color: #fde047;
+    }
+    .q-send-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    /* 6-STATION DEPARTMENT STAR QUICK-BUTTONS */
+    .dept-stars-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 3px;
+      margin-top: 5px;
+    }
+    .dept-star-btn {
+      background: #162032;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      border-radius: 4px;
+      padding: 2px 0;
+      font-size: 9px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+    }
+    .dept-star-btn.starred {
+      background: #450a0a;
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    /* =====================================================================
+       6 NPC MINI-BOARDS (I–VI) & 4-LANE TETHER TRACKS SECTION
+       ===================================================================== */
+    .npc-section-wrap {
+      background: #0f172a;
+      border: 2px solid #475569;
+      border-radius: 12px;
+      padding: 9px 11px;
+      margin-bottom: 12px;
+    }
+    .npc-section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #334155;
+    }
+    .npcs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 1350px) {
+      .npcs-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 820px) {
+      .npcs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .npc-card {
+      background: #151d2a;
+      border: 1.5px solid #334155;
+      border-radius: 9px;
+      padding: 7px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .npc-card.deployed-npc {
+      border-color: #f59e0b;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+    }
+    .npc-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .npc-roman-badge {
+      background: #fde047;
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 5px;
+      border: 1.5px solid #000;
+    }
+    .npc-deploy-bar {
+      background: #0b0f17;
+      border: 1px solid #263248;
+      border-radius: 6px;
+      padding: 4px 6px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      font-size: 10px;
+    }
+    .tether-lanes-box {
+      background: #0b0f17;
+      border: 1px solid #263248;
+      border-radius: 6px;
+      padding: 4px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .tether-lane-row {
+      display: grid;
+      grid-template-columns: 54px repeat(6, 1fr);
+      gap: 3px;
+      align-items: center;
+    }
+    .tether-cell {
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid #334155;
+      background: #162032;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8.5px;
+      font-weight: 900;
+      color: #64748b;
+      position: relative;
+      cursor: pointer;
+    }
+    .tether-cell.honey-spot {
+      border-color: #f59e0b;
+    }
+    .tether-cell.climax-spot {
+      border-color: #ef4444;
+    }
+    .tether-cell.chit-red {
+      background: #991b1b;
+      border-color: #f87171;
+      color: #fff;
+    }
+    .tether-cell.chit-orange {
+      background: #9a3412;
+      border-color: #fb923c;
+      color: #fff;
+    }
+    .tether-cell.chit-yellow {
+      background: #854d0e;
+      border-color: #fde047;
+      color: #fef08a;
+    }
+    .heart-limit-pin {
+      position: absolute;
+      top: -6px;
+      right: -3px;
+      font-size: 9px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 2px #000);
+    }
+
+    /* ALL 6 STATIONS GRID (3x2) */
+    .stations-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 1400px) {
+      .stations-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 900px) {
+      .stations-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .station-card {
+      background: var(--panel-bg);
+      border: 2px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .station-card.legal-highlight {
+      border-color: #22c55e;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.28);
+    }
+    .station-card.empty-warning {
+      border-color: #ef4444;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+    }
+    .station-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    /* FLAG BROWSER BAR INSIDE EACH STATION CARD */
+    .flag-browser-bar {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      padding: 5px 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .flag-browser-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: #cbd5e1;
+    }
+    .flag-tabs-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .flag-tab-btn {
+      flex: 1;
+      min-width: 54px;
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1.5px solid #334155;
+      border-radius: 5px;
+      padding: 3px 5px;
+      font-size: 9.5px;
+      font-weight: 900;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.12s ease;
+    }
+    .flag-tab-btn:hover {
+      border-color: #94a3b8;
+      color: #fff;
+    }
+    .flag-tab-btn.live-flag {
+      background: #065f46;
+      color: #ecfdf5;
+      border-color: #10b981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+    }
+    .flag-tab-btn.preview-flag {
+      background: #78350f;
+      color: #fef3c7;
+      border-color: #f59e0b;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
+    }
+
+    .station-local-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .st-mini-btn {
+      flex: 1;
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+      padding: 4px 5px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+    }
+    .st-mini-btn:hover {
+      border-color: #94a3b8;
+      color: #fff;
+    }
+    .st-mini-btn.active {
+      background: #f59e0b;
+      color: #0f172a;
+      border-color: #fde047;
+    }
+    .st-mini-btn.step-ready {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #93c5fd;
+    }
+    .st-mini-btn.done {
+      background: #064e3b;
+      color: #a7f3d0;
+      border-color: #10b981;
+    }
+    .turn-move-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 9.5px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .turn-move-btn:hover {
+      background: #f59e0b;
+      color: #0f172a;
+    }
+
+    .deploy-here-btn {
+      width: 100%;
+      background: rgba(34, 197, 94, 0.18);
+      border: 2px dashed #22c55e;
+      color: #86efac;
+      padding: 6px;
+      border-radius: 7px;
+      font-weight: 900;
+      font-size: 11.5px;
+      cursor: pointer;
+    }
+    .deploy-here-btn:hover {
+      background: rgba(34, 197, 94, 0.32);
+      color: #fff;
+    }
+
+    /* QUICK CUBE & STAR ADJUSTER INSIDE EACH STATION */
+    .cube-adjuster {
+      background: #0f172a;
+      border: 1px solid #263248;
+      border-radius: 7px;
+      padding: 5px 7px;
+      font-size: 10px;
+    }
+    .cube-adj-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .cube-adj-item {
+      background: #162032;
+      border: 1px solid #2c3e5a;
+      border-radius: 5px;
+      padding: 3px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .svg-wrap {
+      background: #f5f0e6;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      padding: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>🚩 Full 6-Station Flag-Pole, 6 NPCs (I–VI Face-Up), 4-Lane Tether Tracks &amp; On-Call Studio</h1>
+      <p><strong>Pure Energy Mode (No Buoyancy!)</strong> • Players place <strong>4 Face-Down Batteries + 1 Optional Face-Up NPC (I–VI)</strong> • <strong>❤️ Red / 🧡 Orange / 💛 Yellow</strong> Tether Chits (1–6) • <strong>🖤 Corpse Heart = +$2 Overtime</strong> &amp; Keep Best 2 Hearts!</p>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+      <label style="font-size:11px; font-weight:800; color:#fde047; background:#292524; border:1px solid #fbbf24; padding:4px 8px; border-radius:6px; display:flex; align-items:center; gap:5px; cursor:pointer;"
+             title="Player discs deploy Face-Down (?) and flip at Step 3 (Energy). NPCs (I-VI) ALWAYS go Face-Up in the stack so everyone sees their battery!">
+        <input type="checkbox" id="chkFaceDownDeploy" checked onchange="renderAll()" />
+        <span>🕵️ Players Face-Down / NPCs Face-Up</span>
+      </label>
+
+      <label style="font-size:11px; font-weight:800; color:#86efac; background:#064e3b; border:1px solid #10b981; padding:4px 8px; border-radius:6px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+        <input type="checkbox" id="chkNoSelfStack" checked onchange="renderAll()" />
+        <span>🔒 Max 1 Player Battery / Station (NPCs Exempt)</span>
+      </label>
+
+      <label style="font-size:11px; font-weight:800; color:#38bdf8; display:flex; align-items:center; gap:4px;">
+        <span>$kill Track:</span>
+        <select id="selSkillLength" onchange="onChangeSkillLength()" style="background:#1e293b; color:#fff; border:1px solid #38bdf8; border-radius:5px; padding:3px 6px; font-weight:800; font-size:11px;">
+          <option value="3" selected>3 Boxes (Box 1 ➔ Box 2 ➔ Box 3★)</option>
+          <option value="2">2 Boxes (Box 1 ➔ Box 2★)</option>
+        </select>
+      </label>
+
+      <label style="font-size:11px; font-weight:800; color:#c084fc; display:flex; align-items:center; gap:4px;">
+        <span>Payout Mode:</span>
+        <select id="selPayoutFormula" onchange="renderAll()" style="background:#1e293b; color:#fff; border:1px solid #c084fc; border-radius:5px; padding:3px 6px; font-weight:800; font-size:11px;">
+          <option value="flag_strips" selected>🚩 Flag-Pole Strips &amp; Demand Placards</option>
+          <option value="circle_number">Static Numbered Circles (#1=+1 .. #5=+5)</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <!-- DEDICATED TURN ORDER & ON-CALL (4-3-3-2) SETUP BAR -->
+  <div class="setup-bar" id="setupBar"></div>
+
+  <!-- GLOBAL STEP-BY-STEP (PURE ENERGY — NO BUOYANCY STEP!) -->
+  <div class="stage-bar">
+    <!-- 4-CYCLE TRACKER PILLS -->
+    <div id="cyclePillsBar" style="display:flex; align-items:center; gap:4px; background:#0f172a; padding:4px 8px; border-radius:8px; border:1px solid #334155;"></div>
+
+    <span style="color:#475569; font-weight:900;">|</span>
+
+    <button class="stage-btn" id="btnGlobal1" onclick="setAllStationsStage(1)">
+      <span>1️⃣</span>
+      <span>Deploy (4 Bats + Optional NPC)</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnGlobal2" onclick="triggerSetFlagsWithCallInCheck()" title="Checks for any empty stations (0 workers -> -2 Token + On-Call Redeploy while face-down!), then locks in Flag-Pole Strips!">
+      <span>2️⃣</span>
+      <span>Call-In Check &amp; Set Flags</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnGlobal4" onclick="setAllStationsStage(4)" title="Pure Energy Rule: Flip player batteries face-up and sort by Energy (4/4 White > 3/4 Yellow > 1/4 Orange > 0/4 Red, Party Guy V on Top)!">
+      <span>3️⃣</span>
+      <span>Energy (Flip &amp; Sort Batteries)</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <!-- COMBINED PROGRESSIVE BUTTON: 1ST CLICK = CALCULATE RESULTS, 2ND CLICK = MOVE CUBES & PAY, 3RD CLICK = START NEXT CYCLE! -->
+    <button class="stage-btn" id="btnGlobalCalcMove" onclick="triggerGlobalCalcOrMove()">
+      <span id="btnGlobalCalcMoveIcon">4️⃣</span>
+      <span id="btnGlobalCalcMoveText">Calculate Results (Click 1/3)</span>
+    </button>
+
+    <div style="flex:1;"></div>
+
+    <button class="stage-btn util" onclick="undoLastDeployment()" title="Undo last placed battery or NPC">
+      <span>↩️</span>
+      <span>Undo Last</span>
+    </button>
+    <button class="stage-btn util" id="btnNextCycleKeepCubes" onclick="startNextShiftKeepCubes()" title="Commit moved cubes, stars, consolidated 2 hearts, cash & sliding Heart markers and start the next cycle!">
+      <span>⏭️</span>
+      <span id="btnNextCycleKeepCubesText">End Cycle 1 ➔ Start Cycle 2/4 (Keep Cubes)</span>
+    </button>
+    <button class="stage-btn reset" onclick="resetEntireLab()">
+      <span>⟲</span>
+      <span>Full Reset (Cycle 1)</span>
+    </button>
+  </div>
+
+  <!-- EMERGENCY ON-CALL REDEPLOYMENT BANNER (SHOWS WHEN ANY STATION HAS 0 WORKERS!) -->
+  <div id="callInBannerContainer"></div>
+
+  <!-- TURN & HARVEST FLAG FORECAST BANNER -->
+  <div class="turn-banner" id="turnBanner"></div>
+
+  <!-- 4 PLAYERS & THEIR 4-BATTERY CIRCADIAN RHYTHM BOARDS -->
+  <div class="players-grid" id="playersGrid"></div>
+
+  <!-- 6 NPC MINI-BOARDS (I–VI) WITH 4 PLAYER TETHER LANES (1–6, RED / ORANGE / YELLOW CHITS & SLIDING ❤️ LIMIT) -->
+  <div class="npc-section-wrap" id="npcSectionWrap"></div>
+
+  <!-- ALL 6 STATIONS GRID (3x2) -->
+  <div class="stations-grid" id="stationsGrid"></div>
+
+  <script>
+    // =========================================================================
+    // 1. CONSTANTS: BATTERIES, PLAYERS, 6 NPCs (I–VI), TETHER CHITS & 6 STATIONS
+    // =========================================================================
+    const BATTERY_TYPES = {
+      white_4:  { id: 'white_4',  label: 'Full (4/4 White)',  short: '4/4 W', rank: 4, fill: '#FFFFFF', bars: 4, textColor: '#0f172a' },
+      yellow_3: { id: 'yellow_3', label: 'High (3/4 Yellow)', short: '3/4 Y', rank: 3, fill: '#FFFF00', bars: 3, textColor: '#0f172a' },
+      orange_1: { id: 'orange_1', label: 'Low (1/4 Orange)',  short: '1/4 O', rank: 2, fill: '#FF7F00', bars: 1, textColor: '#ffffff' },
+      red_0:    { id: 'red_0',    label: 'Empty (0/4 Red)',   short: '0/4 R', rank: 1, fill: '#CC0000', bars: 0, textColor: '#ffffff' }
+    };
+
+    const CIRCADIAN_PROFILES = {
+      morning_lark: {
+        id: 'morning_lark',
+        name: 'Morning Lark (1:W ➔ 2:Y ➔ 3:O ➔ 4:R)',
+        slots: ['white_4', 'yellow_3', 'orange_1', 'red_0']
+      },
+      midday_peak: {
+        id: 'midday_peak',
+        name: 'Mid-Day Peak (1:Y ➔ 2:W ➔ 3:O ➔ 4:R)',
+        slots: ['yellow_3', 'white_4', 'orange_1', 'red_0']
+      },
+      night_owl: {
+        id: 'night_owl',
+        name: 'Night Owl (1:R ➔ 2:O ➔ 3:Y ➔ 4:W)',
+        slots: ['red_0', 'orange_1', 'yellow_3', 'white_4']
+      },
+      second_wind: {
+        id: 'second_wind',
+        name: 'Second Wind (1:W ➔ 2:R ➔ 3:O ➔ 4:Y)',
+        slots: ['white_4', 'red_0', 'orange_1', 'yellow_3']
+      }
+    };
+
+    // MOE'S 6 UNIQUE NPCs (LABELED I TO VI, PLACED FACE-UP IN STACK!)
+    const NPC_DEFS = [
+      {
+        id: 'npc_1',
+        roman: 'I',
+        name: 'NPC I: 🎯 Turn-Order Guy',
+        short: 'NPC I (Turn Order)',
+        roleDesc: 'Choose Turn Order! Fixed 0/4 Red Battery (sinks to bottom & pushes everyone up 1 circle).',
+        fixedBattery: 'red_0',
+        defaultBattery: 'red_0',
+        tetherSteps: 1,
+        changesFlagCount: true
+      },
+      {
+        id: 'npc_2',
+        roman: 'II',
+        name: 'NPC II: ⬆️ The Booster (+1 Above)',
+        short: 'NPC II (+1 Above)',
+        roleDesc: 'Pick any battery (W/Y/O/R). Gives +1 to the Flag number of the worker directly ABOVE him!',
+        fixedBattery: null,
+        defaultBattery: 'yellow_3',
+        tetherSteps: 1,
+        changesFlagCount: true
+      },
+      {
+        id: 'npc_3',
+        roman: 'III',
+        name: 'NPC III: 🎓 The Trainer (★ +1 $kill)',
+        short: 'NPC III (Trainer ★)',
+        roleDesc: 'Pick any battery (W/Y/O/R). Trains you for +1 $kill in the station where you place him!',
+        fixedBattery: null,
+        defaultBattery: 'yellow_3',
+        tetherSteps: 1,
+        changesFlagCount: true
+      },
+      {
+        id: 'npc_4',
+        roman: 'IV',
+        name: 'NPC IV: ❤️ Relief Worker (+1 Full ❤️)',
+        short: 'NPC IV (Relief ❤️)',
+        roleDesc: 'Pick any battery (W/Y/O/R). Gives you +1 Full Heart ❤️ immediately (burn the candle at both ends for +$2 🖤 overtime!).',
+        fixedBattery: null,
+        defaultBattery: 'orange_1',
+        tetherSteps: 1,
+        changesFlagCount: true
+      },
+      {
+        id: 'npc_5',
+        roman: 'V',
+        name: 'NPC V: 🎉 The Party Guy (Top Boost!)',
+        short: 'NPC V (Party Top!)',
+        roleDesc: 'Gives your worker in that station an Energy Drink boost straight to the #1 TOP of the stack regardless of battery! Does NOT change Flag!',
+        fixedBattery: 'white_4',
+        defaultBattery: 'white_4',
+        tetherSteps: 1,
+        changesFlagCount: false
+      },
+      {
+        id: 'npc_6',
+        roman: 'VI',
+        name: 'NPC VI: 💵 Clingy Worker (+$3, +2 Tether)',
+        short: 'NPC VI (Clingy +$3)',
+        roleDesc: 'Pick any battery (W/Y/O/R). Gives you +$3 Cash directly on your Paycheck, AND jumps +2 spaces on their Tether Track!',
+        fixedBattery: null,
+        defaultBattery: 'orange_1',
+        tetherSteps: 2,
+        changesFlagCount: true
+      }
+    ];
+
+    // MOE'S 3-COLOR TETHER TRACK CHITS (RED = CRUSH/AFFAIR, ORANGE = FRIEND, YELLOW = ACQUAINTANCE/USER) Across Levels 1 to 6
+    const TETHER_LEVEL_CHITS = {
+      red: {
+        colorName: '❤️ Red (Crush)',
+        cssClass: 'chit-red',
+        levels: {
+          1: { title: '❤️ L1: Flirty Spark', story: 'Looks like somebody has a little work crush on you — laughed way too hard at your joke.', cash: 0, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          2: { title: '❤️ L2: Trying to Impress You', story: 'Busts their ass to make you look good (+1 $weat in station).', cash: 0, skill: 0, sweat: 1, flagMod: 0, heartEffect: null },
+          3: { title: '❤️ L3 (🍯): Parking Lot Hangout', story: '2-hour talk by your truck after shift (+1 $kill, downgrades 1 ❤️ ➔ 💔).', cash: 0, skill: 1, sweat: 0, flagMod: 0, heartEffect: 'downgrade_1' },
+          4: { title: '❤️ L4: Texting at Dinner', story: 'Blowing up your phone at the family table (+$1 check, 1 Heart ➔ 🖤 Corpse).', cash: 1, skill: 0, sweat: 0, flagMod: 0, heartEffect: 'corpse_1' },
+          5: { title: '❤️ L5: Secret Gifts & Rumors', story: 'Everyone by the stills is whispering (+1 $kill, -$2 check, 1 Heart ➔ 💔).', cash: -2, skill: 1, sweat: 0, flagMod: 0, heartEffect: 'downgrade_1' },
+          6: { title: '🚨 ❤️ L6: FULL-BLOWN AFFAIR!', story: 'Time to tell your wife! You get 2 Corpse Hearts (🖤🖤) this round!', cash: 0, skill: 0, sweat: 0, flagMod: 0, heartEffect: 'affair_2_corpse' }
+        }
+      },
+      orange: {
+        colorName: '🧡 Orange (Friend)',
+        cssClass: 'chit-orange',
+        levels: {
+          1: { title: '🧡 L1: New Work Friend', story: 'Saved you a seat at the break table and brought you a cafecito.', cash: 0, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          2: { title: '🧡 L2: Got Your Back', story: 'Covers your tasks while you catch a breather (+$1 on Paycheck).', cash: 1, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          3: { title: '🧡 L3 (🍯): Personal Emergency!', story: '"Hey friend, my car broke down — can I borrow $2?" (-$2 from Paycheck).', cash: -2, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          4: { title: '🧡 L4: Paying You Back', story: '"Thanks for spotting me — let me do the heavy lifting!" (+2 $weat).', cash: 0, skill: 0, sweat: 2, flagMod: 0, heartEffect: null },
+          5: { title: '🧡 L5: Help Me Move Tonight!', story: '"I need your truck after work, bestie!" (+1 $kill, downgrades 1 ❤️ ➔ 💔).', cash: 0, skill: 1, sweat: 0, flagMod: 0, heartEffect: 'downgrade_1' },
+          6: { title: '🚨 🧡 L6: BESTIE OBLIGATION!', story: 'Obligated to spend your Hearts hanging out with them all night after work!', cash: 0, skill: 0, sweat: 0, flagMod: 0, heartEffect: 'friend_obligated_hearts' }
+        }
+      },
+      yellow: {
+        colorName: '💛 Yellow (User)',
+        cssClass: 'chit-yellow',
+        levels: {
+          1: { title: '💛 L1: Strictly Business', story: 'Polite but guarded — "Just tell me what you need done so I can clock out."', cash: 0, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          2: { title: '💛 L2: Keeping Score', story: '"You only talk to me when you need something." (-$1 buying them coffee).', cash: -1, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          3: { title: '💛 L3 (🍯): Dragging Their Feet', story: 'Passive-aggressive slowdown on your shift (-1 to your Flag number).', cash: 0, skill: 0, sweat: 0, flagMod: -1, heartEffect: null },
+          4: { title: '💛 L4: Talking Behind Your Back', story: 'Complaining to the crew that you treat them like a mule (-$2 from Paycheck).', cash: -2, skill: 0, sweat: 0, flagMod: 0, heartEffect: null },
+          5: { title: '💛 L5: Shouting Match on Floor', story: 'Tempers flare in front of the crew (-1 Flag number & 1 Heart ➔ 🖤 Corpse).', cash: 0, skill: 0, sweat: 0, flagMod: -1, heartEffect: 'corpse_1' },
+          6: { title: '🚨 💛 L6: WORKPLACE FIGHT!', story: 'Blow-up fight! You are NOT allowed to use Battery #4 next round!', cash: 0, skill: 0, sweat: 0, flagMod: 0, heartEffect: 'fight_lose_battery' }
+        }
+      }
+    };
+
+    // MOE'S CANONICAL 6 STATION NAMES
+    const ALL_STATION_DEFS = [
+      { id: 1, name: 'Station 1: Harvest Agave',     short: 'S1 Harvest', zone: 'Front of House (Sets Agave Supply)', headerBg: '#15803d', headerBorder: '#052e16' },
+      { id: 2, name: 'Station 2: Cook Agave',        short: 'S2 Cook',    zone: 'Front of House (vs Harvest)',        headerBg: '#7e22ce', headerBorder: '#3b0764' },
+      { id: 3, name: 'Station 3: Mill Agave',        short: 'S3 Mill',    zone: 'Front of House (vs Harvest)',        headerBg: '#1d4ed8', headerBorder: '#172554' },
+      { id: 4, name: 'Station 4: Ferment & Distill', short: 'S4 Ferment', zone: 'Front of House (vs Harvest)',        headerBg: '#c2410c', headerBorder: '#431407' },
+      { id: 5, name: 'Station 5: Age in Barrels',    short: 'S5 Barrels', zone: 'Back of House (Fixed Par = 3)',      headerBg: '#78350f', headerBorder: '#291002' },
+      { id: 6, name: 'Station 6: Bottle & Label',    short: 'S6 Bottle',  zone: 'Back of House (Fixed Par = 2)',      headerBg: '#0f172a', headerBorder: '#000000' }
+    ];
+
+    // MOE'S EXACT FLAG-POLE STRIPS & DEMAND PLACARDS
+    const STATION_FLAGS = {
+      1: [
+        {
+          id: 'h1',
+          tabLabel: '1W: [3]',
+          placardTitle: '🚩 1 HARVESTER FLAG (100 Tons ➔ 1 Agave)',
+          placardStory: 'Solo Jimador in the field (+3). Sends 1 Agave to Cook, Mill & Ferment.',
+          poleBottomToTop: [3, null, null, null, null],
+          bannerFill: '#fef3c7',
+          bannerStroke: '#d97706'
+        },
+        {
+          id: 'h2',
+          tabLabel: '2W: [3,2]',
+          placardTitle: '🚩 2 HARVESTERS FLAG (200 Tons ➔ 2 Agaves)',
+          placardStory: '2 Jimadores (+3 Top, +2 Bottom). Sends 2 Agaves to Cook, Mill & Ferment.',
+          poleBottomToTop: [2, 3, null, null, null],
+          bannerFill: '#dcfce7',
+          bannerStroke: '#16a34a'
+        },
+        {
+          id: 'h3',
+          tabLabel: '3W: [3,3,2]',
+          placardTitle: '🚩 3 HARVESTERS FLAG (300 Tons ➔ 3 Agaves)',
+          placardStory: '3 Jimadores (+3, +3, +2). Sends 3 Agaves to Cook, Mill & Ferment.',
+          poleBottomToTop: [2, 3, 3, null, null],
+          bannerFill: '#bbf7d0',
+          bannerStroke: '#15803d'
+        },
+        {
+          id: 'h4',
+          tabLabel: '4W: [3,2,2,1] (+$1 Bottle)',
+          placardTitle: '🚩 4 HARVESTERS FLAG (4 Agaves ➔ +$1 BOTTLING RUSH!)',
+          placardStory: '4 Agaves (1 Añejo, 1 Repo, +1 extra)! Everyone in S6 Bottling gets +$1 Rush Pay!',
+          poleBottomToTop: [1, 2, 2, 3, null],
+          bannerFill: '#86efac',
+          bannerStroke: '#166534'
+        },
+        {
+          id: 'h5',
+          tabLabel: '5W: [4,3,2,1,1] (+$2 Bottle)',
+          placardTitle: '🚩 5 HARVESTERS FLAG (5 Agaves ➔ +$2 BOTTLING RUSH!)',
+          placardStory: '5 Agaves (1 Añejo, 1 Repo, +2 extra)! Everyone in S6 Bottling gets +$2 Rush Pay!',
+          poleBottomToTop: [1, 1, 2, 3, 4],
+          bannerFill: '#4ade80',
+          bannerStroke: '#14532d'
+        }
+      ],
+      2: [
+        {
+          id: 'c_surplus',
+          tabLabel: '🔥 Surplus (W<A): [6..2]',
+          placardTitle: '🔥 SURPLUS AGAVE PLACARD (Workers < Harvest)',
+          placardStory: 'More piñas than oven crew! Huge workload pays [6, 5, 4, 3, 2] Top-to-Bottom!',
+          poleBottomToTop: [2, 3, 4, 5, 6],
+          bannerFill: '#ffedd5',
+          bannerStroke: '#ea580c'
+        },
+        {
+          id: 'c_equal',
+          tabLabel: '⚖️ Equal (W=A): [5..1]',
+          placardTitle: '⚖️ EQUAL / ON-DEMAND PLACARD (Workers = Harvest)',
+          placardStory: 'Ovens matched to Harvest supply. Standard [5, 4, 3, 2, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 2, 3, 4, 5],
+          bannerFill: '#e0f2fe',
+          bannerStroke: '#0284c7'
+        },
+        {
+          id: 'c_deficit',
+          tabLabel: '💤 Deficit (W>A): [4..1,1]',
+          placardTitle: '💤 DEFICIT AGAVE PLACARD (Workers > Harvest)',
+          placardStory: 'Too many cooks for today\'s piñas! Reduced [4, 3, 2, 1, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 1, 2, 3, 4],
+          bannerFill: '#f1f5f9',
+          bannerStroke: '#64748b'
+        }
+      ],
+      3: [
+        {
+          id: 'm_surplus',
+          tabLabel: '🔥 Surplus (W<A): [6..2]',
+          placardTitle: '🔥 SURPLUS AGAVE PLACARD (Workers < Harvest)',
+          placardStory: 'Tahona & mill flooded with roasted piñas! Pays [6, 5, 4, 3, 2] Top-to-Bottom!',
+          poleBottomToTop: [2, 3, 4, 5, 6],
+          bannerFill: '#ffedd5',
+          bannerStroke: '#ea580c'
+        },
+        {
+          id: 'm_equal',
+          tabLabel: '⚖️ Equal (W=A): [5..1]',
+          placardTitle: '⚖️ EQUAL / ON-DEMAND PLACARD (Workers = Harvest)',
+          placardStory: 'Mill crew matched to Harvest wave. Standard [5, 4, 3, 2, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 2, 3, 4, 5],
+          bannerFill: '#e0f2fe',
+          bannerStroke: '#0284c7'
+        },
+        {
+          id: 'm_deficit',
+          tabLabel: '💤 Deficit (W>A): [4..1,1]',
+          placardTitle: '💤 DEFICIT AGAVE PLACARD (Workers > Harvest)',
+          placardStory: 'Not enough roasted agave for this crew! Reduced [4, 3, 2, 1, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 1, 2, 3, 4],
+          bannerFill: '#f1f5f9',
+          bannerStroke: '#64748b'
+        }
+      ],
+      4: [
+        {
+          id: 'f_surplus',
+          tabLabel: '🔥 Surplus (W<A): [6..2]',
+          placardTitle: '🔥 SURPLUS MOSTO PLACARD (Workers < Harvest)',
+          placardStory: 'Fermentation tanks & stills overflowing! Pays [6, 5, 4, 3, 2] Top-to-Bottom!',
+          poleBottomToTop: [2, 3, 4, 5, 6],
+          bannerFill: '#ffedd5',
+          bannerStroke: '#ea580c'
+        },
+        {
+          id: 'f_equal',
+          tabLabel: '⚖️ Equal (W=A): [5..1]',
+          placardTitle: '⚖️ EQUAL / ON-DEMAND PLACARD (Workers = Harvest)',
+          placardStory: 'Stills matched to Harvest wave. Standard [5, 4, 3, 2, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 2, 3, 4, 5],
+          bannerFill: '#e0f2fe',
+          bannerStroke: '#0284c7'
+        },
+        {
+          id: 'f_deficit',
+          tabLabel: '💤 Deficit (W>A): [4..1,1]',
+          placardTitle: '💤 DEFICIT MOSTO PLACARD (Workers > Harvest)',
+          placardStory: 'Too many distillers waiting on mash! Reduced [4, 3, 2, 1, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 1, 2, 3, 4],
+          bannerFill: '#f1f5f9',
+          bannerStroke: '#64748b'
+        }
+      ],
+      5: [
+        {
+          id: 'b_short',
+          tabLabel: '🔥 <3W: [3,3]',
+          placardTitle: '🔥 BARRELS SHORT-HANDED (<3 Workers for 3 Jobs)',
+          placardStory: 'Blanco, Reposado & Añejo cellar under-crewed! Bottom two boxes pay [3, 3]!',
+          poleBottomToTop: [3, 3, null, null, null],
+          bannerFill: '#fef3c7',
+          bannerStroke: '#d97706'
+        },
+        {
+          id: 'b_par',
+          tabLabel: '⚖️ 3W (Par): [3,2,1]',
+          placardTitle: '⚖️ BARRELS ON-PAR (3 Workers = 1 Per Expression)',
+          placardStory: '1 Blanco, 1 Reposado, 1 Añejo barrel job. Pays [3, 2, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 2, 3, null, null],
+          bannerFill: '#dcfce7',
+          bannerStroke: '#16a34a'
+        },
+        {
+          id: 'b_over',
+          tabLabel: '💤 4+W: [2,2,2,1,1]',
+          placardTitle: '💤 BARRELS OVER-CREWED (4+ Workers in Cellar)',
+          placardStory: 'Crowded barrel cellar! Pays [2, 2, 2, 1, 1] Top-to-Bottom.',
+          poleBottomToTop: [1, 1, 2, 2, 2],
+          bannerFill: '#f1f5f9',
+          bannerStroke: '#64748b'
+        }
+      ],
+      6: [
+        {
+          id: 'bt_solo',
+          tabLabel: '🔥 1W: [3]',
+          placardTitle: '🔥 SOLO BOTTLER FLAG (1 Worker Running Line)',
+          placardStory: 'Running the bottling & labeling line solo! Bottom box pays [3].',
+          poleBottomToTop: [3, null, null, null, null],
+          bannerFill: '#fef3c7',
+          bannerStroke: '#d97706'
+        },
+        {
+          id: 'bt_par',
+          tabLabel: '⚖️ 2W (Par): [2,2]',
+          placardTitle: '⚖️ BOTTLING ON-PAR (2 Workers on the Line)',
+          placardStory: 'Balanced 2-person bottling line. Both boxes pay [2, 2]!',
+          poleBottomToTop: [2, 2, null, null, null],
+          bannerFill: '#dcfce7',
+          bannerStroke: '#16a34a'
+        },
+        {
+          id: 'bt_allhands',
+          tabLabel: '🎉 3+W: [2,2,2,1,1] + ALL ❤️!',
+          placardTitle: '🎉 BOTTLING ALL-HANDS (3+ Workers = Early 5PM ❤️!)',
+          placardStory: 'Pays [2, 2, 2, 1, 1] AND everyone in Station 6 leaves early at 5PM with a Full Heart ❤️!',
+          poleBottomToTop: [1, 1, 2, 2, 2],
+          bannerFill: '#fae8ff',
+          bannerStroke: '#a855f7'
+        }
+      ]
+    };
+
+    // MOE'S CANONICAL 4 FRIENDS & FAVORITE COLORS: GREEN (Lyndon), BLUE (Sarah), YELLOW (Moe), PURPLE (Brian) — NEVER RED!
+    const PLAYER_DEFS = [
+      { id: 'green',  turnOrder: 1, name: 'Lyndon (Green)',  shortName: 'Lyndon', hex: '#22c55e', cubeTop: '#86efac', cubeLeft: '#22c55e', cubeRight: '#15803d', defaultProfile: 'morning_lark' },
+      { id: 'blue',   turnOrder: 2, name: 'Sarah (Blue)',    shortName: 'Sarah',  hex: '#3b82f6', cubeTop: '#93c5fd', cubeLeft: '#3b82f6', cubeRight: '#1e40af', defaultProfile: 'midday_peak' },
+      { id: 'yellow', turnOrder: 3, name: 'Moe (Yellow)',    shortName: 'Moe',    hex: '#eab308', cubeTop: '#fef08a', cubeLeft: '#eab308', cubeRight: '#854d0e', defaultProfile: 'night_owl' },
+      { id: 'purple', turnOrder: 4, name: 'Brian (Purple)',  shortName: 'Brian',  hex: '#a855f7', cubeTop: '#d8b4fe', cubeLeft: '#a855f7', cubeRight: '#581c87', defaultProfile: 'second_wind' }
+    ];
+
+    // =========================================================================
+    // 2. SHIFT LEGALITY MATRIX (MOE'S LOCKED 2-2-3-3-2-2 RULE — DO NOT ALTER!)
+    //    Battery #1 ➔ Stations 1, 2, 3
+    //    Battery #2 ➔ Stations 1, 2, 3, 4
+    //    Battery #3 ➔ Stations 3, 4, 5, 6
+    //    Battery #4 ➔ Stations 4, 5, 6
+    //    (Station Accepted Bats: S1:[1,2], S2:[1,2], S3:[1,2,3], S4:[2,3,4], S5:[3,4], S6:[3,4])
+    // =========================================================================
+    function getAllowedStationsForSlot(slotNum) {
+      if (slotNum === 1) return [1, 2, 3];
+      if (slotNum === 2) return [1, 2, 3, 4];
+      if (slotNum === 3) return [3, 4, 5, 6];
+      return [4, 5, 6];
+    }
+
+    function getAcceptedSlotsForStation(stationId) {
+      const slots = [];
+      for (let s = 1; s <= 4; s++) {
+        if (getAllowedStationsForSlot(s).includes(stationId)) {
+          slots.push(s);
+        }
+      }
+      return slots;
+    }
+
+    function getSkillMaxBox() {
+      const sel = document.getElementById('selSkillLength');
+      return sel ? Number(sel.value) : 3;
+    }
+
+    function canSendBatteryToStation(playerId, slotNum, stationId) {
+      const p = playersState[playerId];
+      if (slotNum === 4 && p.lostBatteryNextRound) {
+        return { ok: false, reason: `${p.shortName} lost Battery #4 this round from a Level 6 Yellow Workplace Fight!` };
+      }
+      const allowed = getAllowedStationsForSlot(slotNum);
+      if (!allowed.includes(stationId)) {
+        return { ok: false, reason: `Battery #${slotNum} can only enter Stations ${allowed.join(', ')}` };
+      }
+      const st = stationsState[stationId];
+      const physicalDiscsCount = st.deployments.filter(d => !d.isPartyBoost).length;
+      if (physicalDiscsCount >= 5) {
+        return { ok: false, reason: `Station ${stationId} already has 5 discs` };
+      }
+      const noSelfStack = document.getElementById('chkNoSelfStack')?.checked ?? true;
+      if (noSelfStack && st.deployments.some(d => !d.isNpc && d.playerId === playerId)) {
+        return { ok: false, reason: `${playersState[playerId].shortName} already has a player battery in Station ${stationId}` };
+      }
+      return { ok: true, reason: '' };
+    }
+
+    // =========================================================================
+    // 3. LIVE STATE, 8 ON-CALL CHITS, 6 NPCs, TETHER TRACKS & PERSISTENCE
+    // =========================================================================
+    const STORAGE_KEY = 'tequila_6station_npc_tether_v5_green';
+    let currentCycle = 1;
+    let cycleSnapshots = {};
+    let playersState = {};
+    let stationsState = {};
+    let npcsState = {};
+    let deploymentHistory = [];
+    let selectedDisc = null;
+    let deploySeqCounter = 1;
+    let manualHumanPlayers = new Set();
+    let peekedStationDiscs = new Set();
+    let activeNpcDraftPlayerId = 'green';
+
+    function generateValidOnCallDeal() {
+      const playerIds = PLAYER_DEFS.map(p => p.id);
+      for (let attempt = 0; attempt < 200; attempt++) {
+        const shuffledForS1 = [...playerIds].sort(() => Math.random() - 0.5);
+        const s1Players = [shuffledForS1[0], shuffledForS1[1]];
+        const shuffledForS5 = [...playerIds].sort(() => Math.random() - 0.5);
+        const s5Players = [shuffledForS5[0], shuffledForS5[1]];
+
+        const remainingPool = [];
+        playerIds.forEach(pid => {
+          let countUsed = 0;
+          if (s1Players.includes(pid)) countUsed++;
+          if (s5Players.includes(pid)) countUsed++;
+          for (let k = countUsed; k < 2; k++) {
+            remainingPool.push(pid);
+          }
+        });
+
+        if (remainingPool.length === 4) {
+          const shuffledRem = [...remainingPool].sort(() => Math.random() - 0.5);
+          const mapByStation = {
+            1: s1Players,
+            2: [shuffledRem[0]],
+            3: [shuffledRem[1]],
+            4: [shuffledRem[2]],
+            5: s5Players,
+            6: [shuffledRem[3]]
+          };
+          const playerStations = { green: [], blue: [], yellow: [], purple: [] };
+          [1, 2, 3, 4, 5, 6].forEach(stId => {
+            mapByStation[stId].forEach(pid => {
+              playerStations[pid].push(stId);
+            });
+          });
+          const valid = playerIds.every(pid => playerStations[pid].length === 2 && playerStations[pid][0] !== playerStations[pid][1]);
+          if (valid) {
+            return { mapByStation, playerStations };
+          }
+        }
+      }
+      return {
+        mapByStation: {
+          1: ['green', 'blue'],
+          2: ['yellow'],
+          3: ['purple'],
+          4: ['green'],
+          5: ['yellow', 'purple'],
+          6: ['blue']
+        },
+        playerStations: {
+          green: [1, 4],
+          blue: [1, 6],
+          yellow: [2, 5],
+          purple: [3, 5]
+        }
+      };
+    }
+
+    function getStartingPointsForTurnOrder(turnOrder) {
+      if (turnOrder === 4) return 4;
+      if (turnOrder === 3) return 3;
+      if (turnOrder === 2) return 3;
+      return 2;
+    }
+
+    function getPlayersInTurnOrder() {
+      return Object.values(playersState).sort((a, b) => a.turnOrder - b.turnOrder);
+    }
+
+    function initDefaultNpcsState() {
+      npcsState = {};
+      NPC_DEFS.forEach(nDef => {
+        const lanes = {};
+        PLAYER_DEFS.forEach(pDef => {
+          lanes[pDef.id] = {
+            pos: 0,           // 0..6
+            heartLimit: 3,    // Starts above Space 3, slides to pos+3 at end of round, locks at 6!
+            chits: {},        // { 1: 'red'|'orange'|'yellow', 2: ... }
+            lastEventText: ''
+          };
+        });
+        npcsState[nDef.id] = {
+          ...nDef,
+          chosenBattery: nDef.defaultBattery,
+          deployedToStation: null,
+          draftedByPlayerId: null,
+          lanes
+        };
+      });
+    }
+
+    function applyStartingOnCallSetup(deal) {
+      ALL_STATION_DEFS.forEach(st => {
+        stationsState[st.id].onCallPlayerIds = [...deal.mapByStation[st.id]];
+        stationsState[st.id].onCallRemovedReason = null;
+        stationsState[st.id].abandonedPenalty = 0;
+        stationsState[st.id].calledInPlayerId = null;
+      });
+
+      PLAYER_DEFS.forEach(pDef => {
+        const p = playersState[pDef.id];
+        const stPair = deal.playerStations[p.id];
+        p.onCallStations = [...stPair];
+        const totalPts = getStartingPointsForTurnOrder(p.turnOrder);
+        const stA = stPair[0];
+        const stB = stPair[1];
+        const ptsA = Math.ceil(totalPts / 2);
+        const ptsB = Math.floor(totalPts / 2);
+        [1, 2, 3, 4, 5, 6].forEach(stId => {
+          p.dept[stId] = { skill: 0, sweat: 0, manualStar: false };
+        });
+        p.dept[stA].sweat = ptsA;
+        p.dept[stB].sweat = ptsB;
+        p.setupPointsSplit = { [stA]: ptsA, [stB]: ptsB };
+      });
+    }
+
+    function clonePlayerDeptAndStats(pState, stState, nState) {
+      const snap = { players: {}, stationsOnCall: {}, npcs: {} };
+      PLAYER_DEFS.forEach(p => {
+        const src = pState[p.id];
+        snap.players[p.id] = {
+          turnOrder: src.turnOrder,
+          profileId: src.profileId,
+          cash: src.cash,
+          fullHearts: src.fullHearts,
+          halfHearts: src.halfHearts,
+          corpseHearts: src.corpseHearts,
+          lostBatteryNextRound: Boolean(src.lostBatteryNextRound),
+          onCallStations: [...(src.onCallStations || [])],
+          setupPointsSplit: JSON.parse(JSON.stringify(src.setupPointsSplit || {})),
+          dept: JSON.parse(JSON.stringify(src.dept))
+        };
+      });
+      ALL_STATION_DEFS.forEach(st => {
+        snap.stationsOnCall[st.id] = {
+          onCallPlayerIds: [...(stState[st.id]?.onCallPlayerIds || [])],
+          onCallRemovedReason: stState[st.id]?.onCallRemovedReason || null
+        };
+      });
+      if (nState) {
+        NPC_DEFS.forEach(nDef => {
+          if (nState[nDef.id]) {
+            snap.npcs[nDef.id] = {
+              chosenBattery: nState[nDef.id].chosenBattery,
+              lanes: JSON.parse(JSON.stringify(nState[nDef.id].lanes))
+            };
+          }
+        });
+      }
+      return snap;
+    }
+
+    function saveStateToStorage() {
+      try {
+        const payload = {
+          currentCycle,
+          cycleSnapshots,
+          playersState,
+          stationsState,
+          npcsState,
+          deploymentHistory,
+          deploySeqCounter,
+          manualHumanPlayers: Array.from(manualHumanPlayers),
+          skillLen: document.getElementById('selSkillLength')?.value || '3',
+          payoutFormula: document.getElementById('selPayoutFormula')?.value || 'flag_strips'
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {}
+    }
+
+    function loadStateFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data || !data.playersState || !data.stationsState || !data.npcsState) return false;
+        currentCycle = data.currentCycle || 1;
+        cycleSnapshots = data.cycleSnapshots || {};
+        playersState = data.playersState;
+        PLAYER_DEFS.forEach(pDef => {
+          if (playersState[pDef.id]) {
+            playersState[pDef.id].name = pDef.name;
+            playersState[pDef.id].shortName = pDef.shortName;
+            playersState[pDef.id].hex = pDef.hex;
+            playersState[pDef.id].cubeTop = pDef.cubeTop;
+            playersState[pDef.id].cubeLeft = pDef.cubeLeft;
+            playersState[pDef.id].cubeRight = pDef.cubeRight;
+            playersState[pDef.id].hoodOpen = true;
+            if (typeof playersState[pDef.id].npcBonusCash !== 'number') playersState[pDef.id].npcBonusCash = 0;
+            if (typeof playersState[pDef.id].npcBonusFullHearts !== 'number') playersState[pDef.id].npcBonusFullHearts = 0;
+            if (typeof playersState[pDef.id].npcDraftedId === 'undefined') playersState[pDef.id].npcDraftedId = null;
+          }
+        });
+        stationsState = data.stationsState;
+        npcsState = data.npcsState;
+        ALL_STATION_DEFS.forEach(stDef => {
+          if (stationsState[stDef.id]) {
+            stationsState[stDef.id].name = stDef.name;
+            stationsState[stDef.id].short = stDef.short;
+            stationsState[stDef.id].zone = stDef.zone;
+            stationsState[stDef.id].headerBg = stDef.headerBg;
+            stationsState[stDef.id].headerBorder = stDef.headerBorder;
+            if (!stationsState[stDef.id].onCallPlayerIds) stationsState[stDef.id].onCallPlayerIds = [];
+            if (typeof stationsState[stDef.id].abandonedPenalty !== 'number') stationsState[stDef.id].abandonedPenalty = 0;
+          }
+        });
+        deploymentHistory = data.deploymentHistory || [];
+        deploySeqCounter = data.deploySeqCounter || 1;
+        manualHumanPlayers = new Set(data.manualHumanPlayers || []);
+        if (data.skillLen && document.getElementById('selSkillLength')) {
+          document.getElementById('selSkillLength').value = data.skillLen;
+        }
+        if (data.payoutFormula && document.getElementById('selPayoutFormula')) {
+          document.getElementById('selPayoutFormula').value = data.payoutFormula;
+        }
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function initDefaultState() {
+      currentCycle = 1;
+      cycleSnapshots = {};
+      playersState = {};
+      manualHumanPlayers = new Set();
+      peekedStationDiscs = new Set();
+      PLAYER_DEFS.forEach(p => {
+        const prof = CIRCADIAN_PROFILES[p.defaultProfile];
+        playersState[p.id] = {
+          ...p,
+          profileId: p.defaultProfile,
+          cash: 0,
+          fullHearts: 0,
+          halfHearts: 0,
+          corpseHearts: 0,
+          hoodOpen: true,
+          onCallStations: [],
+          setupPointsSplit: {},
+          npcDraftedId: null,
+          npcBonusCash: 0,
+          npcBonusFullHearts: 0,
+          tetherCashMod: 0,
+          tetherHeartEffects: [],
+          lostBatteryNextRound: false,
+          slots: {
+            1: { battery: prof.slots[0], deployedTo: null },
+            2: { battery: prof.slots[1], deployedTo: null },
+            3: { battery: prof.slots[2], deployedTo: null },
+            4: { battery: prof.slots[3], deployedTo: null }
+          },
+          dept: {
+            1: { skill: 0, sweat: 0, manualStar: false },
+            2: { skill: 0, sweat: 0, manualStar: false },
+            3: { skill: 0, sweat: 0, manualStar: false },
+            4: { skill: 0, sweat: 0, manualStar: false },
+            5: { skill: 0, sweat: 0, manualStar: false },
+            6: { skill: 0, sweat: 0, manualStar: false }
+          }
+        };
+      });
+
+      stationsState = {};
+      ALL_STATION_DEFS.forEach(st => {
+        stationsState[st.id] = {
+          ...st,
+          stage: 1,
+          previewFlagId: null,
+          deployments: [],
+          onCallPlayerIds: [],
+          onCallRemovedReason: null,
+          abandonedPenalty: 0,
+          calledInPlayerId: null
+        };
+      });
+
+      initDefaultNpcsState();
+
+      const deal = generateValidOnCallDeal();
+      applyStartingOnCallSetup(deal);
+
+      deploymentHistory = [];
+      deploySeqCounter = 1;
+      selectedDisc = null;
+      cycleSnapshots[1] = clonePlayerDeptAndStats(playersState, stationsState, npcsState);
+    }
+
+    // =========================================================================
+    // 4. DEDICATED TURN ORDER, ON-CALL SETUP & 6-NPC TETHER ENGINE
+    // =========================================================================
+    function recalculateSetupPointsForTurnOrder() {
+      if (currentCycle !== 1 || deploymentHistory.length > 0) return;
+      PLAYER_DEFS.forEach(pDef => {
+        const p = playersState[pDef.id];
+        const stPair = p.onCallStations || [1, 6];
+        const totalPts = getStartingPointsForTurnOrder(p.turnOrder);
+        const stA = stPair[0];
+        const stB = stPair[1];
+        const ptsA = Math.ceil(totalPts / 2);
+        const ptsB = Math.floor(totalPts / 2);
+        [1, 2, 3, 4, 5, 6].forEach(stId => {
+          p.dept[stId].skill = 0;
+          p.dept[stId].sweat = 0;
+          p.dept[stId].manualStar = false;
+        });
+        p.dept[stA].sweat = ptsA;
+        p.dept[stB].sweat = ptsB;
+        p.setupPointsSplit = { [stA]: ptsA, [stB]: ptsB };
+      });
+      cycleSnapshots[1] = clonePlayerDeptAndStats(playersState, stationsState, npcsState);
+    }
+
+    function movePlayerTurnOrder(playerId, delta) {
+      const p = playersState[playerId];
+      const targetOrder = p.turnOrder + delta;
+      if (targetOrder < 1 || targetOrder > 4) return;
+      const other = Object.values(playersState).find(x => x.turnOrder === targetOrder);
+      if (other) {
+        other.turnOrder = p.turnOrder;
+        p.turnOrder = targetOrder;
+      }
+      recalculateSetupPointsForTurnOrder();
+      renderAll();
+    }
+
+    function makePlayerFirstInTurnOrder(playerId) {
+      const p = playersState[playerId];
+      if (!p || p.turnOrder === 1) return;
+      const oldOrder = p.turnOrder;
+      Object.values(playersState).forEach(other => {
+        if (other.id === playerId) {
+          other.turnOrder = 1;
+        } else if (other.turnOrder < oldOrder) {
+          other.turnOrder += 1;
+        }
+      });
+      renderAll();
+    }
+
+    function rotateTurnOrder() {
+      Object.values(playersState).forEach(p => {
+        p.turnOrder = p.turnOrder === 1 ? 4 : p.turnOrder - 1;
+      });
+      recalculateSetupPointsForTurnOrder();
+      renderAll();
+    }
+
+    function shuffleTurnOrder() {
+      const orders = [1, 2, 3, 4].sort(() => Math.random() - 0.5);
+      PLAYER_DEFS.forEach((pDef, idx) => {
+        playersState[pDef.id].turnOrder = orders[idx];
+      });
+      recalculateSetupPointsForTurnOrder();
+      renderAll();
+    }
+
+    function reshuffleOnCallChits() {
+      const deal = generateValidOnCallDeal();
+      applyStartingOnCallSetup(deal);
+      cycleSnapshots[currentCycle] = clonePlayerDeptAndStats(playersState, stationsState, npcsState);
+      renderAll();
+    }
+
+    function cyclePlayerOnCallPointSplit(playerId) {
+      const p = playersState[playerId];
+      if (!p.onCallStations || p.onCallStations.length < 2) return;
+      const [stA, stB] = p.onCallStations;
+      const totalPts = getStartingPointsForTurnOrder(p.turnOrder);
+      const curA = p.dept[stA].sweat;
+      const nextA = (curA + 1) > totalPts ? 0 : (curA + 1);
+      const nextB = totalPts - nextA;
+      p.dept[stA].sweat = nextA;
+      p.dept[stB].sweat = nextB;
+      p.setupPointsSplit = { [stA]: nextA, [stB]: nextB };
+      cycleSnapshots[currentCycle] = clonePlayerDeptAndStats(playersState, stationsState, npcsState);
+      renderAll();
+    }
+
+    // =========================================================================
+    // NPC SELECTION, BATTERY CHOICE, FACE-UP STATION PLACEMENT & TETHER CHIT DRAW
+    // =========================================================================
+    function setNpcBattery(npcId, batteryId) {
+      const npc = npcsState[npcId];
+      if (!npc || npc.fixedBattery) return;
+      npc.chosenBattery = batteryId;
+      if (npc.deployedToStation) {
+        const st = stationsState[npc.deployedToStation];
+        const rec = st.deployments.find(d => d.isNpc && d.npcId === npcId);
+        if (rec) rec.batteryId = batteryId;
+      }
+      renderAll();
+    }
+
+    function drawRandomTetherColor() {
+      const pool = ['red', 'orange', 'yellow'];
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    // Allows clicking any space (1..6) on a player's lane on an NPC card to test/cycle Red / Orange / Yellow / Clear!
+    function cycleTetherCellManual(npcId, playerId, spaceNum) {
+      const npc = npcsState[npcId];
+      if (!npc) return;
+      const lane = npc.lanes[playerId];
+      const curColor = lane.chits[spaceNum] || null;
+      const order = [null, 'orange', 'red', 'yellow'];
+      const nextColor = order[(order.indexOf(curColor) + 1) % order.length];
+      if (!nextColor) {
+        delete lane.chits[spaceNum];
+        if (lane.pos === spaceNum) lane.pos = Math.max(0, spaceNum - 1);
+      } else {
+        lane.chits[spaceNum] = nextColor;
+        if (lane.pos < spaceNum) lane.pos = spaceNum;
+        const chitObj = TETHER_LEVEL_CHITS[nextColor].levels[spaceNum];
+        lane.lastEventText = `${chitObj.title}: ${chitObj.story}`;
+      }
+      renderAll();
+    }
+
+    // Deploys an NPC (I–VI) FACE-UP into `stationId` for `playerId` and advances their Tether Track (+1, or +2 for Clingy Worker VI)!
+    function deployNpcToStation(npcId, playerId, stationId) {
+      const npc = npcsState[npcId];
+      const p = playersState[playerId];
+      if (!npc || !p) return;
+
+      if (npc.deployedToStation !== null) {
+        alert(`${npc.short} is already placed in Station ${npc.deployedToStation} this cycle!`);
+        return;
+      }
+      if (p.npcDraftedId && p.npcDraftedId !== npcId) {
+        alert(`${p.shortName} already drafted ${npcsState[p.npcDraftedId].short} this cycle! (Undo or reset to switch)`);
+        return;
+      }
+
+      const st = stationsState[stationId];
+      const isPartyGuy = (npcId === 'npc_5');
+      const physicalDiscsCount = st.deployments.filter(d => !d.isPartyBoost).length;
+      if (!isPartyGuy && physicalDiscsCount >= 5) {
+        alert(`Station ${stationId} already has 5 discs on the pole!`);
+        return;
+      }
+
+      npc.deployedToStation = stationId;
+      npc.draftedByPlayerId = playerId;
+      p.npcDraftedId = npcId;
+
+      // Apply immediate NPC perks:
+      // NPC I (Turn Order): makes player #1 in Turn Order!
+      if (npcId === 'npc_1') {
+        makePlayerFirstInTurnOrder(playerId);
+      }
+      // NPC IV (Relief Worker): +1 Full Heart credit immediately!
+      if (npcId === 'npc_4') {
+        p.npcBonusFullHearts = (p.npcBonusFullHearts || 0) + 1;
+      }
+      // NPC VI (Clingy Worker): +$3 Cash directly on Paycheck!
+      if (npcId === 'npc_6') {
+        p.npcBonusCash = (p.npcBonusCash || 0) + 3;
+      }
+
+      // Advance Player's Tether Lane on this NPC (+1 for normal, +2 for Clingy Worker VI!)
+      const lane = npc.lanes[playerId];
+      const stepsToMove = npc.tetherSteps || 1;
+      const startPos = lane.pos;
+      const targetPos = Math.min(6, startPos + stepsToMove);
+
+      const triggeredSteps = [];
+      for (let step = startPos + 1; step <= targetPos; step++) {
+        if (!lane.chits[step]) {
+          // Space 3 Honey Spot for Clingy Worker defaults to Orange ($2 emergency) on first build or random bag draw
+          lane.chits[step] = (npcId === 'npc_6' && step === 3) ? 'orange' : drawRandomTetherColor();
+        }
+        const cColor = lane.chits[step];
+        const chitInfo = TETHER_LEVEL_CHITS[cColor].levels[step];
+        triggeredSteps.push({ step, cColor, chitInfo });
+
+        // Apply Tether Chit cash / heart effects to player
+        if (chitInfo.cash !== 0) {
+          p.tetherCashMod = (p.tetherCashMod || 0) + chitInfo.cash;
+        }
+        if (chitInfo.heartEffect) {
+          p.tetherHeartEffects = p.tetherHeartEffects || [];
+          p.tetherHeartEffects.push(chitInfo.heartEffect);
+        }
+      }
+
+      lane.pos = targetPos;
+      // Check if player hit or passed the sliding ❤️ Heart Limit Marker in a single round!
+      if (targetPos >= lane.heartLimit) {
+        const lastColor = lane.chits[targetPos] || 'red';
+        const climaxInfo = TETHER_LEVEL_CHITS[lastColor].levels[6];
+        lane.lastEventText = `🚨 HIT ❤️ HEART LIMIT (Space ${lane.heartLimit})! ${climaxInfo.title}: ${climaxInfo.story}`;
+        if (climaxInfo.heartEffect && !(p.tetherHeartEffects || []).includes(climaxInfo.heartEffect)) {
+          p.tetherHeartEffects = p.tetherHeartEffects || [];
+          p.tetherHeartEffects.push(climaxInfo.heartEffect);
+        }
+      } else if (triggeredSteps.length > 0) {
+        const last = triggeredSteps[triggeredSteps.length - 1];
+        lane.lastEventText = `${last.chitInfo.title}: ${last.chitInfo.story}`;
+      }
+
+      const record = {
+        isNpc: true,
+        npcId: npc.id,
+        npcRoman: npc.roman,
+        npcName: npc.short,
+        isPartyBoost: isPartyGuy,
+        playerId,
+        slotNum: 'NPC',
+        batteryId: npc.fixedBattery || npc.chosenBattery,
+        tetherStepsMoved: stepsToMove,
+        prevTetherPos: startPos,
+        deploySeq: deploySeqCounter++
+      };
+
+      st.deployments.push(record);
+      deploymentHistory.push({ ...record, stationId });
+
+      if (st.stage > 1) st.stage = 1;
+      renderAll();
+    }
+
+    // =========================================================================
+    // 5. EMERGENCY ON-CALL CHECK & REDEPLOYMENT (BEFORE SET OUT FLAGS!)
+    // =========================================================================
+    function getResponsiblePlayerForEmptyStation(stationId) {
+      const st = stationsState[stationId];
+      const orderedPlayers = getPlayersInTurnOrder();
+
+      const starHolders = orderedPlayers.filter(p => hasStationStar(p.id, stationId));
+      if (starHolders.length > 0) {
+        return { player: starHolders[0], reason: `★ Star Boss in S${stationId}` };
+      }
+
+      const onCallHolders = orderedPlayers.filter(p => (st.onCallPlayerIds || []).includes(p.id));
+      if (onCallHolders.length > 0) {
+        return { player: onCallHolders[0], reason: `On-Call Chit in S${stationId} (#${onCallHolders[0].turnOrder} in Turn Order)` };
+      }
+
+      return { player: orderedPlayers[0], reason: `Turn Order Fallback` };
+    }
+
+    function getPullableDiscsForCallIn(playerId) {
+      const list = [];
+      ALL_STATION_DEFS.forEach(stDef => {
+        const st = stationsState[stDef.id];
+        const humanDiscs = st.deployments.filter(d => !d.isNpc);
+        if (humanDiscs.length >= 2) {
+          humanDiscs.forEach(dep => {
+            if (dep.playerId === playerId) {
+              list.push({
+                fromStationId: stDef.id,
+                slotNum: dep.slotNum,
+                batteryId: dep.batteryId,
+                deploySeq: dep.deploySeq
+              });
+            }
+          });
+        }
+      });
+      if (list.length === 0) {
+        ALL_STATION_DEFS.forEach(stDef => {
+          const st = stationsState[stDef.id];
+          st.deployments.filter(d => !d.isNpc).forEach(dep => {
+            if (dep.playerId === playerId) {
+              list.push({
+                fromStationId: stDef.id,
+                slotNum: dep.slotNum,
+                batteryId: dep.batteryId,
+                deploySeq: dep.deploySeq
+              });
+            }
+          });
+        });
+      }
+      return list;
+    }
+
+    function executeEmergencyCallInMove(emptyStationId, playerId, fromStationId, slotNum) {
+      const fromSt = stationsState[fromStationId];
+      const toSt = stationsState[emptyStationId];
+      const idx = fromSt.deployments.findIndex(d => !d.isNpc && d.playerId === playerId && d.slotNum === slotNum);
+      if (idx === -1) return;
+
+      const [movedRecord] = fromSt.deployments.splice(idx, 1);
+      playersState[playerId].slots[slotNum].deployedTo = emptyStationId;
+      toSt.deployments.push(movedRecord);
+      toSt.abandonedPenalty = -2;
+      toSt.calledInPlayerId = playerId;
+      renderAll();
+    }
+
+    function autoResolveAllEmptyStationsAndSetFlags() {
+      ALL_STATION_DEFS.forEach(stDef => {
+        const st = stationsState[stDef.id];
+        if (st.deployments.filter(d => !d.isPartyBoost).length === 0) {
+          const resp = getResponsiblePlayerForEmptyStation(stDef.id);
+          const pullable = getPullableDiscsForCallIn(resp.player.id);
+          if (pullable.length > 0) {
+            const chosen = pullable[0];
+            executeEmergencyCallInMove(stDef.id, resp.player.id, chosen.fromStationId, chosen.slotNum);
+          }
+        }
+      });
+      setAllStationsStage(2);
+    }
+
+    function triggerSetFlagsWithCallInCheck() {
+      const emptyStations = ALL_STATION_DEFS.filter(stDef => stationsState[stDef.id].deployments.filter(d => !d.isPartyBoost).length === 0);
+      if (emptyStations.length === 0) {
+        setAllStationsStage(2);
+      } else {
+        renderAll();
+      }
+    }
+
+    // =========================================================================
+    // 6. FLAG-POLE STRIP & SUPPLY/DEMAND DETERMINATION ENGINE
+    // =========================================================================
+    // Note: Party Guy (NPC V) does NOT change the Flag worker count!
+    function getStationFlagWorkerCount(stationId) {
+      const deps = stationsState[stationId]?.deployments || [];
+      return deps.filter(d => !d.isPartyBoost).length;
+    }
+
+    function getHarvestAgaveCount() {
+      return getStationFlagWorkerCount(1);
+    }
+
+    function getLiveFlagForStation(stationId) {
+      const W = getStationFlagWorkerCount(stationId);
+      const A = getHarvestAgaveCount();
+      const flags = STATION_FLAGS[stationId];
+
+      if (stationId === 1) {
+        const idx = Math.max(0, Math.min(4, (W || 1) - 1));
+        return flags[idx];
+      }
+      if (stationId === 2 || stationId === 3 || stationId === 4) {
+        if (W < A) return flags[0];
+        if (W === A) return flags[1];
+        return flags[2];
+      }
+      if (stationId === 5) {
+        if (W < 3) return flags[0];
+        if (W === 3) return flags[1];
+        return flags[2];
+      }
+      if (W <= 1) return flags[0];
+      if (W === 2) return flags[1];
+      return flags[2];
+    }
+
+    function getActiveFlagForStation(stationId) {
+      const st = stationsState[stationId];
+      const liveFlag = getLiveFlagForStation(stationId);
+      if (st.previewFlagId) {
+        const found = STATION_FLAGS[stationId].find(f => f.id === st.previewFlagId);
+        if (found) return { flag: found, isPreview: found.id !== liveFlag.id, liveFlag };
+      }
+      return { flag: liveFlag, isPreview: false, liveFlag };
+    }
+
+    function selectStationFlagPreview(stationId, flagId) {
+      const st = stationsState[stationId];
+      const liveFlag = getLiveFlagForStation(stationId);
+      if (!flagId || flagId === liveFlag.id || st.previewFlagId === flagId) {
+        st.previewFlagId = null;
+      } else {
+        st.previewFlagId = flagId;
+      }
+      renderAll();
+    }
+
+    function onChangeSkillLength() {
+      const skMax = getSkillMaxBox();
+      PLAYER_DEFS.forEach(p => {
+        [1, 2, 3, 4, 5, 6].forEach(stId => {
+          const d = playersState[p.id].dept[stId];
+          if (d.skill > skMax) d.skill = skMax;
+        });
+      });
+      renderAll();
+    }
+
+    function hasStationStar(playerId, stationId) {
+      const skMax = getSkillMaxBox();
+      const d = playersState[playerId].dept[stationId];
+      return d.skill >= skMax || d.sweat >= 6 || d.manualStar;
+    }
+
+    function getAllowedSlotListForPlayer(playerId) {
+      const p = playersState[playerId];
+      return p && p.lostBatteryNextRound ? [1, 2, 3] : [1, 2, 3, 4];
+    }
+
+    function getTotalRequiredPlayerChits() {
+      return PLAYER_DEFS.reduce((acc, pDef) => acc + getAllowedSlotListForPlayer(pDef.id).length, 0);
+    }
+
+    function getDeployedPlayerChitsCount() {
+      return deploymentHistory.filter(d => !d.isNpc).length;
+    }
+
+    function getNextTurnPlayerId() {
+      const ordered = getPlayersInTurnOrder();
+      for (const p of ordered) {
+        const slots = getAllowedSlotListForPlayer(p.id);
+        const usedCount = slots.filter(s => playersState[p.id].slots[s].deployedTo !== null).length;
+        if (usedCount < slots.length) return p.id;
+      }
+      return null;
+    }
+
+    function togglePeekStationDisc(stationId, playerId, slotNum) {
+      const key = `${stationId}_${playerId}_${slotNum}`;
+      if (peekedStationDiscs.has(key)) {
+        peekedStationDiscs.delete(key);
+      } else {
+        peekedStationDiscs.add(key);
+      }
+      renderAll();
+    }
+
+    function showAllPlayerHands() {
+      PLAYER_DEFS.forEach(p => {
+        playersState[p.id].hoodOpen = true;
+      });
+      renderAll();
+    }
+
+    function togglePlayerHood(playerId) {
+      playersState[playerId].hoodOpen = !playersState[playerId].hoodOpen;
+      renderAll();
+    }
+
+    // =========================================================================
+    // 7. RANDOM BOT DEPLOYMENT
+    // =========================================================================
+    function randomDeployForPlayer(playerId, countToDeploy) {
+      const p = playersState[playerId];
+      let deployedSoFar = 0;
+      const allowedSlots = getAllowedSlotListForPlayer(playerId);
+      const availSlots = allowedSlots.filter(s => p.slots[s].deployedTo === null);
+      const shuffledSlots = [...availSlots].sort(() => Math.random() - 0.5);
+
+      for (const slotNum of shuffledSlots) {
+        if (deployedSoFar >= countToDeploy) break;
+        const legalStations = getAllowedStationsForSlot(slotNum).filter(
+          stId => canSendBatteryToStation(playerId, slotNum, stId).ok
+        );
+        if (legalStations.length > 0) {
+          const randIdx = Math.floor(Math.random() * legalStations.length);
+          const chosenStationId = legalStations[randIdx];
+          selectedDisc = { playerId, slotNum };
+          deploySelectedToStation(chosenStationId, true);
+          deployedSoFar++;
+        }
+      }
+      selectedDisc = null;
+      renderAll();
+    }
+
+    function selectCircadianDisc(playerId, slotNum, event) {
+      if (event && event.target && (event.target.tagName === 'SELECT' || event.target.tagName === 'BUTTON')) return;
+      const p = playersState[playerId];
+      if (slotNum === 4 && p.lostBatteryNextRound) return;
+      const slotObj = p.slots[slotNum];
+      if (slotObj.deployedTo !== null) return;
+      manualHumanPlayers.add(playerId);
+      activeNpcDraftPlayerId = playerId;
+      p.hoodOpen = true;
+      if (selectedDisc && selectedDisc.playerId === playerId && selectedDisc.slotNum === slotNum) {
+        selectedDisc = null;
+      } else {
+        selectedDisc = { playerId, slotNum };
+      }
+      renderAll();
+    }
+
+    function sendBatteryDirectlyToStation(playerId, slotNum, stationId, event) {
+      if (event) event.stopPropagation();
+      manualHumanPlayers.add(playerId);
+      activeNpcDraftPlayerId = playerId;
+      playersState[playerId].hoodOpen = true;
+      selectedDisc = { playerId, slotNum };
+      deploySelectedToStation(stationId, true);
+      renderAll();
+    }
+
+    function deploySelectedToStation(stationId, skipRender = false) {
+      if (!selectedDisc) return;
+      const { playerId, slotNum } = selectedDisc;
+      const slotObj = playersState[playerId].slots[slotNum];
+      if (slotObj.deployedTo !== null) return;
+
+      const check = canSendBatteryToStation(playerId, slotNum, stationId);
+      if (!check.ok) {
+        if (!skipRender) alert(check.reason);
+        return;
+      }
+
+      const st = stationsState[stationId];
+      slotObj.deployedTo = stationId;
+      const record = {
+        isNpc: false,
+        playerId,
+        slotNum,
+        batteryId: slotObj.battery,
+        deploySeq: deploySeqCounter++
+      };
+      st.deployments.push(record);
+      deploymentHistory.push({ ...record, stationId });
+
+      if (st.stage > 1) st.stage = 1;
+      selectedDisc = null;
+      const nextPid = getNextTurnPlayerId();
+      if (nextPid) activeNpcDraftPlayerId = nextPid;
+      if (!skipRender) renderAll();
+    }
+
+    function undoLastDeployment() {
+      if (deploymentHistory.length === 0) return;
+      const last = deploymentHistory.pop();
+      const st = stationsState[last.stationId];
+      st.deployments = st.deployments.filter(d => d.deploySeq !== last.deploySeq);
+      st.abandonedPenalty = 0;
+      st.calledInPlayerId = null;
+
+      if (last.isNpc) {
+        const npc = npcsState[last.npcId];
+        const p = playersState[last.playerId];
+        if (npc) {
+          npc.deployedToStation = null;
+          npc.draftedByPlayerId = null;
+          if (typeof last.prevTetherPos === 'number') {
+            const lane = npc.lanes[last.playerId];
+            for (let s = lane.pos; s > last.prevTetherPos; s--) {
+              delete lane.chits[s];
+            }
+            lane.pos = last.prevTetherPos;
+            lane.lastEventText = '';
+          }
+        }
+        if (p) {
+          p.npcDraftedId = null;
+          if (last.npcId === 'npc_4') p.npcBonusFullHearts = Math.max(0, (p.npcBonusFullHearts || 0) - 1);
+          if (last.npcId === 'npc_6') p.npcBonusCash = Math.max(0, (p.npcBonusCash || 0) - 3);
+        }
+      } else {
+        playersState[last.playerId].slots[last.slotNum].deployedTo = null;
+      }
+
+      selectedDisc = null;
+      renderAll();
+    }
+
+    function changePlayerProfile(playerId, newProfileId) {
+      const prof = CIRCADIAN_PROFILES[newProfileId];
+      if (!prof) return;
+      const p = playersState[playerId];
+      p.profileId = newProfileId;
+      [1, 2, 3, 4].forEach((s, idx) => {
+        p.slots[s].battery = prof.slots[idx];
+        const depSt = p.slots[s].deployedTo;
+        if (depSt) {
+          const rec = stationsState[depSt].deployments.find(d => !d.isNpc && d.playerId === playerId && d.slotNum === s);
+          if (rec) rec.batteryId = prof.slots[idx];
+        }
+      });
+      renderAll();
+    }
+
+    function togglePlayerStationStar(playerId, stationId) {
+      const skMax = getSkillMaxBox();
+      const d = playersState[playerId].dept[stationId];
+      const currentlyStarred = hasStationStar(playerId, stationId);
+      if (currentlyStarred) {
+        d.manualStar = false;
+        if (d.skill >= skMax) d.skill = 0;
+        if (d.sweat >= 6) d.sweat = 0;
+      } else {
+        d.manualStar = true;
+        if (d.skill < skMax && d.sweat < 6) d.skill = skMax;
+        const st = stationsState[stationId];
+        if (st.onCallPlayerIds.length > 0 && !st.onCallPlayerIds.includes(playerId)) {
+          st.onCallPlayerIds = [];
+          st.onCallRemovedReason = `Removed when ${playersState[playerId].shortName} earned ★!`;
+        }
+      }
+      renderAll();
+    }
+
+    function setPlayerStationTrack(playerId, stationId, trackType, val) {
+      const skMax = getSkillMaxBox();
+      const d = playersState[playerId].dept[stationId];
+      d[trackType] = Number(val);
+      d.manualStar = (d.skill >= skMax || d.sweat >= 6);
+      renderAll();
+    }
+
+    function setStationStage(stationId, stageNum) {
+      const st = stationsState[stationId];
+      if (stageNum >= 2) st.previewFlagId = null;
+      st.stage = stageNum;
+      renderAll();
+    }
+
+    function triggerStationCalcOrMove(stationId) {
+      const st = stationsState[stationId];
+      st.previewFlagId = null;
+      if (st.stage < 5) {
+        st.stage = 5;
+      } else if (st.stage === 5) {
+        st.stage = 6;
+      } else {
+        st.stage = 5;
+      }
+      renderAll();
+    }
+
+    function triggerGlobalCalcOrMove() {
+      const stages = ALL_STATION_DEFS.map(st => stationsState[st.id].stage);
+      const allAtStage5 = stages.every(s => s === 5);
+      const allAtStage6 = stages.every(s => s >= 6);
+      if (allAtStage6) {
+        startNextShiftKeepCubes();
+      } else if (allAtStage5) {
+        setAllStationsStage(6);
+      } else {
+        setAllStationsStage(5);
+      }
+    }
+
+    function setAllStationsStage(stageNum) {
+      ALL_STATION_DEFS.forEach(st => {
+        if (stageNum >= 2) st.previewFlagId = null;
+        stationsState[st.id].stage = stageNum;
+      });
+      renderAll();
+    }
+
+    // Consolidates a player's earned hearts this shift (plus Relief Worker Full Heart & Tether Heart mods) down to their MAX 2 BEST HEARTS!
+    function computePlayerCycleHeartConsolidation(playerId) {
+      const p = playersState[playerId];
+      const pool = [];
+
+      // Collect station hearts earned by this player across all 6 stations
+      ALL_STATION_DEFS.forEach(stDef => {
+        const sim = simulateStation(stDef.id);
+        const r = sim.resultsByPlayer[playerId];
+        if (r && r.deployedCount > 0 && r.heartType) {
+          pool.push(r.heartType);
+        }
+      });
+
+      // Add Relief Worker (NPC IV) Bonus Full Heart(s)
+      for (let i = 0; i < (p.npcBonusFullHearts || 0); i++) {
+        pool.push('full');
+      }
+
+      // Apply any Tether Chit Heart modifiers from this round
+      const effects = p.tetherHeartEffects || [];
+      effects.forEach(eff => {
+        if (eff === 'downgrade_1') {
+          const fullIdx = pool.indexOf('full');
+          if (fullIdx !== -1) pool[fullIdx] = 'half';
+          else {
+            const halfIdx = pool.indexOf('half');
+            if (halfIdx !== -1) pool[halfIdx] = 'corpse';
+          }
+        } else if (eff === 'corpse_1') {
+          const fullIdx = pool.indexOf('full');
+          if (fullIdx !== -1) pool[fullIdx] = 'corpse';
+          else {
+            const halfIdx = pool.indexOf('half');
+            if (halfIdx !== -1) pool[halfIdx] = 'corpse';
+          }
+        } else if (eff === 'affair_2_corpse') {
+          pool.unshift('corpse', 'corpse');
+        }
+      });
+
+      const isAffairOverride = effects.includes('affair_2_corpse');
+      const isFriendObligated = effects.includes('friend_obligated_hearts');
+      const willLoseBatNextRound = effects.includes('fight_lose_battery');
+
+      // Sort pool so player keeps their BEST 2 Hearts (Full > Half > Corpse), unless Level 6 Red Affair forced 2 Corpse Hearts!
+      const rankMap = { full: 3, half: 2, corpse: 1 };
+      if (isAffairOverride) {
+        return {
+          rawPool: pool,
+          kept: ['corpse', 'corpse'],
+          keptFull: 0,
+          keptHalf: 0,
+          keptCorpse: 2,
+          note: '💔 L6 Affair (2 🖤)',
+          isFriendObligated,
+          willLoseBatNextRound
+        };
+      }
+
+      const sorted = [...pool].sort((a, b) => rankMap[b] - rankMap[a]);
+      const kept = sorted.slice(0, 2);
+      return {
+        rawPool: pool,
+        kept,
+        keptFull: kept.filter(x => x === 'full').length,
+        keptHalf: kept.filter(x => x === 'half').length,
+        keptCorpse: kept.filter(x => x === 'corpse').length,
+        note: isFriendObligated ? '🍻 Obligated to Bestie!' : `Keep Best 2/${pool.length}`,
+        isFriendObligated,
+        willLoseBatNextRound
+      };
+    }
+
+    function startNextShiftKeepCubes() {
+      if (!cycleSnapshots[currentCycle]) {
+        cycleSnapshots[currentCycle] = clonePlayerDeptAndStats(playersState, stationsState, npcsState);
+      }
+
+      // Pre-compute consolidated 2 Hearts per player for this cycle
+      const consolByPlayer = {};
+      PLAYER_DEFS.forEach(pDef => {
+        consolByPlayer[pDef.id] = computePlayerCycleHeartConsolidation(pDef.id);
+      });
+
+      ALL_STATION_DEFS.forEach(stDef => {
+        const st = stationsState[stDef.id];
+        const sim = simulateStation(stDef.id);
+        PLAYER_DEFS.forEach(pDef => {
+          const r = sim.resultsByPlayer[pDef.id];
+          if (r && (r.deployedCount > 0 || r.skillMoves > 0 || r.sweatMoves > 0)) {
+            const d = playersState[pDef.id].dept[stDef.id];
+            d.skill = r.endSkill;
+            d.sweat = r.endSweat;
+            d.manualStar = r.endHasStar;
+            playersState[pDef.id].cash += r.cashEarned;
+          }
+        });
+
+        if (sim.outsiderEarnedStar && st.onCallPlayerIds.length > 0) {
+          st.onCallPlayerIds = [];
+          st.onCallRemovedReason = `Removed when ${sim.outsiderEarnedStarName} earned ★!`;
+        }
+
+        st.deployments = [];
+        st.previewFlagId = null;
+        st.abandonedPenalty = 0;
+        st.calledInPlayerId = null;
+        st.stage = 1;
+      });
+
+      // Add NPC Bonus Cash (e.g. +$3 Clingy Worker), Tether Cash Mods, and Consolidated Max 2 Hearts!
+      PLAYER_DEFS.forEach(pDef => {
+        const p = playersState[pDef.id];
+        const c = consolByPlayer[pDef.id];
+        p.cash += (p.npcBonusCash || 0) + (p.tetherCashMod || 0);
+        p.fullHearts += c.keptFull;
+        p.halfHearts += c.keptHalf;
+        p.corpseHearts += c.keptCorpse;
+        p.lostBatteryNextRound = Boolean(c.willLoseBatNextRound);
+        p.npcDraftedId = null;
+        p.npcBonusCash = 0;
+        p.npcBonusFullHearts = 0;
+        p.tetherCashMod = 0;
+        p.tetherHeartEffects = [];
+        p.hoodOpen = true;
+        [1, 2, 3, 4].forEach(s => {
+          p.slots[s].deployedTo = null;
+        });
+      });
+
+      // End of round: Slide each NPC's ❤️ Heart Limit Marker to (pos + 3), locking at Space 6!
+      NPC_DEFS.forEach(nDef => {
+        const npc = npcsState[nDef.id];
+        npc.deployedToStation = null;
+        npc.draftedByPlayerId = null;
+        PLAYER_DEFS.forEach(pDef => {
+          const lane = npc.lanes[pDef.id];
+          if (lane.pos > 0) {
+            lane.heartLimit = Math.min(6, Math.max(lane.heartLimit, lane.pos + 3));
+          }
+        });
+      });
+
+      currentCycle += 1;
+      cycleSnapshots[currentCycle] = clonePlayerDeptAndStats(playersState, stationsState, npcsState);
+
+      manualHumanPlayers = new Set();
+      peekedStationDiscs = new Set();
+      deploymentHistory = [];
+      deploySeqCounter = 1;
+      selectedDisc = null;
+      renderAll();
+    }
+
+    function jumpToCycleSnapshot(targetCycleNum) {
+      const snap = cycleSnapshots[targetCycleNum];
+      if (!snap) return;
+      currentCycle = targetCycleNum;
+      manualHumanPlayers = new Set();
+      peekedStationDiscs = new Set();
+
+      PLAYER_DEFS.forEach(pDef => {
+        const s = snap.players ? snap.players[pDef.id] : snap[pDef.id];
+        const p = playersState[pDef.id];
+        if (s.turnOrder) p.turnOrder = s.turnOrder;
+        p.profileId = s.profileId;
+        p.cash = s.cash;
+        p.fullHearts = s.fullHearts;
+        p.halfHearts = s.halfHearts;
+        p.corpseHearts = s.corpseHearts;
+        p.lostBatteryNextRound = Boolean(s.lostBatteryNextRound);
+        p.npcDraftedId = null;
+        p.npcBonusCash = 0;
+        p.npcBonusFullHearts = 0;
+        p.tetherCashMod = 0;
+        p.tetherHeartEffects = [];
+        if (s.onCallStations) p.onCallStations = [...s.onCallStations];
+        if (s.setupPointsSplit) p.setupPointsSplit = JSON.parse(JSON.stringify(s.setupPointsSplit));
+        p.dept = JSON.parse(JSON.stringify(s.dept));
+        p.hoodOpen = true;
+        const prof = CIRCADIAN_PROFILES[p.profileId];
+        [1, 2, 3, 4].forEach((slotNum, idx) => {
+          p.slots[slotNum] = { battery: prof.slots[idx], deployedTo: null };
+        });
+      });
+
+      ALL_STATION_DEFS.forEach(stDef => {
+        const st = stationsState[stDef.id];
+        st.deployments = [];
+        st.previewFlagId = null;
+        st.abandonedPenalty = 0;
+        st.calledInPlayerId = null;
+        st.stage = 1;
+        if (snap.stationsOnCall && snap.stationsOnCall[stDef.id]) {
+          st.onCallPlayerIds = [...snap.stationsOnCall[stDef.id].onCallPlayerIds];
+          st.onCallRemovedReason = snap.stationsOnCall[stDef.id].onCallRemovedReason;
+        }
+      });
+
+      if (snap.npcs) {
+        NPC_DEFS.forEach(nDef => {
+          const ns = snap.npcs[nDef.id];
+          if (ns && npcsState[nDef.id]) {
+            npcsState[nDef.id].chosenBattery = ns.chosenBattery;
+            npcsState[nDef.id].deployedToStation = null;
+            npcsState[nDef.id].draftedByPlayerId = null;
+            npcsState[nDef.id].lanes = JSON.parse(JSON.stringify(ns.lanes));
+          }
+        });
+      }
+
+      deploymentHistory = [];
+      deploySeqCounter = 1;
+      selectedDisc = null;
+      renderAll();
+    }
+
+    function resetEntireLab() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      initDefaultState();
+      renderAll();
+    }
+
+    // =========================================================================
+    // 8. STATION SIMULATION ENGINE (PURE ENERGY + 6 NPCs + TETHER MODS + +$2 🖤 OVERTIME)
+    // =========================================================================
+    function simulateStation(stationId) {
+      const st = stationsState[stationId];
+      const skMax = getSkillMaxBox();
+      const payoutFormula = document.getElementById('selPayoutFormula')?.value || 'flag_strips';
+      const flagInfo = getActiveFlagForStation(stationId);
+      const activeFlag = flagInfo.flag;
+
+      // Check if Party Guy (NPC V) is in this station!
+      // Party Guy boosts his owner's worker in this station straight to #1 Top of the stack regardless of battery, and does NOT take up a separate Flag circle!
+      const partyGuyRec = st.deployments.find(d => d.isNpc && d.npcId === 'npc_5');
+      const partyBoostedPlayerId = partyGuyRec ? partyGuyRec.playerId : null;
+
+      // Physical stack tokens (excludes Party Guy attachment if owner has a worker here; if owner placed Party Guy alone without a worker, show Party Guy on pole)
+      const ownerHasWorkerHere = partyBoostedPlayerId && st.deployments.some(d => !d.isNpc && d.playerId === partyBoostedPlayerId);
+      const poleDeployments = st.deployments.filter(d => !(d.isPartyBoost && ownerHasWorkerHere));
+
+      // Stage 1 & 2: Raw arrival order
+      const rawStackTopToBottom = [...poleDeployments]
+        .sort((a, b) => a.deploySeq - b.deploySeq)
+        .map(d => {
+          const p = playersState[d.playerId];
+          const isBoostedByPartyGuy = (!d.isNpc && d.playerId === partyBoostedPlayerId);
+          return {
+            ...d,
+            player: p,
+            turnOrder: p.turnOrder,
+            battery: BATTERY_TYPES[d.batteryId],
+            isBoostedByPartyGuy,
+            effectiveEnergyRank: isBoostedByPartyGuy ? 99 : BATTERY_TYPES[d.batteryId].rank,
+            hasStar: d.isNpc ? (d.npcId === 'npc_3') : hasStationStar(d.playerId, stationId)
+          };
+        });
+
+      // Stage 3+ (Pure Energy Mode — No Buoyancy!): Sort by Effective Battery Energy (Party Guy 99 > 4/4 W > 3/4 Y > 1/4 O > 0/4 R)
+      const energyStackTopToBottom = [...rawStackTopToBottom].sort((a, b) => {
+        if (b.effectiveEnergyRank !== a.effectiveEnergyRank) {
+          return b.effectiveEnergyRank - a.effectiveEnergyRank;
+        }
+        return a.deploySeq - b.deploySeq;
+      });
+
+      const activeStack = st.stage >= 3 ? energyStackTopToBottom : rawStackTopToBottom;
+      const N = activeStack.length;
+      const allHandsBottlingEarlyLeave = (stationId === 6 && N >= 3 && payoutFormula === 'flag_strips');
+
+      // Bottom-to-Top Heart Peeling for Real Players (5:00 PM ❤️ = $0, 8:00 PM 💔 = $0, 12:00 AM 🖤 = +$2 Overtime!)
+      const humanStackBottomToTop = [...activeStack].reverse().filter(t => !t.isNpc);
+      const heartByPlayerId = {};
+      humanStackBottomToTop.forEach((tok, idxFromBottomHuman) => {
+        if (allHandsBottlingEarlyLeave || idxFromBottomHuman === 0) {
+          heartByPlayerId[tok.playerId] = {
+            type: 'full',
+            label: allHandsBottlingEarlyLeave ? '❤️ Early (All Hands!)' : '❤️ Full (5PM)',
+            overtimeCash: 0
+          };
+        } else if (idxFromBottomHuman === 1) {
+          heartByPlayerId[tok.playerId] = {
+            type: 'half',
+            label: '💔 Half (8PM)',
+            overtimeCash: 0
+          };
+        } else {
+          // Moe's rule: $2 on overtime check for Corpse Heart (12:00 AM)!
+          heartByPlayerId[tok.playerId] = {
+            type: 'corpse',
+            label: '🖤 Corpse (12AM +$2)',
+            overtimeCash: 2
+          };
+        }
+      });
+
+      const resultsByPlayer = {};
+      PLAYER_DEFS.forEach(pDef => {
+        const d = playersState[pDef.id].dept[stationId];
+        resultsByPlayer[pDef.id] = {
+          deployedCount: 0,
+          skillMoves: 0,
+          sweatMoves: 0,
+          startSkill: d.skill,
+          startSweat: d.sweat,
+          endSkill: d.skill,
+          endSweat: d.sweat,
+          skillBounces: 0,
+          sweatBounces: 0,
+          onCallBonusCash: 0,
+          bottlingRushBonusCash: 0,
+          overtimeCash: 0,
+          cashEarned: 0,
+          startHasStar: hasStationStar(pDef.id, stationId),
+          endHasStar: hasStationStar(pDef.id, stationId),
+          earnedNewStar: false,
+          isOnCallHere: (st.onCallPlayerIds || []).includes(pDef.id),
+          heartType: null,
+          heartLabel: '—'
+        };
+      });
+
+      const penalty = st.abandonedPenalty || 0;
+      const harvestAgaves = getHarvestAgaveCount();
+      // Moe's Heavy Harvest Bottling Rush Rule:
+      // Normally 3 expressions (1 Añejo barrel, 1 Reposado pulled, 1 Blanco).
+      // When 4 or 5 Agaves are harvested in S1, there are 1 or 2 extra tequilas to bottle — everyone in S6 Bottling gets +$1 (at 4 Agave) or +$2 (at 5 Agave) directly on their paycheck!
+      const bottlingRushPerWorker = (stationId === 6 && harvestAgaves >= 4) ? Math.min(2, harvestAgaves - 3) : 0;
+
+      // Check if Trainer (NPC III) is in this station — gives his owner +1 $kill in this station!
+      const trainerRec = st.deployments.find(d => d.isNpc && d.npcId === 'npc_3');
+      if (trainerRec) {
+        resultsByPlayer[trainerRec.playerId].skillMoves += 1;
+      }
+
+      // Check if any player has a Tether Chit station bonus/penalty with an NPC deployed in this station!
+      st.deployments.filter(d => d.isNpc).forEach(npcDep => {
+        const npcObj = npcsState[npcDep.npcId];
+        const lane = npcObj?.lanes?.[npcDep.playerId];
+        if (lane && lane.pos > 0) {
+          const cColor = lane.chits[lane.pos];
+          const chitObj = cColor ? TETHER_LEVEL_CHITS[cColor].levels[lane.pos] : null;
+          if (chitObj) {
+            resultsByPlayer[npcDep.playerId].skillMoves += (chitObj.skill || 0);
+            resultsByPlayer[npcDep.playerId].sweatMoves = Math.max(0, resultsByPlayer[npcDep.playerId].sweatMoves + (chitObj.sweat || 0));
+          }
+        }
+      });
+
+      const tokenPayouts = activeStack.map((tok, idxFromTop) => {
+        const idxFromBottom = (N - 1) - idxFromTop;
+        const circleFromBottom = idxFromBottom + 1;
+        const flagBoxVal = activeFlag.poleBottomToTop[idxFromBottom] ?? circleFromBottom;
+        const baseVal = (payoutFormula === 'flag_strips') ? flagBoxVal : circleFromBottom;
+
+        // Check if NPC II (The Booster: +1 to worker directly ABOVE him!) is directly below this token (`idxFromTop + 1`)
+        const tokenDirectlyBelow = activeStack[idxFromTop + 1];
+        const boosterBonus = (tokenDirectlyBelow && tokenDirectlyBelow.isNpc && tokenDirectlyBelow.npcId === 'npc_2') ? 1 : 0;
+
+        // Check if this player has a Yellow Tether flagMod (-1) from an NPC in this station
+        let tetherFlagMod = 0;
+        if (!tok.isNpc) {
+          st.deployments.filter(d => d.isNpc && d.playerId === tok.playerId).forEach(npcDep => {
+            const lane = npcsState[npcDep.npcId]?.lanes?.[tok.playerId];
+            if (lane && lane.pos > 0) {
+              const col = lane.chits[lane.pos];
+              const ch = col ? TETHER_LEVEL_CHITS[col].levels[lane.pos] : null;
+              if (ch && ch.flagMod) tetherFlagMod += ch.flagMod;
+            }
+          });
+        }
+
+        const payoutVal = Math.max(1, baseVal + penalty + boosterBonus + tetherFlagMod);
+
+        let sk = 0;
+        let sw = 0;
+
+        if (!tok.isNpc) {
+          if (penalty < 0 && N === 1) {
+            sk = payoutVal;
+            sw = payoutVal;
+          } else if (idxFromTop === 0 || tok.hasStar) {
+            // Pure Energy Rule: Top of stack OR ★ Star player earns $kill!
+            sk = payoutVal;
+          } else {
+            sw = payoutVal;
+          }
+
+          const pr = resultsByPlayer[tok.playerId];
+          const hInfo = heartByPlayerId[tok.playerId] || { type: 'full', label: '❤️ Full', overtimeCash: 0 };
+          pr.deployedCount += 1;
+          pr.skillMoves += sk;
+          pr.sweatMoves += sw;
+          if (pr.isOnCallHere) {
+            pr.onCallBonusCash = 1;
+          }
+          if (bottlingRushPerWorker > 0) {
+            pr.bottlingRushBonusCash = bottlingRushPerWorker;
+          }
+          pr.overtimeCash += hInfo.overtimeCash;
+          pr.heartType = hInfo.type;
+          pr.heartLabel = hInfo.label;
+        }
+
+        return {
+          ...tok,
+          idxFromTop,
+          circleFromBottom,
+          baseVal,
+          boosterBonus,
+          payoutVal,
+          skMoves: sk,
+          swMoves: sw,
+          heartLabel: tok.isNpc ? '🤖 NPC (Face-Up)' : (heartByPlayerId[tok.playerId]?.label || '❤️ Full')
+        };
+      });
+
+      let outsiderEarnedStar = false;
+      let outsiderEarnedStarName = '';
+
+      PLAYER_DEFS.forEach(pDef => {
+        const r = resultsByPlayer[pDef.id];
+        const rawSk = r.startSkill + r.skillMoves;
+        if (rawSk > skMax) {
+          r.endSkill = skMax;
+          r.skillBounces = rawSk - skMax;
+        } else {
+          r.endSkill = rawSk;
+          r.skillBounces = 0;
+        }
+
+        const rawSw = r.startSweat + r.sweatMoves;
+        if (rawSw > 6) {
+          r.endSweat = 6;
+          r.sweatBounces = rawSw - 6;
+        } else {
+          r.endSweat = rawSw;
+          r.sweatBounces = 0;
+        }
+
+        r.cashEarned = r.skillBounces + r.sweatBounces + r.onCallBonusCash + r.bottlingRushBonusCash + r.overtimeCash;
+        r.endHasStar = (r.endSkill >= skMax || r.endSweat >= 6 || r.startHasStar);
+        r.earnedNewStar = (!r.startHasStar && r.endHasStar);
+
+        if (r.earnedNewStar && !(st.onCallPlayerIds || []).includes(pDef.id)) {
+          outsiderEarnedStar = true;
+          outsiderEarnedStarName = pDef.shortName;
+        }
+      });
+
+      return {
+        stage: st.stage,
+        N,
+        flagWorkerCount: getStationFlagWorkerCount(stationId),
+        bottlingRushPerWorker,
+        partyGuyRec,
+        activeFlag,
+        isPreviewFlag: flagInfo.isPreview,
+        liveFlag: flagInfo.liveFlag,
+        activeStack: tokenPayouts,
+        resultsByPlayer,
+        outsiderEarnedStar,
+        outsiderEarnedStarName
+      };
+    }
+
+    // =========================================================================
+    // 9. RENDERING
+    // =========================================================================
+    function renderSetupBar() {
+      const bar = document.getElementById('setupBar');
+      if (!bar) return;
+      const ordered = getPlayersInTurnOrder();
+
+      const orderPills = ordered.map(p => {
+        const pts = getStartingPointsForTurnOrder(p.turnOrder);
+        const stPair = (p.onCallStations || []).map(s => `S${s}:${p.dept[s]?.sweat || 0}w`).join(' & ');
+        return `
+          <span style="display:inline-flex; align-items:center; gap:4px; background:#162032; border:1px solid ${p.hex}; border-radius:6px; padding:2px 7px;">
+            <span class="color-dot" style="background:${p.hex}; width:9px; height:9px;"></span>
+            <strong style="color:#fff;">#${p.turnOrder} ${p.name}</strong>
+            <span style="color:#fde047; font-weight:800;">(${pts} Pts: ${stPair})</span>
+          </span>
+        `;
+      }).join('<span style="color:#64748b; font-weight:900;">➔</span>');
+
+      bar.innerHTML = `
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
+          <strong style="color:#fde047;">🎯 Turn Order &amp; Reverse Setup (4•3•3•2 Pts):</strong>
+          ${orderPills}
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+          <button onclick="showAllPlayerHands()" class="st-mini-btn" style="border-color:#22c55e; color:#86efac;" title="Open all 4 players' hands at the top so you can see all unplaced discs!">👁️ Show All 4 Hands</button>
+          <button onclick="rotateTurnOrder()" class="st-mini-btn" title="Rotate 1st Player marker to the next player in line!">🔄 Rotate Turn Order</button>
+          <button onclick="shuffleTurnOrder()" class="st-mini-btn" title="Randomly shuffle Turn Order (1st..4th) and update 4-3-3-2 setup points!">🔀 Shuffle Turn Order</button>
+          <button onclick="reshuffleOnCallChits()" class="st-mini-btn" style="border-color:#f59e0b; color:#fde047;" title="Re-shuffle the 8 Colored On-Call Chits (1 per station + extras on S1 Harvest & S5 Barrels)!">🎲 Re-Deal 8 On-Call Chits</button>
+        </div>
+      `;
+    }
+
+    function renderCallInBanner() {
+      const container = document.getElementById('callInBannerContainer');
+      if (!container) return;
+
+      const deployedPlayers = getDeployedPlayerChitsCount();
+      const requiredPlayers = getTotalRequiredPlayerChits();
+      const emptyStations = ALL_STATION_DEFS.filter(stDef => stationsState[stDef.id].deployments.filter(d => !d.isPartyBoost).length === 0);
+
+      if (deployedPlayers < requiredPlayers || emptyStations.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const itemsHtml = emptyStations.map(stDef => {
+        const resp = getResponsiblePlayerForEmptyStation(stDef.id);
+        const p = resp.player;
+        const pullable = getPullableDiscsForCallIn(p.id);
+
+        return `
+          <div style="background:#0f172a; border:1.5px solid #f59e0b; border-radius:7px; padding:6px 10px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-top:5px;">
+            <div>
+              <span style="color:#fca5a5; font-weight:900;">🚨 ${stDef.name} is EMPTY (0 Workers)!</span>
+              <span style="color:#fde047; font-weight:800; margin-left:6px;">[-2 Abandoned Post Token]</span>
+              <div style="font-size:11px; color:#e2e8f0; margin-top:2px;">
+                Responsible Player: <strong style="color:${p.hex};">#${p.turnOrder} ${p.name}</strong> (${resp.reason}).
+                Pick which of ${p.shortName}'s deployed discs to pull into Station ${stDef.id}:
+              </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+              ${pullable.map(item => {
+                const b = BATTERY_TYPES[item.batteryId];
+                return `
+                  <button class="stage-btn step-ready" style="padding:4px 9px; font-size:10.5px;"
+                          onclick="executeEmergencyCallInMove(${stDef.id}, '${p.id}', ${item.fromStationId}, ${item.slotNum})">
+                    🧲 Pull ${p.shortName}'s Bat #${item.slotNum} (${b.short}) from S${item.fromStationId} ➔ S${stDef.id}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="callin-alert">
+          <div style="width:100%; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <strong style="font-size:13px; color:#fef08a;">🚨 MANDATORY ON-CALL CHECK (Before Setting Out Flags!):</strong>
+              <span style="font-size:11.5px; color:#fecaca; margin-left:6px;">
+                ${emptyStations.length} station(s) have 0 workers! Each empty station gets a <strong>-2 Token</strong> (solo 3 flag ➔ 1 $k &amp; 1 $w).
+              </span>
+            </div>
+            <button class="stage-btn step-ready" onclick="autoResolveAllEmptyStationsAndSetFlags()">
+              ⚡ Auto-Pull On-Call Workers &amp; Set Out Flags
+            </button>
+          </div>
+          <div style="width:100%;">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCyclePillsBar() {
+      const bar = document.getElementById('cyclePillsBar');
+      if (!bar) return;
+      const maxCycleToShow = Math.max(4, currentCycle);
+      const pills = [];
+      for (let c = 1; c <= maxCycleToShow; c++) {
+        const isCurrent = (c === currentCycle);
+        const hasSnap = Boolean(cycleSnapshots[c]);
+        const bg = isCurrent ? '#d97706' : hasSnap ? '#064e3b' : '#1e293b';
+        const border = isCurrent ? '#fde047' : hasSnap ? '#10b981' : '#334155';
+        const color = isCurrent ? '#ffffff' : hasSnap ? '#a7f3d0' : '#64748b';
+        const label = c <= 4 ? `Cycle ${c}/4` : `Cycle ${c}`;
+        pills.push(`
+          <button onclick="${hasSnap ? `jumpToCycleSnapshot(${c})` : ''}"
+                  style="background:${bg}; border:1.5px solid ${border}; color:${color}; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:900; cursor:${hasSnap ? 'pointer' : 'default'};"
+                  title="${hasSnap ? `Click to rewind/restore to the start of Cycle ${c}` : `Reach Cycle ${c} by finishing earlier cycles`}">
+            ${isCurrent ? '⚡ ' : hasSnap ? '✓ ' : ''}${label}
+          </button>
+        `);
+      }
+      bar.innerHTML = `
+        <span style="font-size:10.5px; font-weight:900; color:#fde047; margin-right:3px;">PRE-CORP:</span>
+        ${pills.join('')}
+      `;
+    }
+
+    function renderTurnBanner() {
+      const banner = document.getElementById('turnBanner');
+      const deployedPlayers = getDeployedPlayerChitsCount();
+      const requiredPlayers = getTotalRequiredPlayerChits();
+      const deployedNpcs = deploymentHistory.filter(d => d.isNpc).length;
+      const nextPid = getNextTurnPlayerId();
+      const harvestCount = getHarvestAgaveCount();
+      const bottleRushBonus = harvestCount >= 4 ? Math.min(2, harvestCount - 3) : 0;
+      const cycleTag = `<span style="background:#d97706; color:#fff; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:900; margin-right:6px;">CYCLE ${currentCycle} OF 4</span>`;
+      const harvestWaveBadge = `<span style="background:#15803d; border:1px solid #86efac; color:#fff; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:900;">🌾 Harvest Supply: ${harvestCount} Agave${harvestCount === 1 ? '' : 's'} (S2–S4 vs ${harvestCount}${bottleRushBonus > 0 ? ` • 🍾 S6 Bottling Rush: +$${bottleRushBonus}/worker!` : ''})</span>`;
+
+      if (deployedPlayers < requiredPlayers && nextPid) {
+        const p = playersState[nextPid];
+        banner.innerHTML = `
+          <div>
+            ${cycleTag}
+            🕵️ <strong>Next Up:</strong> <span style="color:${p.hex}; font-weight:900;">#${p.turnOrder} ${p.name}</span>.
+            Place your <strong>4 Batteries (Face-Down ?)</strong> + optionally pick <strong>1 of the 6 NPCs (I–VI Face-Up!)</strong> below!
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${harvestWaveBadge}
+            <span style="font-size:12px; color:#fde047; font-weight:800;">Player Bats: ${deployedPlayers}/${requiredPlayers} • NPCs: ${deployedNpcs}/4</span>
+          </div>
+        `;
+      } else {
+        banner.innerHTML = `
+          <div>
+            ${cycleTag}
+            ✅ <strong>All ${requiredPlayers} Player Batteries Placed (+ ${deployedNpcs} NPCs)!</strong> Click <strong>2️⃣ Call-In Check &amp; Set Flags</strong> ➔ <strong>3️⃣ Energy (Flip &amp; Sort)</strong> ➔ <strong>4️⃣ Calculate / Move Cubes</strong>!
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${harvestWaveBadge}
+            <span style="font-size:12px; color:#6ee7b7; font-weight:800;">${deployedPlayers}/${requiredPlayers} Bats + ${deployedNpcs} NPCs</span>
+          </div>
+        `;
+      }
+    }
+
+    function renderPlayersGrid() {
+      const container = document.getElementById('playersGrid');
+      const nextPid = getNextTurnPlayerId();
+      const anyStationRevealed = ALL_STATION_DEFS.some(st => stationsState[st.id].stage >= 3);
+      const orderedPlayers = getPlayersInTurnOrder();
+
+      container.innerHTML = orderedPlayers.map(p => {
+        const isTurn = (nextPid === p.id);
+        const allowedSlots = getAllowedSlotListForPlayer(p.id);
+        const remainingCount = allowedSlots.filter(s => p.slots[s].deployedTo === null).length;
+        const showSecretSlots = p.hoodOpen || anyStationRevealed;
+
+        let movedStage6Cash = 0;
+        let previewStage5Cash = 0;
+        ALL_STATION_DEFS.forEach(stDef => {
+          const sim = simulateStation(stDef.id);
+          const r = sim.resultsByPlayer[p.id];
+          if (sim.stage >= 6) {
+            movedStage6Cash += r.cashEarned;
+          } else if (sim.stage === 5) {
+            previewStage5Cash += r.cashEarned;
+          }
+        });
+
+        const immediateRoundMods = (p.npcBonusCash || 0) + (p.tetherCashMod || 0);
+        const consol = computePlayerCycleHeartConsolidation(p.id);
+
+        const totalStarsCount = [1, 2, 3, 4, 5, 6].filter(stId => {
+          const sim = simulateStation(stId);
+          return sim.stage >= 6 ? sim.resultsByPlayer[p.id].endHasStar : hasStationStar(p.id, stId);
+        }).length;
+
+        const publicStationsEntered = ALL_STATION_DEFS
+          .filter(st => stationsState[st.id].deployments.some(d => d.playerId === p.id))
+          .map(st => `S${st.id}`);
+
+        const startPts = getStartingPointsForTurnOrder(p.turnOrder);
+        const draftedNpc = p.npcDraftedId ? npcsState[p.npcDraftedId] : null;
+
+        return `
+          <div class="p-card ${isTurn ? 'current-turn' : ''}">
+            <div class="p-head">
+              <div class="p-name">
+                <button class="turn-move-btn" onclick="movePlayerTurnOrder('${p.id}', -1)" title="Move earlier in Turn Order">◀</button>
+                <span class="color-dot" style="background:${p.hex};"></span>
+                <span>#${p.turnOrder} ${p.name}</span>
+                <button class="turn-move-btn" onclick="movePlayerTurnOrder('${p.id}', 1)" title="Move later in Turn Order">▶</button>
+              </div>
+              <span class="paycheck-pill" title="Paycheck includes Wall Bounces, +$1 On-Call, +$2 🖤 Overtime, +$3 Clingy Worker, and Tether Chit mods!">
+                ✓ $${p.cash + movedStage6Cash + immediateRoundMods}${previewStage5Cash > 0 ? ` (+$${previewStage5Cash})` : ''}
+              </span>
+            </div>
+
+            <!-- ON-CALL CHITS (+$1) & BONUS 5TH NPC BATTERY STATUS -->
+            <div class="oncall-player-row">
+              <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <span style="color:#94a3b8; font-weight:800;">On-Call:</span>
+                ${(p.onCallStations || []).map(stId => {
+                  const stillActive = (stationsState[stId]?.onCallPlayerIds || []).includes(p.id);
+                  return `<span class="oncall-badge ${stillActive ? '' : 'removed'}">
+                    S${stId} ${stillActive ? '+$1' : '✗'}
+                  </span>`;
+                }).join('')}
+              </div>
+              <button class="turn-move-btn" onclick="cyclePlayerOnCallPointSplit('${p.id}')">
+                ⚖️ Split ${startPts} Pts
+              </button>
+            </div>
+
+            <!-- CUMULATIVE HEARTS & MAX-2 CONSOLIDATION PREVIEW -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; border:1px solid #263248; border-radius:5px; padding:3px 7px; margin-bottom:5px; font-size:9.5px; font-weight:800;">
+              <span style="color:#fca5a5;">★ ${totalStarsCount}/6</span>
+              <span style="color:#e2e8f0;" title="Saved Hearts + This Shift's Consolidated Best 2 Hearts (${consol.note})">
+                ❤️ ${p.fullHearts}${consol.keptFull > 0 ? `+${consol.keptFull}` : ''} •
+                💔 ${p.halfHearts}${consol.keptHalf > 0 ? `+${consol.keptHalf}` : ''} •
+                🖤 ${p.corpseHearts}${consol.keptCorpse > 0 ? `+${consol.keptCorpse}` : ''}
+              </span>
+              <span style="color:#fde047;">${draftedNpc ? `🤖 ${draftedNpc.roman} (S${draftedNpc.deployedToStation})` : '🤖 No NPC'}</span>
+            </div>
+
+            <!-- BOT RANDOM DEPLOY BUTTONS + SCREEN HOOD TOGGLE -->
+            <div class="p-bot-bar">
+              <button class="bot-btn" ${remainingCount === 0 ? 'disabled' : ''}
+                      onclick="randomDeployForPlayer('${p.id}', 4)">
+                🎲 Random 4
+              </button>
+              <button class="bot-btn" ${remainingCount === 0 ? 'disabled' : ''}
+                      onclick="randomDeployForPlayer('${p.id}', 2)">
+                🎲 Random 2
+              </button>
+              <button class="hood-btn ${showSecretSlots ? 'open' : ''}"
+                      onclick="togglePlayerHood('${p.id}')">
+                ${showSecretSlots ? '👤 Hand Open' : '🛡️ Dark'}
+              </button>
+            </div>
+
+            <!-- PUBLIC CIRCADIAN RHYTHM CARD -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; margin-bottom:4px;">
+              <span style="font-size:9px; color:#94a3b8; font-weight:800;">CIRCADIAN:</span>
+              <select onchange="changePlayerProfile('${p.id}', this.value)" style="background:#0f172a; color:#f8fafc; border:1px solid #334155; border-radius:4px; font-size:9.5px; font-weight:700; padding:1px 4px; flex:1;">
+                ${Object.values(CIRCADIAN_PROFILES).map(pr => `
+                  <option value="${pr.id}" ${p.profileId === pr.id ? 'selected' : ''}>${pr.name}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            ${showSecretSlots ? `
+              <div class="circadian-row">
+                ${[1, 2, 3, 4].map(slotNum => {
+                  const slotObj = p.slots[slotNum];
+                  const b = BATTERY_TYPES[slotObj.battery];
+                  const isLockedFight = (slotNum === 4 && p.lostBatteryNextRound);
+                  const isSelected = selectedDisc && selectedDisc.playerId === p.id && selectedDisc.slotNum === slotNum;
+                  const isDeployed = slotObj.deployedTo !== null;
+                  const allowedSts = getAllowedStationsForSlot(slotNum);
+
+                  return `
+                    <div class="circ-slot ${isSelected ? 'selected' : ''} ${isDeployed ? 'deployed' : ''} ${isLockedFight ? 'locked-slot' : ''}"
+                         onclick="selectCircadianDisc('${p.id}', ${slotNum}, event)">
+                      <div class="circ-slot-title">Bat #${slotNum}</div>
+                      <div class="circ-allowed-tag">${isLockedFight ? '🥊 FIGHT LOCK' : `S${allowedSts.join(',')}`}</div>
+                      <div style="display:flex; justify-content:center; margin:2px 0;">
+                        <svg width="30" height="30" viewBox="-26 -26 52 52">
+                          <circle cx="0" cy="0" r="22" fill="${p.hex}" stroke="#0f172a" stroke-width="2" />
+                          <circle cx="0" cy="0" r="15" fill="${b.fill}" stroke="#0f172a" stroke-width="1.5" />
+                          <rect x="-8" y="-5" width="14" height="10" rx="1.5" fill="none" stroke="#0f172a" stroke-width="1.6" />
+                          <rect x="6" y="-2.5" width="2.5" height="5" fill="#0f172a" />
+                          ${b.bars > 0 ? `<rect x="-6.5" y="-3" width="${b.bars * 2.8}" height="6" fill="#0f172a" />` : ''}
+                        </svg>
+                      </div>
+                      ${isLockedFight
+                        ? `<div style="font-size:8.5px; font-weight:900; color:#fca5a5;">Lost (Fight)</div>`
+                        : isDeployed
+                          ? `<div style="font-size:9px; font-weight:900; color:#fde047; margin-top:3px;">In S${slotObj.deployedTo} (?)</div>`
+                          : `
+                            <div class="quick-send-row">
+                              ${allowedSts.map(stId => {
+                                const check = canSendBatteryToStation(p.id, slotNum, stId);
+                                return `<button class="q-send-btn"
+                                                ${check.ok ? '' : 'disabled'}
+                                                title="${check.ok ? `Send ${p.shortName}'s Battery #${slotNum} Face-Down to Station ${stId}` : check.reason}"
+                                                onclick="sendBatteryDirectlyToStation('${p.id}', ${slotNum}, ${stId}, event)">S${stId}</button>`;
+                              }).join('')}
+                            </div>
+                          `
+                      }
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            ` : `
+              <div style="background:#0a0f18; border:1.5px dashed #334155; border-radius:8px; padding:12px 8px; text-align:center; margin:6px 0;">
+                <div style="font-size:11px; font-weight:900; color:#94a3b8;">🛡️ ${p.shortName.toUpperCase()}'S HAND IS HIDDEN</div>
+                <div style="font-size:10px; color:#cbd5e1; margin-top:4px;">
+                  Placed in: <strong style="color:#fde047;">${publicStationsEntered.length > 0 ? publicStationsEntered.join(', ') : 'None yet'}</strong>
+                </div>
+              </div>
+            `}
+
+            <!-- 1-CLICK DEPARTMENT RED STAR (★) TOGGLES FOR ALL 6 STATIONS -->
+            <div class="dept-stars-row">
+              ${[1, 2, 3, 4, 5, 6].map(stId => {
+                const starred = hasStationStar(p.id, stId);
+                return `
+                  <button class="dept-star-btn ${starred ? 'starred' : ''}" onclick="togglePlayerStationStar('${p.id}', ${stId})">
+                    S${stId}:${starred ? '★' : '0'}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // RENDER THE 6 NPC MINI-BOARDS (I–VI) & 4-PLAYER TETHER TRACKS (1–6)
+    // =========================================================================
+    function renderNpcSection() {
+      const wrap = document.getElementById('npcSectionWrap');
+      if (!wrap) return;
+
+      const nextPid = getNextTurnPlayerId();
+      if (nextPid && !playersState[activeNpcDraftPlayerId]) {
+        activeNpcDraftPlayerId = nextPid;
+      }
+
+      const playerSelectorHtml = getPlayersInTurnOrder().map(p => {
+        const isSel = (activeNpcDraftPlayerId === p.id);
+        return `
+          <button onclick="activeNpcDraftPlayerId='${p.id}'; renderAll();"
+                  style="background:${isSel ? p.hex : '#1e293b'}; color:${isSel && p.id === 'yellow' ? '#0f172a' : '#fff'}; border:2px solid ${isSel ? '#fde047' : p.hex}; border-radius:6px; padding:3px 9px; font-size:11px; font-weight:900; cursor:pointer;">
+            ${isSel ? '👉 ' : ''}#${p.turnOrder} ${p.shortName} ${p.npcDraftedId ? `(Drafted ${npcsState[p.npcDraftedId].roman})` : '(Pick NPC)'}
+          </button>
+        `;
+      }).join('');
+
+      const npcCardsHtml = NPC_DEFS.map(nDef => {
+        const npc = npcsState[nDef.id];
+        const isDeployed = (npc.deployedToStation !== null);
+        const ownerPlayer = npc.draftedByPlayerId ? playersState[npc.draftedByPlayerId] : null;
+        const activeBatObj = BATTERY_TYPES[npc.fixedBattery || npc.chosenBattery];
+
+        const batteryPickerHtml = npc.fixedBattery
+          ? `<span style="background:${activeBatObj.fill}; color:${activeBatObj.textColor}; padding:1px 6px; border-radius:4px; font-weight:900; font-size:9.5px; border:1px solid #000;">
+               ${nDef.id === 'npc_5' ? '🎉 TOP BOOST (No Flag Change)' : `Fixed: ${activeBatObj.short}`}
+             </span>`
+          : Object.values(BATTERY_TYPES).map(b => {
+              const sel = (npc.chosenBattery === b.id);
+              return `
+                <button onclick="setNpcBattery('${npc.id}', '${b.id}')"
+                        style="background:${b.fill}; color:${b.textColor}; border:${sel ? '2px solid #fde047' : '1px solid #334155'}; opacity:${sel ? '1' : '0.55'}; border-radius:4px; padding:1px 5px; font-size:9px; font-weight:900; cursor:pointer;"
+                        title="Set ${npc.short} battery to ${b.label} (Face-Up in stack!)">
+                  ${b.short}
+                </button>
+              `;
+            }).join('');
+
+        const stationButtonsHtml = isDeployed
+          ? `<span style="color:#fde047; font-weight:900; font-size:10px;">
+               ✅ Placed Face-Up in S${npc.deployedToStation} by ${ownerPlayer?.shortName} (${activeBatObj.short})
+             </span>`
+          : [1, 2, 3, 4, 5, 6].map(stId => `
+              <button class="q-send-btn" style="padding:2px 6px; font-size:9.5px;"
+                      onclick="deployNpcToStation('${npc.id}', '${activeNpcDraftPlayerId}', ${stId})"
+                      title="Draft ${npc.short} for ${playersState[activeNpcDraftPlayerId]?.shortName} and place FACE-UP into Station ${stId} (+${npc.tetherSteps} Tether)!">
+                S${stId}
+              </button>
+            `).join('');
+
+        // 4 Player Tether Lanes (1..6) with Red / Orange / Yellow chits & Sliding ❤️ Heart Limit Marker
+        const lanesHtml = PLAYER_DEFS.map(pDef => {
+          const lane = npc.lanes[pDef.id];
+          const cells = [1, 2, 3, 4, 5, 6].map(spaceNum => {
+            const cColor = lane.chits[spaceNum] || null;
+            const colorClass = cColor ? TETHER_LEVEL_CHITS[cColor].cssClass : '';
+            const isHoney = (spaceNum === 3);
+            const isClimax = (spaceNum === 6);
+            const hasHeartPin = (lane.heartLimit === spaceNum);
+            const isCurrentPos = (lane.pos === spaceNum);
+            const chitObj = cColor ? TETHER_LEVEL_CHITS[cColor].levels[spaceNum] : null;
+            const tooltip = chitObj
+              ? `${pDef.shortName} Space ${spaceNum} — ${chitObj.title}: ${chitObj.story} (Click to test/change color)`
+              : `${pDef.shortName} Space ${spaceNum}${isHoney ? ' (🍯 Honey Spot)' : isClimax ? ' (🚨 L6 Climax)' : ''}${hasHeartPin ? ' [❤️ Sliding Limit]' : ''} — Click to test Red/Orange/Yellow chit`;
+
+            return `
+              <div class="tether-cell ${colorClass} ${isHoney ? 'honey-spot' : ''} ${isClimax ? 'climax-spot' : ''}"
+                   style="${isCurrentPos ? `outline:2px solid ${pDef.hex};` : ''}"
+                   onclick="cycleTetherCellManual('${npc.id}', '${pDef.id}', ${spaceNum})"
+                   title="${tooltip}">
+                ${hasHeartPin ? `<span class="heart-limit-pin" title="❤️ Heart Speed/Affair Limit Marker (3 spaces ahead, locks on 6)">❤️</span>` : ''}
+                <span>${cColor ? (cColor === 'red' ? '❤️' : cColor === 'orange' ? '🧡' : '💛') : ''}${spaceNum}</span>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="tether-lane-row">
+              <span style="font-size:9.5px; font-weight:900; color:${pDef.hex}; display:flex; align-items:center; gap:3px;">
+                <span class="color-dot" style="background:${pDef.hex}; width:8px; height:8px;"></span>
+                ${pDef.shortName} (${lane.pos}/6)
+              </span>
+              ${cells}
+            </div>
+            ${lane.lastEventText ? `<div style="font-size:8.5px; color:#fde047; padding-left:56px; line-height:1.2;">↳ ${lane.lastEventText}</div>` : ''}
+          `;
+        }).join('');
+
+        return `
+          <div class="npc-card ${isDeployed ? 'deployed-npc' : ''}">
+            <div class="npc-head">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="npc-roman-badge">${npc.roman}</span>
+                <strong style="font-size:12px; color:#f8fafc;">${npc.name}</strong>
+              </div>
+              <span style="font-size:9.5px; font-weight:900; color:${npc.tetherSteps === 2 ? '#fca5a5' : '#93c5fd'};">
+                +${npc.tetherSteps} Tether
+              </span>
+            </div>
+            <div style="font-size:10px; color:#cbd5e1; line-height:1.25;">${npc.roleDesc}</div>
+
+            <!-- BATTERY PICKER + SEND FACE-UP TO STATION S1..S6 -->
+            <div class="npc-deploy-bar">
+              <div style="display:flex; align-items:center; gap:3px; flex-wrap:wrap;">
+                <span style="color:#94a3b8; font-weight:800;">Bat:</span>
+                ${batteryPickerHtml}
+              </div>
+              <div style="display:flex; align-items:center; gap:3px; flex-wrap:wrap;">
+                <span style="color:#fde047; font-weight:800;">${isDeployed ? '' : `Place for ${playersState[activeNpcDraftPlayerId]?.shortName}:`}</span>
+                ${stationButtonsHtml}
+              </div>
+            </div>
+
+            <!-- 4 PLAYER TETHER LANES (SPACES 1 TO 6 + SLIDING ❤️ LIMIT) -->
+            <div class="tether-lanes-box">
+              <div style="display:flex; justify-content:space-between; font-size:8.5px; color:#94a3b8; font-weight:800;">
+                <span>4-PLAYER TETHER LANES (1–6 • ❤️ Limit = +3 Ahead):</span>
+                <span>Click any box (1–6) to test 🧡/❤️/💛</span>
+              </div>
+              ${lanesHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      wrap.innerHTML = `
+        <div class="npc-section-head">
+          <div>
+            <strong style="font-size:13px; color:#fde047;">🤖 6 UNIQUE NPCs (I–VI, Placed FACE-UP in Stack) &amp; 4-Lane Tether Boards (❤️ Crush / 🧡 Friend / 💛 User):</strong>
+            <div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">
+              Select a player on the right, pick the NPC's Battery (W/Y/O/R), and click <strong>S1–S6</strong> to place that NPC <strong>FACE-UP</strong> into any station! (Clingy Worker VI pays <strong>+$3</strong> &amp; moves <strong>+2</strong> onto Space 2 safely before Space 3's <strong>-$2</strong> emergency!)
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center;">
+            <span style="font-size:10.5px; font-weight:900; color:#cbd5e1;">Drafting NPC For:</span>
+            ${playerSelectorHtml}
+          </div>
+        </div>
+        <div class="npcs-grid">
+          ${npcCardsHtml}
+        </div>
+      `;
+    }
+
+    function renderMiniBatterySvg(x, y, playerHex, batteryObj, hasStarBadge, slotNum, isFaceDown, isNpc = false, npcRoman = '', isBoostedByPartyGuy = false) {
+      if (isFaceDown && !isNpc) {
+        return `
+          <g transform="translate(${x}, ${y})">
+            <circle cx="0" cy="0" r="22" fill="${playerHex}" stroke="#0f172a" stroke-width="2.2" />
+            <circle cx="0" cy="0" r="13.5" fill="#1e293b" stroke="#fde047" stroke-width="1.5" stroke-dasharray="3,2" />
+            <text x="0" y="5" text-anchor="middle" fill="#fde047" font-size="14" font-weight="900">?</text>
+          </g>
+        `;
+      }
+
+      // NPC tokens are ALWAYS Face-Up in the stack, labeled with their Roman Numeral (I–VI) and chosen Battery!
+      if (isNpc) {
+        return `
+          <g transform="translate(${x}, ${y})">
+            <rect x="-22" y="-22" width="44" height="44" rx="10" fill="#fde047" stroke="${playerHex}" stroke-width="3" />
+            <circle cx="0" cy="2" r="13.5" fill="${batteryObj.fill}" stroke="#0f172a" stroke-width="1.5" />
+            <rect x="-8" y="-3" width="13" height="9" rx="1.5" fill="none" stroke="#0f172a" stroke-width="1.5" />
+            <rect x="5" y="-1" width="2.2" height="5" fill="#0f172a" />
+            ${batteryObj.bars > 0 ? `<rect x="-6.5" y="-1.5" width="${batteryObj.bars * 2.6}" height="6" fill="#0f172a" />` : `<line x1="-4" y1="-2" x2="3" y2="3" stroke="#fff" stroke-width="1.5" />`}
+            <rect x="-16" y="-21" width="32" height="12" rx="4" fill="#0f172a" stroke="#fde047" stroke-width="1.2" />
+            <text x="0" y="-12.5" text-anchor="middle" fill="#fde047" font-size="8.5" font-weight="900">NPC ${npcRoman}</text>
+          </g>
+        `;
+      }
+
+      return `
+        <g transform="translate(${x}, ${y})">
+          <circle cx="0" cy="0" r="22" fill="${playerHex}" stroke="#0f172a" stroke-width="2" />
+          <circle cx="0" cy="0" r="15" fill="${batteryObj.fill}" stroke="#0f172a" stroke-width="1.6" />
+          <rect x="-9" y="-5" width="15" height="10" rx="2" fill="none" stroke="#0f172a" stroke-width="1.7" />
+          <rect x="6" y="-2.8" width="2.6" height="5.6" rx="1" fill="#0f172a" />
+          ${batteryObj.bars > 0 ? `<rect x="-7" y="-3.2" width="${batteryObj.bars * 3.0}" height="6.4" rx="1" fill="#0f172a" />` : `<line x1="-5" y1="-3" x2="4" y2="3" stroke="#fff" stroke-width="1.8" />`}
+
+          <!-- Self-Verifying Slot Number Badge (Left) -->
+          <circle cx="-17" cy="-15" r="8" fill="#0f172a" stroke="#fff" stroke-width="1.2" />
+          <text x="-17" y="-11.8" text-anchor="middle" fill="#fff" font-size="8" font-weight="900">#${slotNum}</text>
+
+          ${isBoostedByPartyGuy ? `
+            <rect x="-20" y="11" width="40" height="11" rx="3" fill="#fde047" stroke="#0f172a" stroke-width="1.2" />
+            <text x="0" y="19" text-anchor="middle" fill="#0f172a" font-size="7.5" font-weight="900">🎉 V TOP!</text>
+          ` : ''}
+
+          <!-- Red Star Badge (Right) -->
+          ${hasStarBadge ? `
+            <g transform="translate(17, -15)">
+              <circle cx="0" cy="0" r="8.5" fill="#fff" stroke="#dc2626" stroke-width="1.6" />
+              <path fill="#FF0000" d="M0,-5.5 L1.6,-1.6 L5.8,-1.1 L2.8,1.6 L3.4,5.8 L0,3.7 L-3.4,5.8 L-2.8,1.6 L-5.8,-1.1 L-1.6,-1.6 Z" />
+            </g>
+          ` : ''}
+        </g>
+      `;
+    }
+
+    function renderIsoCube(x, y, playerDef, isGhost = false, bounceText = '') {
+      const op = isGhost ? '0.32' : '1';
+      return `
+        <g transform="translate(${x}, ${y})" opacity="${op}">
+          <polygon points="0,-9 8.5,-4.5 0,0 -8.5,-4.5" fill="${playerDef.cubeTop}" stroke="#0f172a" stroke-width="1.1" />
+          <polygon points="-8.5,-4.5 0,0 0,9 -8.5,4.5" fill="${playerDef.cubeLeft}" stroke="#0f172a" stroke-width="1.1" />
+          <polygon points="0,0 8.5,-4.5 8.5,4.5 0,9" fill="${playerDef.cubeRight}" stroke="#0f172a" stroke-width="1.1" />
+          ${bounceText ? `<text x="0" y="16.5" text-anchor="middle" fill="#047857" font-size="8.5" font-weight="900">${bounceText}</text>` : ''}
+        </g>
+      `;
+    }
+
+    function renderStationSvg(stationId, sim) {
+      const W = 520;
+      const H = 415;
+      const skMax = getSkillMaxBox();
+      const st = stationsState[stationId];
+      const faceDownSetting = document.getElementById('chkFaceDownDeploy')?.checked ?? true;
+      const payoutFormula = document.getElementById('selPayoutFormula')?.value || 'flag_strips';
+      const isFaceDownNow = faceDownSetting && (sim.stage < 3);
+
+      const stackX = 68;
+      const circleY = [362, 299, 236, 173, 110];
+      const slotOccupants = [null, null, null, null, null];
+
+      sim.activeStack.forEach((item, idxFromTop) => {
+        const idxFromBottom = (sim.N - 1) - idxFromTop;
+        if (idxFromBottom >= 0 && idxFromBottom < 5) {
+          slotOccupants[idxFromBottom] = item;
+        }
+      });
+
+      const skillBuckets = { 0: [], 1: [], 2: [], 3: [] };
+      const sweatBuckets = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+      const ghostSkill = { 0: [], 1: [], 2: [], 3: [] };
+      const ghostSweat = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+
+      PLAYER_DEFS.forEach(pDef => {
+        const r = sim.resultsByPlayer[pDef.id];
+        if (sim.stage < 6) {
+          skillBuckets[r.startSkill].push({ pDef, bounces: 0 });
+          sweatBuckets[r.startSweat].push({ pDef, bounces: 0 });
+        } else {
+          if (r.startSkill !== r.endSkill) ghostSkill[r.startSkill].push({ pDef });
+          if (r.startSweat !== r.endSweat) ghostSweat[r.startSweat].push({ pDef });
+          skillBuckets[r.endSkill].push({ pDef, bounces: r.skillBounces });
+          sweatBuckets[r.endSweat].push({ pDef, bounces: r.sweatBounces });
+        }
+      });
+
+      function drawBucket(bucket, cx, cy, isGhost = false) {
+        if (!bucket || bucket.length === 0) return '';
+        const sp = 16;
+        const startOff = -((bucket.length - 1) * sp) / 2;
+        return bucket.map((it, i) => {
+          const lbl = (!isGhost && it.bounces > 0) ? `+$${it.bounces}` : '';
+          return renderIsoCube(cx + startOff + i * sp, cy, it.pDef, isGhost, lbl);
+        }).join('');
+      }
+
+      const fl = sim.activeFlag;
+      let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">`;
+
+      // LEFT STACK PANEL WITH MOE'S FLAG-POLE STRIP & TOP NARRATIVE PLACARD
+      svg += `
+        <rect x="6" y="6" width="214" height="402" rx="9" fill="#e7e0d3" stroke="#94a3b8" stroke-width="1.5" />
+        <rect x="12" y="10" width="30" height="390" rx="3" fill="#9ca3af" stroke="#4b5563" stroke-width="1.4" />
+        <rect x="16" y="12" width="198" height="58" rx="9" fill="${fl.bannerFill}" stroke="${fl.bannerStroke}" stroke-width="2" />
+        <text x="24" y="27" fill="#0f172a" font-size="9" font-weight="900">${fl.placardTitle}</text>
+        <text x="24" y="40" fill="#334155" font-size="8" font-weight="700">${fl.placardStory.slice(0, 48)}</text>
+        <text x="24" y="51" fill="#334155" font-size="8" font-weight="700">${fl.placardStory.slice(48, 98)}</text>
+      `;
+
+      if (st.abandonedPenalty < 0) {
+        svg += `
+          <rect x="24" y="54" width="184" height="14" rx="3" fill="#dc2626" />
+          <text x="116" y="64" text-anchor="middle" fill="#ffffff" font-size="8.5" font-weight="900">🚨 CALL-IN PENALTY: -2 TOKEN (1 $k &amp; 1 $w)</text>
+        `;
+      } else if (sim.partyGuyRec) {
+        svg += `<text x="208" y="65" text-anchor="end" fill="#7e22ce" font-size="8" font-weight="900">🎉 PARTY GUY V (${playersState[sim.partyGuyRec.playerId].shortName} ➔ TOP!)</text>`;
+      } else {
+        svg += sim.isPreviewFlag
+          ? `<text x="208" y="65" text-anchor="end" fill="#b45309" font-size="8" font-weight="900">👁️ PREVIEWING FLAG</text>`
+          : sim.stage >= 2
+            ? `<text x="208" y="65" text-anchor="end" fill="#047857" font-size="8" font-weight="900">✓ FLAG LOCKED IN</text>`
+            : `<text x="208" y="65" text-anchor="end" fill="#475569" font-size="8" font-weight="800">LIVE PROJECTION</text>`;
+      }
+
+      circleY.forEach((cy, idxFromBottom) => {
+        const cNum = idxFromBottom + 1;
+        const occ = slotOccupants[idxFromBottom];
+        const rawFlagVal = fl.poleBottomToTop[idxFromBottom];
+        const boxVal = (payoutFormula === 'flag_strips') ? rawFlagVal : cNum;
+
+        svg += `
+          <path d="M 14,${cy - 14} L 40,${cy - 14} A 26,26 0 0,0 40,${cy + 14} L 14,${cy + 14} Z"
+                fill="${boxVal !== null ? '#d1d5db' : '#cbd5e1'}"
+                stroke="#111827"
+                stroke-width="1.6" />
+          ${boxVal !== null
+            ? `<text x="25" y="${cy + 5}" text-anchor="middle" fill="#000000" font-size="14" font-weight="900">${boxVal}</text>`
+            : ``
+          }
+
+          <circle cx="${stackX}" cy="${cy}" r="24.5" fill="#cccccc" stroke="#475569" stroke-width="1.6" stroke-dasharray="${occ ? 'none' : '4,3'}" />
+          ${!occ && boxVal !== null ? `<text x="${stackX}" y="${cy + 5}" text-anchor="middle" fill="#64748b" font-size="12" font-weight="900">+${boxVal}</text>` : ''}
+        `;
+
+        if (occ) {
+          const p = occ.player;
+          const r = sim.resultsByPlayer[p.id];
+          const peekKey = `${stationId}_${p.id}_${occ.slotNum}`;
+          const isPeeked = peekedStationDiscs.has(peekKey);
+          // NPCs are ALWAYS Face-Up in the stack! Player discs are Face-Down (?) until Step 3 (Energy) or clicked to peek!
+          const hideThisDisc = (!occ.isNpc) && isFaceDownNow && !isPeeked;
+          const showStar = occ.isNpc ? occ.hasStar : (sim.stage >= 5 ? r.endHasStar : occ.hasStar);
+
+          svg += `
+            <g style="cursor:pointer;" onclick="${occ.isNpc ? '' : `togglePeekStationDisc(${stationId}, '${p.id}', ${occ.slotNum})`}">
+              <title>${occ.isNpc ? `${occ.npcName} (Placed Face-Up by ${p.shortName} at ${occ.battery.short})` : hideThisDisc ? `Click to peek at ${p.shortName}'s face-down disc` : `Click to flip ${p.shortName}'s disc back face-down`}</title>
+              ${renderMiniBatterySvg(stackX, cy, p.hex, occ.battery, showStar, occ.slotNum, hideThisDisc, occ.isNpc, occ.npcRoman, occ.isBoostedByPartyGuy)}
+            </g>
+          `;
+
+          const isTop = (occ.idxFromTop === 0);
+          const pillFill = occ.isNpc ? '#fef9c3' : isTop ? '#dbeafe' : idxFromBottom === 0 ? '#ecfdf5' : '#f8fafc';
+          const pillStroke = occ.isNpc ? '#ca8a04' : isTop ? '#2563eb' : idxFromBottom === 0 ? '#10b981' : '#64748b';
+
+          if (occ.isNpc) {
+            svg += `
+              <rect x="96" y="${cy - 20}" width="118" height="40" rx="5" fill="${pillFill}" stroke="${pillStroke}" stroke-width="1.5" />
+              <text x="102" y="${cy - 7}" fill="#0f172a" font-size="9.2" font-weight="900">NPC ${occ.npcRoman} (${p.shortName})</text>
+              <text x="102" y="${cy + 4}" fill="#334155" font-size="8.5" font-weight="800">Face-Up: ${occ.battery.short}</text>
+              <text x="102" y="${cy + 16}" fill="#b45309" font-size="8" font-weight="900">${occ.npcId === 'npc_2' ? '⬆️ +1 to Above!' : occ.npcId === 'npc_3' ? '🎓 +1 $kill to Owner' : occ.npcId === 'npc_1' ? '🎯 Turn Order (0/4)' : occ.npcId === 'npc_4' ? '❤️ +1 Full Heart' : '💵 +$3 (+2 Tether)'}</text>
+            `;
+          } else {
+            svg += `
+              <rect x="96" y="${cy - 20}" width="118" height="40" rx="5" fill="${pillFill}" stroke="${pillStroke}" stroke-width="1.3" style="cursor:pointer;" onclick="togglePeekStationDisc(${stationId}, '${p.id}', ${occ.slotNum})" />
+              <text x="102" y="${cy - 7}" fill="#0f172a" font-size="9.5" font-weight="900">${p.shortName} ${hideThisDisc ? '(Face-Down ?)' : `(Bat #${occ.slotNum})`}</text>
+              <text x="102" y="${cy + 4}" fill="#334155" font-size="8.8" font-weight="700">${hideThisDisc ? `Click disc to peek 👁️` : `${occ.battery.short}${occ.isBoostedByPartyGuy ? '+🎉V' : ''} • ${occ.hasStar ? '★' : '0★'}`}</text>
+            `;
+            if (sim.stage >= 5) {
+              const mv = (occ.skMoves > 0 && occ.swMoves > 0)
+                ? `+${occ.skMoves}$k/+${occ.swMoves}$w`
+                : occ.skMoves > 0
+                  ? `+${occ.skMoves} $kill`
+                  : `+${occ.swMoves} $weat`;
+              svg += `<text x="102" y="${cy + 16}" fill="#b91c1c" font-size="8.8" font-weight="900">${mv}${occ.boosterBonus ? ' (⬆️+1)' : ''} • ${occ.heartLabel.split(' ')[0]}</text>`;
+            } else {
+              svg += `<text x="102" y="${cy + 16}" fill="#475569" font-size="8.5" font-weight="800">Box: +${occ.payoutVal}${occ.boosterBonus ? '(⬆️+1)' : ''} (${isTop || occ.hasStar ? '$kill' : '$weat'})</text>`;
+            }
+          }
+        }
+      });
+
+      // Right Shared Gray Tracks Panel + Colored On-Call Chits (+$1) Display!
+      const onCallChipsSvg = (st.onCallPlayerIds || []).map((pid, idx) => {
+        const pObj = playersState[pid];
+        const cx = 445 + idx * 34;
+        return `
+          <g transform="translate(${cx}, 20)">
+            <rect x="-15" y="-9" width="30" height="18" rx="9" fill="${pObj.hex}" stroke="#0f172a" stroke-width="1.5" />
+            <text x="0" y="3.5" text-anchor="middle" fill="${pid === 'yellow' ? '#0f172a' : '#ffffff'}" font-size="8.5" font-weight="900">+$1</text>
+          </g>
+        `;
+      }).join('');
+
+      svg += `
+        <rect x="226" y="6" width="288" height="224" rx="9" fill="#e7e0d3" stroke="#94a3b8" stroke-width="1.5" />
+        <text x="236" y="23" fill="#0f172a" font-size="10" font-weight="900">$KILL (${skMax}★) &amp; $WEAT (6★) • ON-CALL:</text>
+        ${onCallChipsSvg || `<text x="432" y="23" fill="#64748b" font-size="8.5" font-weight="800">(Retired)</text>`}
+        <text x="236" y="36" fill="#475569" font-size="8.5" font-weight="700">Pure Energy Mode • 12AM 🖤 Corpse Heart = +$2 Overtime!</text>
+      `;
+
+      const zeroX = 234;
+      const zeroW = 50;
+      const trackX = 290;
+      const totalTrackWidth = 192;
+      const skW = totalTrackWidth / skMax;
+      const swW = 32;
+      const skY = 52;
+      const swY = 134;
+      const boxH = 48;
+
+      svg += `
+        <rect x="${zeroX}" y="${skY}" width="${zeroW}" height="${boxH}" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-dasharray="3,2" />
+        <text x="${zeroX + zeroW / 2}" y="${skY + 12}" text-anchor="middle" fill="#475569" font-size="8" font-weight="800">0 ($kill)</text>
+        ${drawBucket(ghostSkill[0], zeroX + zeroW / 2, skY + 28, true)}
+        ${drawBucket(skillBuckets[0], zeroX + zeroW / 2, skY + 28, false)}
+
+        <rect x="${zeroX}" y="${swY}" width="${zeroW}" height="${boxH}" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-dasharray="3,2" />
+        <text x="${zeroX + zeroW / 2}" y="${swY + 12}" text-anchor="middle" fill="#475569" font-size="8" font-weight="800">0 ($weat)</text>
+        ${drawBucket(ghostSweat[0], zeroX + zeroW / 2, swY + 28, true)}
+        ${drawBucket(sweatBuckets[0], zeroX + zeroW / 2, swY + 28, false)}
+      `;
+
+      for (let b = 1; b <= skMax; b++) {
+        const bx = trackX + (b - 1) * skW;
+        const isStar = (b === skMax);
+        svg += `
+          <rect x="${bx}" y="${skY}" width="${skW - 3}" height="${boxH}" fill="${isStar ? '#e2e8f0' : '#d1d5db'}" stroke="#0f172a" stroke-width="1.5" />
+          <text x="${bx + 5}" y="${skY + 12}" fill="#334155" font-size="9" font-weight="900">$kill ${b}${isStar ? '★' : ''}</text>
+          ${drawBucket(ghostSkill[b], bx + (skW - 3) / 2, skY + 28, true)}
+          ${drawBucket(skillBuckets[b], bx + (skW - 3) / 2, skY + 28, false)}
+        `;
+      }
+
+      const wallX = trackX + totalTrackWidth;
+      svg += `
+        <line x1="${wallX}" y1="${skY - 3}" x2="${wallX}" y2="${skY + boxH + 3}" stroke="#dc2626" stroke-width="3.5" />
+        <text x="${wallX + 5}" y="${skY + 26}" fill="#b91c1c" font-size="9.5" font-weight="900">+$1</text>
+      `;
+
+      for (let b = 1; b <= 6; b++) {
+        const bx = trackX + (b - 1) * swW;
+        svg += `
+          <rect x="${bx}" y="${swY}" width="${swW - 2}" height="${boxH}" fill="${b === 6 ? '#e2e8f0' : '#d1d5db'}" stroke="#0f172a" stroke-width="1.5" />
+          <text x="${bx + 3}" y="${swY + 11}" fill="#334155" font-size="8" font-weight="900">${b}${b === 6 ? '★' : ''}</text>
+          ${drawBucket(ghostSweat[b], bx + (swW - 2) / 2, swY + 28, true)}
+          ${drawBucket(sweatBuckets[b], bx + (swW - 2) / 2, swY + 28, false)}
+        `;
+      }
+
+      svg += `
+        <line x1="${wallX}" y1="${swY - 3}" x2="${wallX}" y2="${swY + boxH + 3}" stroke="#dc2626" stroke-width="3.5" />
+        <text x="${wallX + 5}" y="${swY + 26}" fill="#b91c1c" font-size="9.5" font-weight="900">+$1</text>
+      `;
+
+      // Bottom-Right Station Results & 5:00 PM Hearts Box
+      svg += `
+        <rect x="226" y="236" width="288" height="172" rx="9" fill="#e7e0d3" stroke="#94a3b8" stroke-width="1.5" />
+        <text x="236" y="253" fill="#0f172a" font-size="10.5" font-weight="900">STATION ${stationId} PAYOUT, ON-CALL (+$1) &amp; HEARTS</text>
+      `;
+
+      PLAYER_DEFS.forEach((pDef, i) => {
+        const ry = 262 + i * 35;
+        const r = sim.resultsByPlayer[pDef.id];
+        const starNow = sim.stage >= 5 ? r.endHasStar : r.startHasStar;
+        const onCallTag = r.isOnCallHere ? ' [+$1 On-Call]' : '';
+        const rushTag = r.bottlingRushBonusCash > 0 ? ` [+$${r.bottlingRushBonusCash} Rush]` : '';
+        const mvTxt = (r.deployedCount === 0 && r.skillMoves === 0 && r.sweatMoves === 0)
+          ? `Not in station${r.isOnCallHere ? ' (On-Call)' : ''}`
+          : sim.stage >= 5
+            ? `+${r.skillMoves}$k, +${r.sweatMoves}$w${onCallTag}${rushTag} • ${r.heartLabel}`
+            : `In room (${isFaceDownNow ? 'Face-Down ?' : 'Revealed'})${onCallTag}${rushTag}`;
+        const cashTxt = sim.stage >= 5 && r.cashEarned > 0 ? `+$${r.cashEarned}` : '$0';
+
+        svg += `
+          <rect x="234" y="${ry}" width="272" height="29" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.1" />
+          <rect x="239" y="${ry + 5}" width="11" height="19" rx="2.5" fill="${pDef.hex}" stroke="#0f172a" />
+          <text x="255" y="${ry + 19}" fill="#0f172a" font-size="9.5" font-weight="900">${pDef.shortName} ${starNow ? '★' : '0★'}</text>
+          <text x="312" y="${ry + 19}" fill="#334155" font-size="8.5" font-weight="700">${mvTxt}</text>
+          <text x="498" y="${ry + 19}" text-anchor="end" fill="#047857" font-size="10.5" font-weight="900">${cashTxt}</text>
+        `;
+      });
+
+      svg += `</svg>`;
+      return svg;
+    }
+
+    function renderStationsGrid() {
+      const container = document.getElementById('stationsGrid');
+      const skMax = getSkillMaxBox();
+      const skOptions = Array.from({ length: skMax + 1 }, (_, i) => i);
+      const harvestAgaveCount = getHarvestAgaveCount();
+      const reqPlayerChits = getTotalRequiredPlayerChits();
+
+      container.innerHTML = ALL_STATION_DEFS.map(stDef => {
+        const st = stationsState[stDef.id];
+        const sim = simulateStation(stDef.id);
+        const acceptedSlots = getAcceptedSlotsForStation(stDef.id);
+        const stationFlags = STATION_FLAGS[stDef.id];
+        const isEmptyWarning = (getDeployedPlayerChitsCount() === reqPlayerChits && sim.flagWorkerCount === 0);
+
+        let canDeploySelected = false;
+        let deployBtnText = '';
+        if (selectedDisc) {
+          const check = canSendBatteryToStation(selectedDisc.playerId, selectedDisc.slotNum, stDef.id);
+          canDeploySelected = check.ok;
+          if (canDeploySelected) {
+            const p = playersState[selectedDisc.playerId];
+            const b = BATTERY_TYPES[p.slots[selectedDisc.slotNum].battery];
+            deployBtnText = `➕ Send ${p.shortName}'s Battery #${selectedDisc.slotNum} (${b.short}) Face-Down to Station ${stDef.id}`;
+          }
+        }
+
+        const W = sim.flagWorkerCount;
+        let supplyComparisonTxt = '';
+        if (stDef.id === 1) {
+          const rushSuffix = W >= 4 ? ` • 🍾 +$${Math.min(2, W - 3)} Bottling Rush!` : '';
+          supplyComparisonTxt = `Flag Workers: ${W} ➔ Sets Harvest Supply = ${W} Agave${W === 1 ? '' : 's'}${rushSuffix}`;
+        } else if (stDef.id <= 4) {
+          const rel = W < harvestAgaveCount ? '🔥 Surplus Agave (W < A)' : W === harvestAgaveCount ? '⚖️ Equal (W = A)' : '💤 Deficit Agave (W > A)';
+          supplyComparisonTxt = `Flag Workers: ${W} vs Harvest: ${harvestAgaveCount} ➔ ${rel}`;
+        } else if (stDef.id === 5) {
+          supplyComparisonTxt = `Flag Workers: ${W} vs Barrel Par: 3 ➔ ${W < 3 ? '🔥 Short (<3)' : W === 3 ? '⚖️ On-Par (3)' : '💤 Over (>3)'}`;
+        } else {
+          const rushTag = sim.bottlingRushPerWorker > 0 ? ` • 🍾 +$${sim.bottlingRushPerWorker}/worker Rush (${harvestAgaveCount} Agaves)!` : '';
+          supplyComparisonTxt = `Flag Workers: ${W} vs Bottle Par: 2 ➔ ${W <= 1 ? '🔥 Solo (1)' : W === 2 ? '⚖️ On-Par (2)' : '🎉 All Hands (3+ = All ❤️!)'}${rushTag}`;
+        }
+
+        const calcMoveLabel = st.stage < 5
+          ? '4. Calculate Results'
+          : st.stage === 5
+            ? '5. Move Cubes & Pay (Click!)'
+            : '✓ Cubes Moved & Paid';
+        const calcMoveClass = st.stage === 5
+          ? 'step-ready'
+          : st.stage >= 6
+            ? 'done'
+            : '';
+
+        const onCallBadgesHtml = (st.onCallPlayerIds || []).map(pid => {
+          const pObj = playersState[pid];
+          return `<span style="background:${pObj.hex}; color:${pid === 'yellow' ? '#0f172a' : '#fff'}; padding:1px 6px; border-radius:999px; font-size:9.5px; font-weight:900; border:1px solid #fff;" title="${pObj.name} has an active +$1 On-Call Chit here!">
+            #${pObj.turnOrder} ${pObj.shortName} +$1
+          </span>`;
+        }).join(' ');
+
+        return `
+          <div class="station-card ${canDeploySelected ? 'legal-highlight' : ''} ${isEmptyWarning ? 'empty-warning' : ''}">
+            <div class="station-top-bar"
+                 style="background:${stDef.headerBg}; border:2px solid ${stDef.headerBorder};"
+                 onclick="deploySelectedToStation(${stDef.id})">
+              <div>
+                <div style="font-size:14px; font-weight:900;">${stDef.name}</div>
+                <div style="font-size:10.5px; color:#fef08a; font-weight:700;">Accepts Player Bats: [${acceptedSlots.join(', ')}] + Any NPC (I–VI) • Pole: ${sim.N}/5</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                ${onCallBadgesHtml}
+                <span style="background:rgba(0,0,0,0.38); padding:2px 7px; border-radius:999px; font-size:10.5px; font-weight:800;">
+                  Stage ${st.stage}
+                </span>
+              </div>
+            </div>
+
+            ${canDeploySelected ? `
+              <button class="deploy-here-btn" onclick="deploySelectedToStation(${stDef.id})">
+                ${deployBtnText}
+              </button>
+            ` : ''}
+
+            <!-- INTERACTIVE FLAG-POLE STRIP BROWSER -->
+            <div class="flag-browser-bar">
+              <div class="flag-browser-header">
+                <span>🚩 ${supplyComparisonTxt}</span>
+                ${sim.isPreviewFlag
+                  ? `<button onclick="selectStationFlagPreview(${stDef.id}, null)" style="background:#d97706; color:#fff; border:none; border-radius:4px; padding:1px 6px; font-size:9px; font-weight:900; cursor:pointer;">↩ Back to Live Flag</button>`
+                  : `<span style="color:#6ee7b7; font-size:9px;">Click any Flag to preview</span>`
+                }
+              </div>
+              <div class="flag-tabs-row">
+                ${stationFlags.map(fl => {
+                  const isLive = (fl.id === sim.liveFlag.id);
+                  const isPreview = (sim.isPreviewFlag && fl.id === sim.activeFlag.id);
+                  return `
+                    <button class="flag-tab-btn ${isPreview ? 'preview-flag' : isLive ? 'live-flag' : ''}"
+                            onclick="selectStationFlagPreview(${stDef.id}, '${fl.id}')"
+                            title="${fl.placardTitle} — ${fl.placardStory}">
+                      ${isLive ? '🚩 ' : isPreview ? '👁️ ' : ''}${fl.tabLabel}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- PER-STATION STAGE BUTTONS (PURE ENERGY — NO BUOYANCY STEP!) -->
+            <div class="station-local-btns">
+              <button class="st-mini-btn ${st.stage === 1 ? 'active' : st.stage > 1 ? 'done' : ''}"
+                      onclick="setStationStage(${stDef.id}, 1)">1. Deploy</button>
+              <button class="st-mini-btn ${st.stage === 2 ? 'active' : st.stage > 2 ? 'done' : ''}"
+                      onclick="setStationStage(${stDef.id}, 2)">2. Set Flag</button>
+              <button class="st-mini-btn ${st.stage === 3 || st.stage === 4 ? 'active' : st.stage > 4 ? 'done' : ''}"
+                      onclick="setStationStage(${stDef.id}, 4)">3. Energy (Flip &amp; Sort)</button>
+              <button class="st-mini-btn ${calcMoveClass}"
+                      onclick="triggerStationCalcOrMove(${stDef.id})">${calcMoveLabel}</button>
+            </div>
+
+            <!-- INTERACTIVE STATION SVG -->
+            <div class="svg-wrap">
+              ${renderStationSvg(stDef.id, sim)}
+            </div>
+
+            <!-- PER-STATION CUBE & STAR CONTROLS -->
+            <div class="cube-adjuster">
+              <div style="font-weight:800; color:#cbd5e1; display:flex; justify-content:space-between;">
+                <span>🎛️ Station ${stDef.id} Starting Cubes &amp; Star (★) Adjuster:</span>
+                <span style="color:#94a3b8;">${st.onCallRemovedReason || 'Edit Any Player Live'}</span>
+              </div>
+              <div class="cube-adj-grid">
+                ${PLAYER_DEFS.map(pDef => {
+                  const d = playersState[pDef.id].dept[stDef.id];
+                  const starred = hasStationStar(pDef.id, stDef.id);
+                  return `
+                    <div class="cube-adj-item">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:900; color:${pDef.hex};">${pDef.shortName}</span>
+                        <button onclick="togglePlayerStationStar('${pDef.id}', ${stDef.id})"
+                                style="background:${starred ? '#dc2626' : '#334155'}; color:#fff; border:none; border-radius:4px; padding:1px 4px; font-size:9px; font-weight:800; cursor:pointer;">
+                          ${starred ? '★' : '0★'}
+                        </button>
+                      </div>
+                      <label style="font-size:9px; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;">
+                        <span>$kill:</span>
+                        <select onchange="setPlayerStationTrack('${pDef.id}', ${stDef.id}, 'skill', this.value)"
+                                style="background:#0f172a; color:#fff; border:1px solid #475569; border-radius:3px; font-size:9px; padding:1px;">
+                          ${skOptions.map(v => `<option value="${v}" ${d.skill === v ? 'selected' : ''}>${v === skMax ? `${skMax}★` : v}</option>`).join('')}
+                        </select>
+                      </label>
+                      <label style="font-size:9px; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;">
+                        <span>$weat:</span>
+                        <select onchange="setPlayerStationTrack('${pDef.id}', ${stDef.id}, 'sweat', this.value)"
+                                style="background:#0f172a; color:#fff; border:1px solid #475569; border-radius:3px; font-size:9px; padding:1px;">
+                          ${[0,1,2,3,4,5,6].map(v => `<option value="${v}" ${d.sweat === v ? 'selected' : ''}>${v === 6 ? '6★' : v}</option>`).join('')}
+                        </select>
+                      </label>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateGlobalButtonsState() {
+      const stages = ALL_STATION_DEFS.map(st => stationsState[st.id].stage);
+      const minStage = Math.min(...stages);
+
+      const b1 = document.getElementById('btnGlobal1');
+      const b2 = document.getElementById('btnGlobal2');
+      const b4 = document.getElementById('btnGlobal4');
+      [b1, b2, b4].forEach(b => b && b.classList.remove('active', 'done'));
+
+      if (minStage === 1) b1?.classList.add('active');
+      else if (minStage > 1) b1?.classList.add('done');
+
+      if (minStage === 2) b2?.classList.add('active');
+      else if (minStage > 2) b2?.classList.add('done');
+
+      if (minStage === 3 || minStage === 4) b4?.classList.add('active');
+      else if (minStage > 4) b4?.classList.add('done');
+
+      const cmBtn = document.getElementById('btnGlobalCalcMove');
+      const cmIcon = document.getElementById('btnGlobalCalcMoveIcon');
+      const cmText = document.getElementById('btnGlobalCalcMoveText');
+      cmBtn.classList.remove('active', 'step-ready', 'done');
+
+      const nextCycleLabel = currentCycle < 4
+        ? `Start Cycle ${currentCycle + 1}/4 (Keep Cubes!)`
+        : `Start Cycle ${currentCycle + 1} (Keep Cubes!)`;
+
+      if (minStage < 5) {
+        cmIcon.textContent = '4️⃣';
+        cmText.textContent = 'Calculate Results (Click 1/3)';
+      } else if (minStage === 5) {
+        cmBtn.classList.add('step-ready');
+        cmIcon.textContent = '5️⃣';
+        cmText.textContent = 'Move Cubes & Pay (Click 2/3!)';
+      } else {
+        cmBtn.classList.add('done');
+        cmIcon.textContent = '⏭️';
+        cmText.textContent = `${nextCycleLabel} (Click 3/3!)`;
+      }
+
+      const nextCycleBtnTxt = document.getElementById('btnNextCycleKeepCubesText');
+      if (nextCycleBtnTxt) {
+        nextCycleBtnTxt.textContent = `End Cycle ${currentCycle} ➔ ${nextCycleLabel}`;
+      }
+    }
+
+    function renderAll() {
+      renderSetupBar();
+      renderCyclePillsBar();
+      updateGlobalButtonsState();
+      renderCallInBanner();
+      renderTurnBanner();
+      renderPlayersGrid();
+      renderNpcSection();
+      renderStationsGrid();
+      saveStateToStorage();
+    }
+
+    if (!loadStateFromStorage()) {
+      initDefaultState();
+    }
+    renderAll();
+  </script>
+</body>
+</html>

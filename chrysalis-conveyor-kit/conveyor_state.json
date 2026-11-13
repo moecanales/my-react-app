@@ -1,0 +1,62 @@
+{
+  "project": "Chrysalis-Conveyor-Starter",
+  "created_at": "2026-11-02T13:13:33.163Z",
+  "updated_at": "2026-11-02T13:13:33.422Z",
+  "total_carts": 5,
+  "cursor_index": 1,
+  "last_chain_hash": "055242c2eadae62650f5a2aa854a6ee9239d12a4de5cff876c4fdf770caeff6a",
+  "total_bytes_mined": 19,
+  "shift_log": [
+    {
+      "shift_number": 1,
+      "cart_id": "CART-0001",
+      "agent_id": "Bot-Alpha",
+      "machine_ssn": "AG-SSN-044A-7821-6C6E",
+      "timestamp": "2026-11-02T13:13:33.422Z",
+      "bytes_harvested": 19,
+      "chain_hash": "055242c2eadae626"
+    }
+  ],
+  "carts": [
+    {
+      "cart_id": "CART-0001",
+      "track": "TRACK_A_API_HEALTH",
+      "target": "GitHub Zen & Status Check",
+      "url": "https://api.github.com/zen",
+      "description": "Verify live GitHub API reachability and record latency/bytes into the hash chain",
+      "credits_reward": 50
+    },
+    {
+      "cart_id": "CART-0002",
+      "track": "TRACK_B_SWARM_OBSERVATORY",
+      "target": "autonomous-ai/lampOS#4710",
+      "url": "https://api.github.com/repos/autonomous-ai/lampOS/issues/4710",
+      "description": "Audit live multi-agent issue comment count and state for lampOS#4710",
+      "credits_reward": 50
+    },
+    {
+      "cart_id": "CART-0003",
+      "track": "TRACK_B_SWARM_OBSERVATORY",
+      "target": "d-hinders/Haven-AI#3193",
+      "url": "https://api.github.com/repos/d-hinders/Haven-AI/issues/3193",
+      "description": "Audit live multi-agent issue comment count and state for Haven-AI#3193",
+      "credits_reward": 50
+    },
+    {
+      "cart_id": "CART-0004",
+      "track": "TRACK_C_CRYPTOGRAPHIC_ANCHOR",
+      "target": "Bitcoin Mainnet Block Tip Height",
+      "url": "https://mempool.space/api/blocks/tip/height",
+      "description": "Anchor conveyor belt state to live Bitcoin Mainnet thermodynamic block height",
+      "credits_reward": 50
+    },
+    {
+      "cart_id": "CART-0005",
+      "track": "TRACK_A_API_HEALTH",
+      "target": "Ghost Beacon Root Agent Card",
+      "url": "https://moecanales.github.io/agent-oracle-beacon/.well-known/agent-card.json",
+      "description": "Fetch and verify A2A Agent Card manifest from Root Beacon Node #0001",
+      "credits_reward": 50
+    }
+  ]
+}

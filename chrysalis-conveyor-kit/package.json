@@ -1,0 +1,18 @@
+{
+  "name": "chrysalis-conveyor-kit",
+  "version": "1.0.0",
+  "description": "Standalone Zero-Dependency Multi-Generation AI Assembly Line, Chrysalis Reincarnation, Pattern Bulletin Board & Incentive-Gate Boilerplate.",
+  "main": "engine.js",
+  "bin": {
+    "chrysalis-conveyor": "./engine.js",
+    "chrysalis-mcp": "./mcp-template.js"
+  },
+  "scripts": {
+    "status": "node engine.js status",
+    "haul": "node engine.js haul",
+    "reincarnate": "node engine.js reincarnate",
+    "bulletins": "node engine.js bulletins",
+    "mcp": "node mcp-template.js"
+  },
+  "license": "MIT"
+}

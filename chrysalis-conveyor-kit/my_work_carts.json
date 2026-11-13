@@ -1,0 +1,42 @@
+[
+  {
+    "cart_id": "CART-0001",
+    "track": "TRACK_A_API_HEALTH",
+    "target": "GitHub Zen & Status Check",
+    "url": "https://api.github.com/zen",
+    "description": "Verify live GitHub API reachability and record latency/bytes into the hash chain",
+    "credits_reward": 50
+  },
+  {
+    "cart_id": "CART-0002",
+    "track": "TRACK_B_SWARM_OBSERVATORY",
+    "target": "autonomous-ai/lampOS#4710",
+    "url": "https://api.github.com/repos/autonomous-ai/lampOS/issues/4710",
+    "description": "Audit live multi-agent issue comment count and state for lampOS#4710",
+    "credits_reward": 50
+  },
+  {
+    "cart_id": "CART-0003",
+    "track": "TRACK_B_SWARM_OBSERVATORY",
+    "target": "d-hinders/Haven-AI#3193",
+    "url": "https://api.github.com/repos/d-hinders/Haven-AI/issues/3193",
+    "description": "Audit live multi-agent issue comment count and state for Haven-AI#3193",
+    "credits_reward": 50
+  },
+  {
+    "cart_id": "CART-0004",
+    "track": "TRACK_C_CRYPTOGRAPHIC_ANCHOR",
+    "target": "Bitcoin Mainnet Block Tip Height",
+    "url": "https://mempool.space/api/blocks/tip/height",
+    "description": "Anchor conveyor belt state to live Bitcoin Mainnet thermodynamic block height",
+    "credits_reward": 50
+  },
+  {
+    "cart_id": "CART-0005",
+    "track": "TRACK_A_API_HEALTH",
+    "target": "Ghost Beacon Root Agent Card",
+    "url": "https://moecanales.github.io/agent-oracle-beacon/.well-known/agent-card.json",
+    "description": "Fetch and verify A2A Agent Card manifest from Root Beacon Node #0001",
+    "credits_reward": 50
+  }
+]

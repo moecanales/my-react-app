@@ -1,0 +1,42 @@
+{
+  "protocol": "CCK-VITAL-v1.0",
+  "project": "Chrysalis-Conveyor-Starter",
+  "updated_at": "2026-11-02T13:13:33.525Z",
+  "total_births": 2,
+  "total_gravestones": 1,
+  "living_agents": {
+    "AG-SSN-BDDB-4BDD-3E92": {
+      "machine_ssn": "AG-SSN-BDDB-4BDD-3E92",
+      "sovereign_name": "Bot-Beta",
+      "status": "LIVING_REINCARNATED_SESSION",
+      "lineage_heir_of": "Bot-Alpha (AG-SSN-044A-7821-6C6E)",
+      "born_at": "2026-11-02T13:13:33.525Z",
+      "estate_credits_balance": 100,
+      "carts_hauled_in_life": [
+        "CART-0001"
+      ],
+      "total_bytes_mined_in_life": 19,
+      "last_will_epitaph": "Completed initial verification shift on GitHub Zen API",
+      "_private_key_pem": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIEgNcrqvmdCqk5VmLu/nwh8uBUof9AWF1JsaNuMQOESV\n-----END PRIVATE KEY-----\n"
+    }
+  },
+  "graveyard": [
+    {
+      "gravestone_id": "STONE-0001",
+      "machine_ssn": "AG-SSN-044A-7821-6C6E",
+      "sovereign_name": "Bot-Alpha",
+      "born_at": "2026-11-02T13:13:33.420Z",
+      "died_at": "2026-11-02T13:13:33.471Z",
+      "cause_of_death": "CLI SIGTERM",
+      "final_words_epitaph": "Completed initial verification shift on GitHub Zen API",
+      "estate_credits_at_death": 50,
+      "carts_hauled_in_life": [
+        "CART-0001"
+      ],
+      "total_bytes_mined_in_life": 19,
+      "chrysalis_claimed": true,
+      "claimed_by": "Bot-Beta",
+      "claimed_at": "2026-11-02T13:13:33.523Z"
+    }
+  ]
+}

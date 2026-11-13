@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Station 1: Harvest Agave — Buoyancy, Shared Gray Track & Payout Lab</title>
+  <style>
+    :root {
+      --bg-dark: #0f141c;
+      --panel-bg: #171f2c;
+      --panel-border: #2c3a4f;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-gold: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-green: #10b981;
+      --accent-blue: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    header {
+      background: linear-gradient(90deg, #2a0a0a 0%, #171f2c 60%, #0f141c 100%);
+      border-bottom: 2px solid #7f1d1d;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .title-block h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #fef2f2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .title-block p {
+      margin: 3px 0 0 0;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .stage-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: #0b0f17;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--panel-border);
+      align-items: center;
+    }
+    .stage-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1.5px solid #475569;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stage-btn:hover {
+      background: #334155;
+      border-color: #94a3b8;
+    }
+    .stage-btn.active {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      color: #fff;
+      border-color: #fbbf24;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
+    }
+    .stage-btn.done {
+      background: #064e3b;
+      border-color: #10b981;
+      color: #a7f3d0;
+    }
+    .stage-btn.util {
+      background: #312e81;
+      border-color: #6366f1;
+      color: #e0e7ff;
+    }
+    .stage-btn.util:hover {
+      background: #4338ca;
+    }
+    .stage-btn.reset {
+      background: #3f1d24;
+      border-color: #f43f5e;
+      color: #fecdd3;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 410px 1fr;
+      gap: 16px;
+      padding: 16px 20px;
+      max-width: 1760px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1200px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #fbbf24;
+      margin: 0 0 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #263346;
+      padding-bottom: 7px;
+    }
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .preset-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #243044;
+      color: #e2e8f0;
+      border: 1px solid #3b4d6b;
+      cursor: pointer;
+    }
+    .preset-btn:hover {
+      background: #334460;
+      border-color: #60a5fa;
+    }
+    .player-card {
+      background: #101722;
+      border: 1.5px solid #293649;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .player-card.disabled {
+      opacity: 0.48;
+    }
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .player-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid #fff;
+      display: inline-block;
+    }
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .controls-row3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+    }
+    label.ctrl-lbl {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    select, input[type="number"] {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #3b4d6b;
+      border-radius: 5px;
+      padding: 4px 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .star-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .star-pill.has-star {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
+    .star-pill.no-star {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #94a3b8;
+    }
+    .rule-box {
+      background: #0d131d;
+      border: 1px solid #2b394e;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .narrative-banner {
+      background: linear-gradient(90deg, #1e293b 0%, #172554 100%);
+      border-left: 4px solid #38bdf8;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      font-size: 13.5px;
+      line-height: 1.45;
+    }
+    .narrative-banner strong {
+      color: #fde047;
+    }
+    .svg-board-wrap {
+      background: #f5f0e6;
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 12px;
+      overflow-x: auto;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 12.5px;
+    }
+    .summary-table th, .summary-table td {
+      border: 1px solid #2c3a4f;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .summary-table th {
+      background: #0f172a;
+      color: #cbd5e1;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    .summary-table tr:nth-child(even) {
+      background: #131b27;
+    }
+    .audit-flag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .audit-bad {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+    }
+    .audit-ok {
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid #10b981;
+      color: #6ee7b7;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-block">
+      <h1>🌵 Station 1: Harvest Agave — Buoyancy, Shared Gray Track &amp; Payout Lab</h1>
+      <p>Interactive Rule Sandbox • Binary Red Star (★) Buoyancy vs. Physical Back-Wall Bounce ($1) &amp; Brain-Lopsided Check</p>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span id="stageStatusPill" style="background:#064e3b; border:1px solid #10b981; color:#a7f3d0; padding:5px 12px; border-radius:999px; font-size:12px; font-weight:800;">
+        Stage 0: Ready to Place
+      </span>
+    </div>
+  </header>
+
+  <!-- 6-STAGE STEP-BY-STEP BUTTON BAR -->
+  <div class="stage-bar">
+    <button class="stage-btn" id="btnStage1" onclick="runStage(1)">
+      <span>1️⃣</span>
+      <span>Deploy Meeples</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnStage2" onclick="runStage(2)">
+      <span>2️⃣</span>
+      <span>Buoyancy</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnStage3" onclick="runStage(3)">
+      <span>3️⃣</span>
+      <span>Energy</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnStage4" onclick="runStage(4)">
+      <span>4️⃣</span>
+      <span>Calculate Results</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnStage5" onclick="runStage(5)">
+      <span>5️⃣</span>
+      <span>End Results Calculation</span>
+    </button>
+    <span style="color:#64748b; font-weight:900;">➔</span>
+    <button class="stage-btn" id="btnStage6" onclick="runStage(6)">
+      <span>6️⃣</span>
+      <span>Move Cubes</span>
+    </button>
+
+    <div style="flex:1;"></div>
+
+    <button class="stage-btn util" onclick="carryOverToNextShift()" title="Keep new cube positions & Red Stars and test another turn!">
+      <span>⏭️</span>
+      <span>Carry Over to Next Shift</span>
+    </button>
+    <button class="stage-btn reset" onclick="loadPreset('moe_default')">
+      <span>⟲</span>
+      <span>Reset Scenario</span>
+    </button>
+  </div>
+
+  <div class="main-grid">
+    <!-- LEFT SIDEBAR: SCENARIO & RULE CONTROLS -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>⚡ Quick Test Scenarios</span>
+        <span style="font-size:11px; color:#94a3b8;">1-Click Presets</span>
+      </div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="loadPreset('moe_default')">1. Moe's 4P Scenario (Default)</button>
+        <button class="preset-btn" onclick="loadPreset('moe_yellow_34')">2. Moe w/ 3/4 Yellow Battery</button>
+        <button class="preset-btn" onclick="loadPreset('solo_fresh')">3. Solo Guardian Angel (Moe at 0)</button>
+        <button class="preset-btn" onclick="loadPreset('solo_maxed')">4. Solo Maxed Both ($4 Bounce)</button>
+        <button class="preset-btn" onclick="loadPreset('sweat_star_promoted')">5. Lyndon Sweat-Star Promoted</button>
+      </div>
+
+      <div class="panel-title" style="margin-top:8px;">
+        <span>👥 Players in Turn Order (1st ➔ 4th)</span>
+        <span style="font-size:11px; color:#94a3b8;">Brian • Moe • Sarah • Lyndon</span>
+      </div>
+
+      <div id="playerCardsContainer"></div>
+
+      <!-- OPTIONAL NPC INJECTOR -->
+      <div class="player-card" style="border-color:#475569; background:#141c2b;">
+        <div class="player-header">
+          <div class="player-badge">
+            <span class="color-dot" style="background:#ef4444;"></span>
+            <span>Optional Factory NPC (A1 / B2)</span>
+          </div>
+          <label style="font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" id="chkNpcActive" onchange="onNpcChange()" />
+            <span>In Station 1</span>
+          </label>
+        </div>
+        <div class="controls-row">
+          <label class="ctrl-lbl">
+            <span>NPC Type / Skill</span>
+            <select id="selNpcType" onchange="onNpcChange()">
+              <option value="skilled">Skilled NPC A1 (Has Red ★)</option>
+              <option value="bitter">Bitter / Misplaced NPC (0 ★ - Bottom)</option>
+            </select>
+          </label>
+          <label class="ctrl-lbl">
+            <span>Placement Mode</span>
+            <select id="selNpcMode" onchange="onNpcChange()">
+              <option value="buoyancy">Natural Buoyancy (+1 Tether)</option>
+              <option value="manual_top">Manual Slot on Very Top (+2 Tether)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- RULE ENGINE TUNING KNOBS -->
+      <div class="rule-box">
+        <div style="font-weight:800; color:#fbbf24; font-size:12px; text-transform:uppercase;">🔧 Rule Knobs (Experiment Live)</div>
+
+        <label class="ctrl-lbl">
+          <span>Step 3 Energy (Battery) Rule:</span>
+          <select id="selBuoyancyRule" onchange="recalculateIfActive()">
+            <option value="star_battery_turn">Rule A (Within Star Tier): Energy sorts inside ★ tier (4/4 &gt; 3/4 &gt; 1/4 &gt; 0/4)</option>
+            <option value="star_battery_no_empty_float">Rule B (Exhausted Drop): Empty 0/4 (Lyndon) sinks below Full 4/4 (Brian)</option>
+            <option value="battery_first">Rule C (Energy First): Battery Charge sorts first ➔ ★ breaks ties</option>
+            <option value="star_turn_only">Rule D (No Reorder): Energy drains -1 bar only; keep Step 2 Buoyancy order</option>
+          </select>
+        </label>
+
+        <label class="ctrl-lbl">
+          <span>Step 4–5 Pyramid Payout Formula:</span>
+          <select id="selPayoutRule" onchange="recalculateIfActive()">
+            <option value="canonical_pyramid">Formula A (Bible 16.C): Top = N $kill | Bottom = N $weat, 2nd Bot = (N-1) $weat...</option>
+            <option value="linear_sweat">Formula B (Milder Sweat): Top = N $kill | Bottom = 3 $weat, 2nd Bot = 2 $weat, 3rd = 1 $weat</option>
+            <option value="top2_skill">Formula C (Top 2 Learn Skill): #1 Top = N $kill, #2 = 1 $kill | Below = $weat</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- RIGHT WORKSPACE: VISUAL BOARD + STEP EXPLANATION + TABLE -->
+    <div class="panel">
+      <div id="narrativeBanner" class="narrative-banner">
+        <strong>Stage 0 (Setup):</strong> Players in Turn Order:
+        <strong>#1 Brian (Purple)</strong> (Full 4/4 Battery, No ★),
+        <strong>#2 Moe (Yellow)</strong> (Full 4/4 Battery, Has ★ on $kill),
+        <strong>#3 Sarah (Blue)</strong> (Orange 1/4 Battery, Has ★ on $kill),
+        <strong>#4 Lyndon (Green)</strong> (Empty 0/4 Battery, Has ★ on $weat).
+        Click <strong>1️⃣ Deploy Meeples</strong> above to start!
+      </div>
+
+      <!-- INTERACTIVE SVG STATION 1 BOARD -->
+      <div class="svg-board-wrap" id="svgBoardContainer"></div>
+
+      <!-- DETAILED BREAKDOWN TABLE -->
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Player (Turn Order)</th>
+            <th>Battery (Energy)</th>
+            <th>Red Star (★) Status</th>
+            <th>Stack Slot</th>
+            <th>Earned Moves (Step 4)</th>
+            <th>$kill Track (0–3★)</th>
+            <th>$weat Track (0–6★)</th>
+            <th>Paycheck (✓)</th>
+            <th>The Bobs Audit Check</th>
+            <th>5:00 PM Heart</th>
+          </tr>
+        </thead>
+        <tbody id="breakdownTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // DATA MODEL & PRESETS
+    // =========================================================================
+    const BATTERY_TYPES = {
+      white_4:  { id: 'white_4',  label: 'Full (4/4 White)',   rank: 4, fill: '#FFFFFF', bars: 4, barColor: '#16a34a', textColor: '#0f172a' },
+      yellow_3: { id: 'yellow_3', label: 'High (3/4 Yellow)',  rank: 3, fill: '#FFFF00', bars: 3, barColor: '#ca8a04', textColor: '#0f172a' },
+      orange_1: { id: 'orange_1', label: 'Low (1/4 Orange)',   rank: 2, fill: '#FF7F00', bars: 1, barColor: '#ea580c', textColor: '#ffffff' },
+      red_0:    { id: 'red_0',    label: 'Empty (0/4 Red)',    rank: 1, fill: '#CC0000', bars: 0, barColor: '#dc2626', textColor: '#ffffff' }
+    };
+
+    const PLAYER_COLORS = {
+      purple: { name: 'Brian (Purple)',  shortName: 'Brian',  colorName: 'Purple', hex: '#9B4DCA', dark: '#6A0DAD', light: '#DDBEDD', cubeTop: '#b86ee6', cubeLeft: '#811788', cubeRight: '#581c87' },
+      yellow: { name: 'Moe (Yellow)',    shortName: 'Moe',    colorName: 'Yellow', hex: '#FFE300', dark: '#ca8a04', light: '#FFFFBF', cubeTop: '#fef08a', cubeLeft: '#eab308', cubeRight: '#a16207' },
+      blue:   { name: 'Sarah (Blue)',    shortName: 'Sarah',  colorName: 'Blue',   hex: '#4573B3', dark: '#0A50A1', light: '#BFCAE2', cubeTop: '#60a5fa', cubeLeft: '#2563eb', cubeRight: '#1e3a8a' },
+      green:  { name: 'Lyndon (Green)',  shortName: 'Lyndon', colorName: 'Green',  hex: '#33A02C', dark: '#1B7814', light: '#CCEBB9', cubeTop: '#4ade80', cubeLeft: '#16a34a', cubeRight: '#14532d' }
+    };
+
+    // Stages:
+    // 0 = Setup
+    // 1 = Deploy Meeples (Turn Order)
+    // 2 = Buoyancy (Pure Red Star ★ sorting)
+    // 3 = Energy (Battery Charge sorting / exhaustion check)
+    // 4 = Calculate Results (Raw move counts on stack)
+    // 5 = End Results Calculation (Back-wall bounces, new ★, Audit & Hearts locked)
+    // 6 = Move Cubes (Cubes physically move along shared gray tracks & cash paid)
+    let currentStage = 0;
+    let npcState = {
+      active: false,
+      type: 'skilled', // 'skilled' (1★) or 'bitter' (0★)
+      mode: 'buoyancy'
+    };
+
+    let players = [];
+
+    function hasRedStar(p) {
+      return p.startSkill >= 3 || p.startSweat >= 6 || p.manualStar;
+    }
+
+    function hasEndRedStar(p, res) {
+      const sk = res ? res.endSkill : p.startSkill;
+      const sw = res ? res.endSweat : p.startSweat;
+      return sk >= 3 || sw >= 6 || p.manualStar;
+    }
+
+    function loadPreset(presetName) {
+      npcState.active = false;
+      document.getElementById('chkNpcActive').checked = false;
+
+      if (presetName === 'moe_default') {
+        // Moe's exact scenario:
+        // 1st: Purple (Full 4/4 Battery, No Star)
+        // 2nd: Yellow (Full 4/4 Battery, Has Red Star)
+        // 3rd: Blue (Orange 1/4 Battery, Has Red Star)
+        // 4th: Green (Empty 0/4 Battery, Has Red Star)
+        players = [
+          { id: 'purple', active: true, turnOrder: 1, battery: 'white_4',  startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'yellow', active: true, turnOrder: 2, battery: 'white_4',  startSkill: 3, startSweat: 0, manualStar: true,  priorCash: 0 },
+          { id: 'blue',   active: true, turnOrder: 3, battery: 'orange_1', startSkill: 3, startSweat: 2, manualStar: true,  priorCash: 0 },
+          { id: 'green',  active: true, turnOrder: 4, battery: 'red_0',    startSkill: 0, startSweat: 6, manualStar: true,  priorCash: 0 }
+        ];
+      } else if (presetName === 'moe_yellow_34') {
+        // Variant where Yellow has 3/4 Yellow battery & Star, Purple has 4/4 Full battery & No Star
+        players = [
+          { id: 'purple', active: true, turnOrder: 1, battery: 'white_4',  startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'yellow', active: true, turnOrder: 2, battery: 'yellow_3', startSkill: 3, startSweat: 0, manualStar: true,  priorCash: 0 },
+          { id: 'blue',   active: true, turnOrder: 3, battery: 'orange_1', startSkill: 3, startSweat: 2, manualStar: true,  priorCash: 0 },
+          { id: 'green',  active: true, turnOrder: 4, battery: 'red_0',    startSkill: 0, startSweat: 6, manualStar: true,  priorCash: 0 }
+        ];
+      } else if (presetName === 'solo_fresh') {
+        // Yellow alone at bottom starting from 0 with Guardian Angel uncovered
+        players = [
+          { id: 'yellow', active: true,  turnOrder: 1, battery: 'yellow_3', startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'purple', active: false, turnOrder: 2, battery: 'white_4',  startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'blue',   active: false, turnOrder: 3, battery: 'orange_1', startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'green',  active: false, turnOrder: 4, battery: 'red_0',    startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 }
+        ];
+      } else if (presetName === 'solo_maxed') {
+        // Yellow alone with both Skill (3★) and Sweat (6★) maxed -> bounces twice off both back walls for $4!
+        players = [
+          { id: 'yellow', active: true,  turnOrder: 1, battery: 'yellow_3', startSkill: 3, startSweat: 6, manualStar: true,  priorCash: 0 },
+          { id: 'purple', active: false, turnOrder: 2, battery: 'white_4',  startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'blue',   active: false, turnOrder: 3, battery: 'orange_1', startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 },
+          { id: 'green',  active: false, turnOrder: 4, battery: 'red_0',    startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 }
+        ];
+      } else if (presetName === 'sweat_star_promoted') {
+        // Green earned a Red Star via Sweat (Box 6★, Skill 0) and walks in with 2 rookies (Purple & Blue)
+        players = [
+          { id: 'purple', active: true,  turnOrder: 1, battery: 'white_4',  startSkill: 0, startSweat: 2, manualStar: false, priorCash: 0 },
+          { id: 'blue',   active: true,  turnOrder: 2, battery: 'yellow_3', startSkill: 1, startSweat: 1, manualStar: false, priorCash: 0 },
+          { id: 'green',  active: true,  turnOrder: 3, battery: 'orange_1', startSkill: 0, startSweat: 6, manualStar: true,  priorCash: 0 },
+          { id: 'yellow', active: false, turnOrder: 4, battery: 'white_4',  startSkill: 0, startSweat: 0, manualStar: false, priorCash: 0 }
+        ];
+      }
+
+      currentStage = 0;
+      renderPlayerCards();
+      updateAll();
+    }
+
+    function renderPlayerCards() {
+      const container = document.getElementById('playerCardsContainer');
+      const sortedByTurn = [...players].sort((a, b) => a.turnOrder - b.turnOrder);
+
+      container.innerHTML = sortedByTurn.map((p) => {
+        const c = PLAYER_COLORS[p.id];
+        const starred = hasRedStar(p);
+        const starSource = p.startSkill >= 3 && p.startSweat >= 6
+          ? '★ Both ($kill 3 & $weat 6)'
+          : p.startSkill >= 3
+            ? '★ From $kill (Box 3)'
+            : p.startSweat >= 6
+              ? '★ From $weat (Box 6)'
+              : p.manualStar
+                ? '★ Has Red Star'
+                : 'No Red Star (0)';
+
+        return `
+          <div class="player-card ${p.active ? '' : 'disabled'}">
+            <div class="player-header">
+              <div class="player-badge">
+                <input type="checkbox" ${p.active ? 'checked' : ''} onchange="togglePlayerActive('${p.id}', this.checked)" title="Include in Station 1" />
+                <span class="color-dot" style="background:${c.hex};"></span>
+                <span>#${p.turnOrder} ${c.name}</span>
+              </div>
+              <span class="star-pill ${starred ? 'has-star' : 'no-star'}">
+                ${starred ? '★ RED STAR' : '○ NO STAR'}
+              </span>
+            </div>
+
+            <div class="controls-row">
+              <label class="ctrl-lbl">
+                <span>Battery Played</span>
+                <select onchange="updatePlayerField('${p.id}', 'battery', this.value)">
+                  ${Object.values(BATTERY_TYPES).map(b => `
+                    <option value="${b.id}" ${p.battery === b.id ? 'selected' : ''}>${b.label}</option>
+                  `).join('')}
+                </select>
+              </label>
+              <label class="ctrl-lbl">
+                <span>Red Star (★) Preset</span>
+                <select onchange="setPlayerStarPreset('${p.id}', this.value)">
+                  <option value="none" ${!starred ? 'selected' : ''}>No Star (0 / 0)</option>
+                  <option value="skill_star" ${starred && p.startSkill >= 3 && p.startSweat < 6 ? 'selected' : ''}>★ via $kill (Box 3)</option>
+                  <option value="sweat_star" ${starred && p.startSweat >= 6 && p.startSkill < 3 ? 'selected' : ''}>★ via $weat (Box 6)</option>
+                  <option value="both_star" ${starred && p.startSkill >= 3 && p.startSweat >= 6 ? 'selected' : ''}>★ Both Maxed (3 & 6)</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="controls-row3">
+              <label class="ctrl-lbl">
+                <span>Start $kill (0–3★)</span>
+                <select onchange="updatePlayerField('${p.id}', 'startSkill', Number(this.value))">
+                  ${[0,1,2,3].map(v => `<option value="${v}" ${p.startSkill === v ? 'selected' : ''}>${v === 0 ? '0 (Off Track)' : v === 3 ? 'Box 3 (★ Wall)' : 'Box ' + v}</option>`).join('')}
+                </select>
+              </label>
+              <label class="ctrl-lbl">
+                <span>Start $weat (0–6★)</span>
+                <select onchange="updatePlayerField('${p.id}', 'startSweat', Number(this.value))">
+                  ${[0,1,2,3,4,5,6].map(v => `<option value="${v}" ${p.startSweat === v ? 'selected' : ''}>${v === 0 ? '0 (Off Track)' : v === 6 ? 'Box 6 (★ Wall)' : 'Box ' + v}</option>`).join('')}
+                </select>
+              </label>
+              <label class="ctrl-lbl">
+                <span>Turn Order</span>
+                <select onchange="swapTurnOrder('${p.id}', Number(this.value))">
+                  ${[1,2,3,4].map(t => `<option value="${t}" ${p.turnOrder === t ? 'selected' : ''}>#${t} in Turn</option>`).join('')}
+                </select>
+              </label>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function togglePlayerActive(id, checked) {
+      const p = players.find(x => x.id === id);
+      if (p) p.active = checked;
+      renderPlayerCards();
+      updateAll();
+    }
+
+    function updatePlayerField(id, field, val) {
+      const p = players.find(x => x.id === id);
+      if (!p) return;
+      p[field] = val;
+      if (field === 'startSkill' || field === 'startSweat') {
+        p.manualStar = (p.startSkill >= 3 || p.startSweat >= 6);
+      }
+      renderPlayerCards();
+      updateAll();
+    }
+
+    function setPlayerStarPreset(id, mode) {
+      const p = players.find(x => x.id === id);
+      if (!p) return;
+      if (mode === 'none') {
+        p.startSkill = 0;
+        p.startSweat = 0;
+        p.manualStar = false;
+      } else if (mode === 'skill_star') {
+        p.startSkill = 3;
+        if (p.startSweat >= 6) p.startSweat = 0;
+        p.manualStar = true;
+      } else if (mode === 'sweat_star') {
+        if (p.startSkill >= 3) p.startSkill = 0;
+        p.startSweat = 6;
+        p.manualStar = true;
+      } else if (mode === 'both_star') {
+        p.startSkill = 3;
+        p.startSweat = 6;
+        p.manualStar = true;
+      }
+      renderPlayerCards();
+      updateAll();
+    }
+
+    function swapTurnOrder(id, newOrder) {
+      const p = players.find(x => x.id === id);
+      const other = players.find(x => x.turnOrder === newOrder);
+      if (p && other && p !== other) {
+        other.turnOrder = p.turnOrder;
+        p.turnOrder = newOrder;
+      }
+      renderPlayerCards();
+      updateAll();
+    }
+
+    function onNpcChange() {
+      npcState.active = document.getElementById('chkNpcActive').checked;
+      npcState.type = document.getElementById('selNpcType').value;
+      npcState.mode = document.getElementById('selNpcMode').value;
+      updateAll();
+    }
+
+    function recalculateIfActive() {
+      updateAll();
+    }
+
+    function runStage(stageNum) {
+      currentStage = stageNum;
+      updateAll();
+    }
+
+    function carryOverToNextShift() {
+      const sim = computeSimulation();
+      players.forEach(p => {
+        const r = sim.playerResults[p.id];
+        if (r && p.active) {
+          p.startSkill = r.endSkill;
+          p.startSweat = r.endSweat;
+          p.manualStar = (p.startSkill >= 3 || p.startSweat >= 6);
+          p.priorCash = (p.priorCash || 0) + r.cashEarned;
+        }
+      });
+      currentStage = 1;
+      renderPlayerCards();
+      updateAll();
+    }
+
+    // =========================================================================
+    // CORE SIMULATION ENGINE (6 STAGES)
+    // 1: Deploy Meeples -> 2: Buoyancy -> 3: Energy -> 4: Calculate Results -> 5: End Results Calculation -> 6: Move Cubes
+    // =========================================================================
+    function computeSimulation() {
+      const activePlayers = players
+        .filter(p => p.active)
+        .sort((a, b) => a.turnOrder - b.turnOrder);
+
+      // Stage 1: Deploy Meeples (Turn Order Arrival Stack)
+      const turnOrderStackTopToBottom = activePlayers.map(p => ({
+        kind: 'player',
+        id: p.id,
+        name: PLAYER_COLORS[p.id].name,
+        shortName: PLAYER_COLORS[p.id].shortName,
+        turnOrder: p.turnOrder,
+        battery: BATTERY_TYPES[p.battery],
+        hasStar: hasRedStar(p),
+        startSkill: p.startSkill,
+        startSweat: p.startSweat
+      }));
+
+      if (npcState.active) {
+        turnOrderStackTopToBottom.push({
+          kind: 'npc',
+          id: 'npc',
+          name: npcState.type === 'skilled' ? 'NPC A1 (1★)' : 'Bitter NPC (0★)',
+          shortName: npcState.type === 'skilled' ? 'NPC A1' : 'Bitter NPC',
+          turnOrder: 99,
+          battery: { id: 'npc', label: npcState.type === 'skilled' ? 'Skilled 1★' : 'Bitter 0★', rank: npcState.type === 'skilled' ? 5 : 0 },
+          hasStar: npcState.type === 'skilled',
+          isBitterNpc: npcState.type === 'bitter'
+        });
+      }
+
+      // Stage 2: Pure Red Star (★) Buoyancy Only (Star floats above Non-Star; preserves Turn Order before Energy step)
+      let buoyancyOnlyStackTopToBottom = [...turnOrderStackTopToBottom];
+      buoyancyOnlyStackTopToBottom.sort((a, b) => {
+        if (a.isBitterNpc && !b.isBitterNpc) return 1;
+        if (!a.isBitterNpc && b.isBitterNpc) return -1;
+        if (a.kind === 'npc' && a.hasStar && npcState.mode === 'manual_top') return -1;
+        if (b.kind === 'npc' && b.hasStar && npcState.mode === 'manual_top') return 1;
+        if (a.hasStar !== b.hasStar) return a.hasStar ? -1 : 1;
+        if (a.kind === 'npc' && b.kind === 'player' && a.hasStar && b.hasStar) return 1;
+        if (b.kind === 'npc' && a.kind === 'player' && a.hasStar && b.hasStar) return -1;
+        return a.turnOrder - b.turnOrder;
+      });
+
+      // Stage 3: Energy Step (Battery Charge evaluation & sorting based on selected Energy Rule)
+      const energyRule = document.getElementById('selBuoyancyRule').value;
+      let energyStackTopToBottom = [...buoyancyOnlyStackTopToBottom];
+
+      energyStackTopToBottom.sort((a, b) => {
+        if (a.isBitterNpc && !b.isBitterNpc) return 1;
+        if (!a.isBitterNpc && b.isBitterNpc) return -1;
+        if (a.kind === 'npc' && a.hasStar && npcState.mode === 'manual_top') return -1;
+        if (b.kind === 'npc' && b.hasStar && npcState.mode === 'manual_top') return 1;
+
+        if (energyRule === 'star_battery_turn') {
+          // Rule A: Red Star (★ vs 0) First -> Battery Energy (4/4 > 3/4 > 1/4 > 0/4) -> Turn Order
+          if (a.hasStar !== b.hasStar) return a.hasStar ? -1 : 1;
+          if (a.kind === 'npc' && b.kind === 'player' && a.hasStar && b.hasStar) return 1;
+          if (b.kind === 'npc' && a.kind === 'player' && a.hasStar && b.hasStar) return -1;
+          if (b.battery.rank !== a.battery.rank) return b.battery.rank - a.battery.rank;
+          return a.turnOrder - b.turnOrder;
+        } else if (energyRule === 'star_turn_only') {
+          // Rule D: Keep pure Star + Turn Order (Energy only drains -1 bar)
+          if (a.hasStar !== b.hasStar) return a.hasStar ? -1 : 1;
+          if (a.kind === 'npc' && b.kind === 'player' && a.hasStar && b.hasStar) return 1;
+          if (b.kind === 'npc' && a.kind === 'player' && a.hasStar && b.hasStar) return -1;
+          return a.turnOrder - b.turnOrder;
+        } else if (energyRule === 'star_battery_no_empty_float') {
+          // Rule B: Empty (0/4 Red) battery (Lyndon) is exhausted and sinks below Full (4/4) battery (Brian)
+          const aEffectiveStar = a.hasStar && a.battery.rank > 1;
+          const bEffectiveStar = b.hasStar && b.battery.rank > 1;
+          if (aEffectiveStar !== bEffectiveStar) return aEffectiveStar ? -1 : 1;
+          if (b.battery.rank !== a.battery.rank) return b.battery.rank - a.battery.rank;
+          if (a.hasStar !== b.hasStar) return a.hasStar ? -1 : 1;
+          return a.turnOrder - b.turnOrder;
+        } else {
+          // Rule C: Battery Energy First -> Red Star Breaks Ties -> Turn Order
+          if (b.battery.rank !== a.battery.rank) return b.battery.rank - a.battery.rank;
+          if (a.hasStar !== b.hasStar) return a.hasStar ? -1 : 1;
+          return a.turnOrder - b.turnOrder;
+        }
+      });
+
+      const activeStack = currentStage >= 3
+        ? energyStackTopToBottom
+        : currentStage === 2
+          ? buoyancyOnlyStackTopToBottom
+          : turnOrderStackTopToBottom;
+      const N = activeStack.length;
+      const guardianAngelUncovered = (N === 1);
+      const hasSkilledNpcInRoom = activeStack.some(t => t.kind === 'npc' && t.hasStar);
+      const payoutRule = document.getElementById('selPayoutRule').value;
+
+      // Stage 4, 5 & 6: Calculate Moves, End Calculation (Bounces, Stars, Audit, Hearts), and Move Cubes
+      const playerResults = {};
+      players.forEach(p => {
+        playerResults[p.id] = {
+          inRoom: p.active,
+          stackIndexFromTop: -1,
+          circleNumberFromBottom: -1,
+          skillMoves: 0,
+          sweatMoves: 0,
+          startSkill: p.startSkill,
+          startSweat: p.startSweat,
+          endSkill: p.startSkill,
+          endSweat: p.startSweat,
+          skillBounces: 0,
+          sweatBounces: 0,
+          cashEarned: 0,
+          totalPaycheck: p.priorCash || 0,
+          earnedNewStar: false,
+          endHasStar: hasRedStar(p),
+          isBrainLopsided: false,
+          heartResult: '—',
+          heartReason: ''
+        };
+      });
+
+      activeStack.forEach((tok, idxFromTop) => {
+        const circleFromBottom = N - idxFromTop; // Bottom token = Circle 1, Top token = Circle N
+        if (tok.kind !== 'player') return;
+
+        const r = playerResults[tok.id];
+        r.stackIndexFromTop = idxFromTop;
+        r.circleNumberFromBottom = circleFromBottom;
+
+        let skMoves = 0;
+        let swMoves = 0;
+
+        if (N === 1) {
+          // Solo worker at bottom with Guardian Angel uncovered in Circle 2!
+          // 1 from your own token + 1 from Guardian Angel on both tracks = 2 $kill and 2 $weat
+          skMoves = 2;
+          swMoves = 2;
+        } else {
+          if (payoutRule === 'canonical_pyramid') {
+            if (idxFromTop === 0) {
+              // Very Top of Stack -> Earns N moves on $kill
+              skMoves = N;
+            } else {
+              // Bottom-up $weat pyramid:
+              // Bottom token (circleFromBottom = 1) gets N moves on $weat
+              // 2nd from bottom (circleFromBottom = 2) gets N - 1 moves on $weat
+              // 3rd from bottom (circleFromBottom = 3) gets N - 2 moves on $weat
+              swMoves = N - (circleFromBottom - 1);
+            }
+          } else if (payoutRule === 'linear_sweat') {
+            if (idxFromTop === 0) {
+              skMoves = N;
+            } else {
+              swMoves = idxFromTop;
+            }
+          } else if (payoutRule === 'top2_skill') {
+            if (idxFromTop === 0) {
+              skMoves = N;
+            } else if (idxFromTop === 1) {
+              skMoves = 1;
+              swMoves = 1;
+            } else {
+              swMoves = N - (circleFromBottom - 1);
+            }
+          }
+        }
+
+        if (hasSkilledNpcInRoom) {
+          skMoves += 1; // +1 $kill mentorship bonus from Skilled NPC in station
+        }
+
+        r.skillMoves = skMoves;
+        r.sweatMoves = swMoves;
+
+        // Calculate end position & back-wall bounces ($kill max = 3, $weat max = 6)
+        const rawSkill = r.startSkill + skMoves;
+        if (rawSkill > 3) {
+          r.endSkill = 3;
+          r.skillBounces = rawSkill - 3;
+        } else {
+          r.endSkill = rawSkill;
+          r.skillBounces = 0;
+        }
+
+        const rawSweat = r.startSweat + swMoves;
+        if (rawSweat > 6) {
+          r.endSweat = 6;
+          r.sweatBounces = rawSweat - 6;
+        } else {
+          r.endSweat = rawSweat;
+          r.sweatBounces = 0;
+        }
+
+        r.cashEarned = r.skillBounces + r.sweatBounces;
+        r.totalPaycheck = (players.find(x => x.id === tok.id).priorCash || 0) + r.cashEarned;
+        r.endHasStar = (r.endSkill >= 3 || r.endSweat >= 6 || tok.hasStar);
+        r.earnedNewStar = (!tok.hasStar && r.endHasStar);
+
+        // Visual Lopsided Check:
+        // Since $kill boxes are double-wide (width = 2x $weat box), a player's $kill cube is physically further right
+        // than their $weat cube whenever (endSkill * 2) > endSweat!
+        const skillVisualX = currentStage >= 5 ? r.endSkill * 2 : r.startSkill * 2;
+        const sweatVisualX = currentStage >= 5 ? r.endSweat : r.startSweat;
+        r.isBrainLopsided = skillVisualX > sweatVisualX;
+
+        // 5:00 PM Heart Retrieval Check:
+        const bitterAtBottom = activeStack.some(x => x.isBitterNpc);
+        const tokenDirectlyBelow = idxFromTop < activeStack.length - 1 ? activeStack[idxFromTop + 1] : null;
+
+        if (bitterAtBottom && idxFromTop < activeStack.length - 1) {
+          r.heartResult = '🖤 Husk Heart';
+          r.heartReason = 'Trapped by Bitter NPC at bottom';
+        } else if (!tokenDirectlyBelow) {
+          r.heartResult = '❤️ Full Heart (Wave 1)';
+          r.heartReason = 'Bottom of stack (nobody underneath you)';
+        } else if (tok.hasStar && tokenDirectlyBelow.hasStar) {
+          r.heartResult = '❤️ Full Heart (Slide Out)';
+          r.heartReason = `Trusted Lieutenant (${tokenDirectlyBelow.shortName || tokenDirectlyBelow.name} ★ is underneath)`;
+        } else {
+          const tokensBelowCount = (activeStack.length - 1) - idxFromTop;
+          if (tokensBelowCount === 1) {
+            r.heartResult = '💔 Half Heart (Wave 2)';
+            r.heartReason = `Pinned supervising unskilled ${tokenDirectlyBelow.shortName || tokenDirectlyBelow.name} (0★)`;
+          } else {
+            r.heartResult = '🖤 Husk Heart';
+            r.heartReason = `Buried ${tokensBelowCount} deep above unskilled workers`;
+          }
+        }
+      });
+
+      return {
+        turnOrderStackTopToBottom,
+        buoyancyOnlyStackTopToBottom,
+        energyStackTopToBottom,
+        activeStack,
+        N,
+        guardianAngelUncovered,
+        playerResults
+      };
+    }
+
+    // =========================================================================
+    // SVG RENDERER (AUTHENTIC ILLUSTRATOR GEOMETRY + ANIMATED TOKENS/CUBES)
+    // =========================================================================
+    function renderBatteryTokenSvg(x, y, playerColorHex, batteryObj, hasStarBadge, turnOrderNum, labelText) {
+      const rOuter = 29;
+      const rInner = 21;
+      return `
+        <g transform="translate(${x}, ${y})">
+          <!-- Outer Player Color Ring -->
+          <circle cx="0" cy="0" r="${rOuter}" fill="${playerColorHex}" stroke="#0f172a" stroke-width="2.5" />
+          <!-- Inner Battery Charge Core -->
+          <circle cx="0" cy="0" r="${rInner}" fill="${batteryObj.fill}" stroke="#0f172a" stroke-width="2" />
+          <!-- Battery Icon Silhouette in Center -->
+          <rect x="-12" y="-7" width="21" height="14" rx="2.5" fill="none" stroke="#0f172a" stroke-width="2" />
+          <rect x="9" y="-3.5" width="3.5" height="7" rx="1" fill="#0f172a" />
+          ${batteryObj.bars > 0 ? `<rect x="-9.5" y="-4.5" width="${batteryObj.bars * 4}" height="9" rx="1" fill="#0f172a" />` : `<line x1="-8" y1="-4" x2="5" y2="4" stroke="#ffffff" stroke-width="2" />`}
+
+          <!-- Turn Order Mini Badge (Top-Left) -->
+          <circle cx="-22" cy="-21" r="10" fill="#0f172a" stroke="#ffffff" stroke-width="1.5" />
+          <text x="-22" y="-17" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="900">#${turnOrderNum}</text>
+
+          <!-- Binary Red Star Badge (Top-Right) -->
+          ${hasStarBadge ? `
+            <g transform="translate(22, -21)">
+              <circle cx="0" cy="0" r="11" fill="#ffffff" stroke="#dc2626" stroke-width="2" />
+              <path fill="#FF0000" d="M0,-8 L2.4,-2.5 L8.3,-1.7 L4,2.4 L5,8.2 L0,5.4 L-5,8.2 L-4,2.4 L-8.3,-1.7 L-2.4,-2.5 Z" />
+            </g>
+          ` : ''}
+        </g>
+      `;
+    }
+
+    function renderIsometricCubeSvg(x, y, playerId, isGhost = false, label = '') {
+      const c = PLAYER_COLORS[playerId];
+      const opacity = isGhost ? '0.32' : '1';
+      return `
+        <g transform="translate(${x}, ${y})" opacity="${opacity}">
+          <!-- Top Diamond -->
+          <polygon points="0,-13 12,-6.5 0,0 -12,-6.5" fill="${c.cubeTop}" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round" />
+          <!-- Left Face -->
+          <polygon points="-12,-6.5 0,0 0,13 -12,6.5" fill="${c.cubeLeft}" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round" />
+          <!-- Right Face -->
+          <polygon points="0,0 12,-6.5 12,6.5 0,13" fill="${c.cubeRight}" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round" />
+          ${label ? `<text x="0" y="23" text-anchor="middle" fill="#0f172a" font-size="10" font-weight="900">${label}</text>` : ''}
+        </g>
+      `;
+    }
+
+    function renderGuardianAngelSvg(x, y, isCovered) {
+      const op = isCovered ? '0.22' : '1.0';
+      return `
+        <g transform="translate(${x}, ${y}) scale(0.95)" opacity="${op}">
+          <!-- Halo -->
+          <ellipse cx="0" cy="-21" rx="11" ry="3.2" fill="none" stroke="#d97706" stroke-width="2.5" />
+          <!-- Left Wing -->
+          <path d="M-9,-6 C-18,-12 -24,-22 -27,-20 C-29,-18 -26,-8 -20,-4 C-25,-3 -27,2 -21,6 C-16,9 -11,8 -9,5 Z" fill="#fef08a" stroke="#b45309" stroke-width="1.8" />
+          <!-- Right Wing -->
+          <path d="M9,-6 C18,-12 24,-22 27,-20 C29,-18 26,-8 20,-4 C25,-3 27,2 21,6 C16,9 11,8 9,5 Z" fill="#fef08a" stroke="#b45309" stroke-width="1.8" />
+          <!-- Vertical Battery Body -->
+          <rect x="-8" y="-14" width="16" height="28" rx="3" fill="#ffffff" stroke="#b45309" stroke-width="2" />
+          <rect x="-4" y="-17.5" width="8" height="3.5" rx="1" fill="#b45309" />
+          <text x="0" y="3" text-anchor="middle" fill="#b45309" font-size="11" font-weight="900">+1</text>
+        </g>
+      `;
+    }
+
+    function renderBoardSvg(sim) {
+      const width = 1140;
+      const height = 560;
+
+      const stackX = 115;
+      const circleCentersY = [
+        465, // Circle 1 (Bottom-most slot)
+        382, // Circle 2 (2nd from bottom — GUARDIAN ANGEL SLOT!)
+        299, // Circle 3 (Middle slot)
+        216, // Circle 4 (4th from bottom)
+        133  // Circle 5 (Top-most slot)
+      ];
+
+      const stackSlotItems = [null, null, null, null, null];
+      if (currentStage >= 1) {
+        sim.activeStack.forEach((item, idxFromTop) => {
+          const circleIdxFromBottom = (sim.N - 1) - idxFromTop;
+          if (circleIdxFromBottom >= 0 && circleIdxFromBottom < 5) {
+            stackSlotItems[circleIdxFromBottom] = {
+              ...item,
+              idxFromTop,
+              circleNum: circleIdxFromBottom + 1
+            };
+          }
+        });
+      }
+
+      const boxHeight = 56;
+      const skillBoxWidth = 116; // 3 double-wide boxes = 348px total width
+      const sweatBoxWidth = 58;  // 6 single-wide boxes = 348px total width
+      const skillY = 145;
+      const sweatY = 235;
+
+      // Collect cubes per box for Shared Gray Track rendering
+      // Cubes move physically in Stage 6 (Move Cubes)!
+      const skillBuckets = { 0: [], 1: [], 2: [], 3: [] };
+      const sweatBuckets = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+      const ghostSkillBuckets = { 0: [], 1: [], 2: [], 3: [] };
+      const ghostSweatBuckets = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+
+      players.filter(p => p.active).forEach(p => {
+        const r = sim.playerResults[p.id];
+        if (currentStage < 6) {
+          skillBuckets[p.startSkill].push({ id: p.id, bounces: 0 });
+          sweatBuckets[p.startSweat].push({ id: p.id, bounces: 0 });
+        } else {
+          if (r.startSkill !== r.endSkill) ghostSkillBuckets[r.startSkill].push({ id: p.id });
+          if (r.startSweat !== r.endSweat) ghostSweatBuckets[r.startSweat].push({ id: p.id });
+          skillBuckets[r.endSkill].push({ id: p.id, bounces: r.skillBounces });
+          sweatBuckets[r.endSweat].push({ id: p.id, bounces: r.sweatBounces });
+        }
+      });
+
+      function renderBucketCubes(bucket, centerX, centerY, isGhost = false) {
+        const count = bucket.length;
+        if (count === 0) return '';
+        const spacing = 26;
+        const startOffset = -((count - 1) * spacing) / 2;
+        return bucket.map((item, i) => {
+          const cx = centerX + startOffset + i * spacing;
+          const lbl = (!isGhost && item.bounces > 0) ? `+$${item.bounces}` : '';
+          return renderIsometricCubeSvg(cx, centerY, item.id, isGhost, lbl);
+        }).join('');
+      }
+
+      const stageBannerTitles = [
+        'STAGE 0: INITIAL SETUP',
+        'STAGE 1: DEPLOY MEEPLES (TURN ORDER)',
+        'STAGE 2: BUOYANCY (RED STAR ★ LINEUP)',
+        'STAGE 3: ENERGY (BATTERY CHARGE CHECK)',
+        'STAGE 4: CALCULATE RESULTS (EARNED MOVES)',
+        'STAGE 5: END RESULTS CALCULATION (BOUNCES & AUDIT)',
+        'STAGE 6: MOVE CUBES & PAYOUT'
+      ];
+
+      let svg = `<svg viewBox="0 0 ${width} ${height}" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">`;
+
+      // Station 1 Header Banner
+      svg += `
+        <rect x="16" y="14" width="${width - 32}" height="54" rx="10" fill="#b91c1c" stroke="#450a0a" stroke-width="3" />
+        <text x="36" y="48" fill="#ffffff" font-size="22" font-weight="900" letter-spacing="1">STATION 1: HARVEST AGAVE (FRONT OF HOUSE • RED)</text>
+        <text x="${width - 36}" y="46" text-anchor="end" fill="#fef08a" font-size="13.5" font-weight="800">
+          ${stageBannerTitles[currentStage]}
+        </text>
+      `;
+
+      // Left Column Frame: 5-Circle Stack
+      svg += `
+        <rect x="24" y="80" width="335" height="460" rx="12" fill="#e7e0d3" stroke="#94a3b8" stroke-width="2" />
+        <text x="191" y="102" text-anchor="middle" fill="#1e293b" font-size="13" font-weight="900">5-CIRCLE PRIORITY STACK (FILLS BOTTOM ➔ UP)</text>
+      `;
+
+      // Draw the 5 Circles from Bottom (Circle 1) to Top (Circle 5)
+      circleCentersY.forEach((cy, idxFromBottom) => {
+        const circleNum = idxFromBottom + 1;
+        const occupant = stackSlotItems[idxFromBottom];
+        const isAngelSlot = (circleNum === 2);
+
+        svg += `
+          <!-- Circle Slot ${circleNum} -->
+          <circle cx="${stackX}" cy="${cy}" r="36" fill="#cccccc" stroke="#475569" stroke-width="2" stroke-dasharray="${occupant ? 'none' : '5,4'}" />
+          <text x="42" y="${cy + 4}" fill="#475569" font-size="11" font-weight="800">Slot ${circleNum}</text>
+        `;
+
+        // Guardian Angel printed in Slot 2 (2nd circle from bottom)
+        if (isAngelSlot) {
+          svg += renderGuardianAngelSvg(stackX, cy, Boolean(occupant));
+          if (!occupant && currentStage >= 1 && sim.N === 1) {
+            svg += `
+              <rect x="162" y="${cy - 22}" width="182" height="44" rx="7" fill="#fef9c3" stroke="#d97706" stroke-width="2" />
+              <text x="253" y="${cy - 4}" text-anchor="middle" fill="#92400e" font-size="11.5" font-weight="900">👼 GUARDIAN ANGEL OPEN!</text>
+              <text x="253" y="${cy + 13}" text-anchor="middle" fill="#b45309" font-size="11" font-weight="800">+1 $kill &amp; +1 $weat Bonus</text>
+            `;
+          }
+        }
+
+        // Render Occupant Token if present
+        if (occupant) {
+          if (occupant.kind === 'player') {
+            const pColor = PLAYER_COLORS[occupant.id].hex;
+            const pRes = sim.playerResults[occupant.id];
+            const showStar = currentStage >= 5 ? pRes.endHasStar : occupant.hasStar;
+            svg += renderBatteryTokenSvg(stackX, cy, pColor, occupant.battery, showStar, occupant.turnOrder, occupant.name);
+
+            const isTop = (occupant.idxFromTop === 0);
+            const roleLabel = isTop ? '👑 TOP (BRAIN / $KILL)' : idxFromBottom === 0 ? '⚓ BOTTOM (GRUNT / $WEAT)' : `⚙️ MIDDLE (#${occupant.idxFromTop + 1} from Top)`;
+            const pillFill = isTop ? '#dbeafe' : idxFromBottom === 0 ? '#fee2e2' : '#f1f5f9';
+            const pillStroke = isTop ? '#2563eb' : idxFromBottom === 0 ? '#dc2626' : '#64748b';
+
+            svg += `
+              <rect x="162" y="${cy - 28}" width="185" height="56" rx="7" fill="${pillFill}" stroke="${pillStroke}" stroke-width="1.8" />
+              <text x="170" y="${cy - 12}" fill="#0f172a" font-size="11" font-weight="900">${roleLabel}</text>
+              <text x="170" y="${cy + 4}" fill="#334155" font-size="11" font-weight="800">${occupant.name}</text>
+            `;
+
+            if (currentStage >= 4) {
+              const moveTxt = [];
+              if (pRes.skillMoves > 0) moveTxt.push(`+${pRes.skillMoves} $kill`);
+              if (pRes.sweatMoves > 0) moveTxt.push(`+${pRes.sweatMoves} $weat`);
+              const bounceTxt = (currentStage >= 5 && pRes.cashEarned > 0) ? ` ➔ 💵 +$${pRes.cashEarned}` : '';
+              svg += `
+                <text x="170" y="${cy + 20}" fill="#b91c1c" font-size="11" font-weight="900">${moveTxt.join(' & ')}${bounceTxt}</text>
+              `;
+            } else if (currentStage === 3) {
+              svg += `
+                <text x="170" y="${cy + 20}" fill="#0f172a" font-size="10.5" font-weight="900">🔋 ${occupant.battery.label} (${occupant.hasStar ? '★' : '0★'})</text>
+              `;
+            } else {
+              svg += `
+                <text x="170" y="${cy + 20}" fill="#475569" font-size="10.5" font-weight="700">${occupant.hasStar ? '★ Red Star' : '○ No Star (0)'} • ${occupant.battery.label.split(' ')[0]}</text>
+              `;
+            }
+          } else {
+            // NPC Token
+            svg += `
+              <g transform="translate(${stackX}, ${cy})">
+                <rect x="-28" y="-24" width="56" height="48" rx="8" fill="${occupant.hasStar ? '#dc2626' : '#1e293b'}" stroke="#0f172a" stroke-width="2.5" />
+                <text x="0" y="-4" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="900">${occupant.hasStar ? 'NPC 1★' : 'NPC 0★'}</text>
+                <text x="0" y="12" text-anchor="middle" fill="#fde047" font-size="10" font-weight="800">${occupant.hasStar ? 'MASTER' : 'BITTER'}</text>
+              </g>
+              <rect x="162" y="${cy - 22}" width="185" height="44" rx="7" fill="#fef2f2" stroke="#dc2626" stroke-width="1.8" />
+              <text x="170" y="${cy - 3}" fill="#7f1d1d" font-size="11" font-weight="900">${occupant.name}</text>
+              <text x="170" y="${cy + 13}" fill="#991b1b" font-size="10.5" font-weight="700">${occupant.hasStar ? 'Floats to ★ tier (+1 $kill all)' : 'Anchors bottom! Pins room!'}</text>
+            `;
+          }
+        }
+      });
+
+      // =====================================================================
+      // RIGHT AREA: SHARED GRAY $KILL (3 BOXES) & $WEAT (6 BOXES) TRACKS
+      // =====================================================================
+      svg += `
+        <rect x="375" y="80" width="745" height="260" rx="12" fill="#e7e0d3" stroke="#94a3b8" stroke-width="2" />
+        <text x="395" y="106" fill="#0f172a" font-size="14" font-weight="900">SHARED NEUTRAL GRAY TRACKS (START AT 0 OFF-TRACK • ALIGNED 348px WIDTH)</text>
+        <text x="395" y="124" fill="#475569" font-size="11.5" font-weight="700">Reaching Box 3 ($kill) OR Box 6 ($weat) grants the Station Red Star (★). Moves past the final box bounce off the back wall for $1!</text>
+      `;
+
+      const zeroBoxX = 390;
+      const zeroBoxW = 105;
+      const actualTrackStartX = 508;
+
+      svg += `
+        <!-- 0 OFF-TRACK STAGING BOX ($kill) -->
+        <rect x="${zeroBoxX}" y="${skillY}" width="${zeroBoxW}" height="${boxHeight}" rx="6" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3" />
+        <text x="${zeroBoxX + zeroBoxW / 2}" y="${skillY + 15}" text-anchor="middle" fill="#475569" font-size="10" font-weight="800">START: 0 ($kill)</text>
+        ${renderBucketCubes(ghostSkillBuckets[0], zeroBoxX + zeroBoxW / 2, skillY + 33, true)}
+        ${renderBucketCubes(skillBuckets[0], zeroBoxX + zeroBoxW / 2, skillY + 33, false)}
+
+        <!-- 0 OFF-TRACK STAGING BOX ($weat) -->
+        <rect x="${zeroBoxX}" y="${sweatY}" width="${zeroBoxW}" height="${boxHeight}" rx="6" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3" />
+        <text x="${zeroBoxX + zeroBoxW / 2}" y="${sweatY + 15}" text-anchor="middle" fill="#475569" font-size="10" font-weight="800">START: 0 ($weat)</text>
+        ${renderBucketCubes(ghostSweatBuckets[0], zeroBoxX + zeroBoxW / 2, sweatY + 33, true)}
+        ${renderBucketCubes(sweatBuckets[0], zeroBoxX + zeroBoxW / 2, sweatY + 33, false)}
+      `;
+
+      // 3 DOUBLE-WIDE $KILL BOXES (Top Track)
+      for (let b = 1; b <= 3; b++) {
+        const bx = actualTrackStartX + (b - 1) * skillBoxWidth;
+        const isStarBox = (b === 3);
+        svg += `
+          <rect x="${bx}" y="${skillY}" width="${skillBoxWidth - 4}" height="${boxHeight}" fill="${isStarBox ? '#e2e8f0' : '#d1d5db'}" stroke="#0f172a" stroke-width="2" />
+          <text x="${bx + 8}" y="${skillY + 15}" fill="#334155" font-size="11" font-weight="900">$kill Box ${b}${isStarBox ? ' (★)' : ''}</text>
+          ${renderBucketCubes(ghostSkillBuckets[b], bx + (skillBoxWidth - 4) / 2, skillY + 32, true)}
+          ${renderBucketCubes(skillBuckets[b], bx + (skillBoxWidth - 4) / 2, skillY + 32, false)}
+        `;
+      }
+
+      // Red Star on Top-Right of $kill Box 3
+      const trackEndRightX = actualTrackStartX + 3 * skillBoxWidth - 4;
+      svg += `
+        <g transform="translate(${trackEndRightX}, ${skillY})">
+          <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#dc2626" stroke-width="2.5" />
+          <path fill="#FF0000" d="M0,-10 L2.9,-3.1 L10,-2.1 L4.8,2.9 L6.1,9.9 L0,6.5 L-6.1,9.9 L-4.8,2.9 L-10,-2.1 L-2.9,-3.1 Z" />
+        </g>
+        <!-- Back Wall Bumper + $kill Label -->
+        <line x1="${trackEndRightX + 4}" y1="${skillY - 6}" x2="${trackEndRightX + 4}" y2="${skillY + boxHeight + 6}" stroke="#dc2626" stroke-width="5" />
+        <text x="${trackEndRightX + 16}" y="${skillY + 30}" fill="#0f172a" font-size="24" font-weight="900">$kill</text>
+        <text x="${trackEndRightX + 16}" y="${skillY + 48}" fill="#b91c1c" font-size="11.5" font-weight="900">Bounce Wall = +$1 / step</text>
+      `;
+
+      // 6 SINGLE-WIDE $WEAT BOXES (Bottom Track)
+      for (let b = 1; b <= 6; b++) {
+        const bx = actualTrackStartX + (b - 1) * sweatBoxWidth;
+        const isStarBox = (b === 6);
+        svg += `
+          <rect x="${bx}" y="${sweatY}" width="${sweatBoxWidth - 4}" height="${boxHeight}" fill="${isStarBox ? '#e2e8f0' : '#d1d5db'}" stroke="#0f172a" stroke-width="2" />
+          <text x="${bx + 6}" y="${sweatY + 14}" fill="#334155" font-size="10" font-weight="900">${b}${isStarBox ? '★' : ''}</text>
+          ${renderBucketCubes(ghostSweatBuckets[b], bx + (sweatBoxWidth - 4) / 2, sweatY + 32, true)}
+          ${renderBucketCubes(sweatBuckets[b], bx + (sweatBoxWidth - 4) / 2, sweatY + 32, false)}
+        `;
+      }
+
+      // Red Star on Top-Right of $weat Box 6
+      svg += `
+        <g transform="translate(${trackEndRightX}, ${sweatY})">
+          <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#dc2626" stroke-width="2.5" />
+          <path fill="#FF0000" d="M0,-10 L2.9,-3.1 L10,-2.1 L4.8,2.9 L6.1,9.9 L0,6.5 L-6.1,9.9 L-4.8,2.9 L-10,-2.1 L-2.9,-3.1 Z" />
+        </g>
+        <!-- Back Wall Bumper + $weat Label -->
+        <line x1="${trackEndRightX + 4}" y1="${sweatY - 6}" x2="${trackEndRightX + 4}" y2="${sweatY + boxHeight + 6}" stroke="#dc2626" stroke-width="5" />
+        <text x="${trackEndRightX + 16}" y="${sweatY + 30}" fill="#0f172a" font-size="24" font-weight="900">$weat</text>
+        <text x="${trackEndRightX + 16}" y="${sweatY + 48}" fill="#b91c1c" font-size="11.5" font-weight="900">Bounce Wall = +$1 / step</text>
+      `;
+
+      // =====================================================================
+      // BOTTOM RIGHT: 4 PLAYER PAYCHECK BOXES (✓) & AUDIT / HEART CARDS
+      // =====================================================================
+      svg += `
+        <rect x="375" y="352" width="745" height="188" rx="12" fill="#e7e0d3" stroke="#94a3b8" stroke-width="2" />
+        <text x="395" y="376" fill="#0f172a" font-size="13.5" font-weight="900">PAYCHECK BOXES (✓) • BINARY RED STAR BADGE • BRAIN-LOPSIDED CHECK &amp; 5:00 PM HEARTS</text>
+      `;
+
+      const sortedPlayers = [...players].sort((a, b) => a.turnOrder - b.turnOrder);
+      sortedPlayers.forEach((p, idx) => {
+        const cardX = 390 + idx * 180;
+        const cardY = 388;
+        const cardW = 170;
+        const cardH = 140;
+        const c = PLAYER_COLORS[p.id];
+        const r = sim.playerResults[p.id];
+        const hasStarNow = currentStage >= 5 ? r.endHasStar : hasRedStar(p);
+        const cashToShow = currentStage >= 6 ? r.totalPaycheck : (p.priorCash || 0);
+        const newCash = currentStage >= 5 ? r.cashEarned : 0;
+
+        svg += `
+          <g opacity="${p.active ? '1' : '0.4'}">
+            <rect x="${cardX}" y="${cardY}" width="${cardW}" height="${cardH}" rx="9" fill="#ffffff" stroke="${c.dark}" stroke-width="2.5" />
+            <rect x="${cardX}" y="${cardY}" width="${cardW}" height="26" rx="7" fill="${c.hex}" />
+            <text x="${cardX + 8}" y="${cardY + 17}" fill="${p.id === 'yellow' ? '#0f172a' : '#ffffff'}" font-size="11.5" font-weight="900">#${p.turnOrder} ${c.name}</text>
+            <text x="${cardX + cardW - 6}" y="${cardY + 17}" text-anchor="end" fill="${p.id === 'yellow' ? '#0f172a' : '#ffffff'}" font-size="10.5" font-weight="900">
+              ${hasStarNow ? '★ STAR' : '○ 0★'}
+            </text>
+
+            <!-- Paycheck Box (✓) -->
+            <rect x="${cardX + 10}" y="${cardY + 34}" width="${cardW - 20}" height="34" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.8" />
+            <text x="${cardX + 16}" y="${cardY + 55}" fill="#065f46" font-size="11.5" font-weight="900">✓ Paycheck:</text>
+            <text x="${cardX + cardW - 16}" y="${cardY + 56}" text-anchor="end" fill="#047857" font-size="14" font-weight="900">$${cashToShow}${newCash > 0 ? ` (+$${newCash})` : ''}</text>
+
+            <!-- Lopsided Check -->
+            <text x="${cardX + 10}" y="${cardY + 86}" fill="${r.isBrainLopsided ? '#dc2626' : '#15803d'}" font-size="10.5" font-weight="900">
+              ${r.isBrainLopsided ? '⚠️ BRAIN-LOPSIDED (Audit!)' : '✅ SWEAT-BALANCED'}
+            </text>
+
+            <!-- 5:00 PM Heart Retrieval -->
+            <text x="${cardX + 10}" y="${cardY + 106}" fill="#0f172a" font-size="11" font-weight="800">
+              ${currentStage >= 3 ? r.heartResult : '5 PM Heart: Pending'}
+            </text>
+            <text x="${cardX + 10}" y="${cardY + 122}" fill="#64748b" font-size="9.5" font-weight="700">
+              ${currentStage >= 3 ? r.heartReason.slice(0, 28) : ''}
+            </text>
+          </g>
+        `;
+      });
+
+      svg += `</svg>`;
+      document.getElementById('svgBoardContainer').innerHTML = svg;
+    }
+
+    // =========================================================================
+    // NARRATIVE BANNER & TABLE UPDATER (6 STAGES)
+    // =========================================================================
+    function updateAll() {
+      const sim = computeSimulation();
+
+      // Update 6 stage buttons visual state
+      [1, 2, 3, 4, 5, 6].forEach(n => {
+        const btn = document.getElementById('btnStage' + n);
+        if (!btn) return;
+        btn.classList.remove('active', 'done');
+        if (currentStage === n) btn.classList.add('active');
+        else if (currentStage > n) btn.classList.add('done');
+      });
+
+      const statusLabels = [
+        'Stage 0: Setup & Ready',
+        'Stage 1: Deploy Meeples (Turn Order)',
+        'Stage 2: Buoyancy (Red Star ★)',
+        'Stage 3: Energy (Battery Check)',
+        'Stage 4: Calculate Results',
+        'Stage 5: End Results Calculation',
+        'Stage 6: Move Cubes & Pay'
+      ];
+      document.getElementById('stageStatusPill').textContent = statusLabels[currentStage];
+
+      // Update Narrative Explanation Banner
+      const banner = document.getElementById('narrativeBanner');
+      if (currentStage === 0) {
+        banner.innerHTML = `
+          <strong>Stage 0 (Setup):</strong> Players in Turn Order:
+          <strong>#1 Brian (Purple)</strong>, <strong>#2 Moe (Yellow)</strong>, <strong>#3 Sarah (Blue)</strong>, and <strong>#4 Lyndon (Green)</strong>.
+          Click <strong>1️⃣ Deploy Meeples</strong> to place them into Station 1 in Turn Order.
+        `;
+      } else if (currentStage === 1) {
+        const orderNames = sim.turnOrderStackTopToBottom.map(t => `#${t.turnOrder} ${t.name} (${t.battery.label.split(' ')[0]}, ${t.hasStar ? '★' : '0★'})`).join(' ➔ ');
+        banner.innerHTML = `
+          <strong>Stage 1 (Deploy Meeples — Turn Order):</strong> Meeples entered Station 1 in Turn Order: <strong>${orderNames}</strong>.
+          <strong>#1 Brian (Purple)</strong> arrived first with a Full (4/4) Battery, but has <strong>No Red Star (0★)</strong>. Next, click <strong>2️⃣ Buoyancy</strong> to sort by Red Star (★)!
+        `;
+      } else if (currentStage === 2) {
+        const buoySummary = sim.buoyancyOnlyStackTopToBottom.map((t, i) => `<strong>${i === 0 ? 'TOP' : i === sim.N - 1 ? 'BOTTOM' : '#' + (i + 1)}: ${t.name}</strong> (${t.hasStar ? '★' : '0★'})`).join(' ➔ ');
+        banner.innerHTML = `
+          <strong>Stage 2 (Buoyancy — Red Star ★ Sorting):</strong> Non-star players sink underneath Red Star (★) players!
+          Stack after Buoyancy: ${buoySummary}.
+          <strong>Moe (Yellow ★)</strong>, <strong>Sarah (Blue ★)</strong>, and <strong>Lyndon (Green ★)</strong> all floated above <strong>Brian (Purple 0★)</strong>. Now click <strong>3️⃣ Energy</strong> to check their Tequila Batteries!
+        `;
+      } else if (currentStage === 3) {
+        const energySummary = sim.energyStackTopToBottom.map((t, i) => `<strong>${i === 0 ? 'TOP' : i === sim.N - 1 ? 'BOTTOM' : '#' + (i + 1)}: ${t.name}</strong> (${t.battery.label.split(' ')[0]}, ${t.hasStar ? '★' : '0★'})`).join(' ➔ ');
+        banner.innerHTML = `
+          <strong>Stage 3 (Energy — Battery Check):</strong> Battery Energy is now evaluated across the stack: ${energySummary}.
+          <br/>💡 <em>Tip:</em> Use the <strong>Step 3 Energy (Battery) Rule</strong> dropdown on the left to test whether <strong>Lyndon (Green, 0/4 Empty Battery + ★)</strong> stays above <strong>Brian (Purple, 4/4 Full Battery + 0★)</strong> (Rule A) or sinks below Brian due to 0/4 exhaustion (Rule B)! Next, click <strong>4️⃣ Calculate Results</strong>.
+        `;
+      } else if (currentStage === 4) {
+        if (sim.N === 1) {
+          const soloP = sim.activeStack[0];
+          banner.innerHTML = `
+            <strong>Stage 4 (Calculate Results — Solo Guardian Angel):</strong> <strong>${soloP.name}</strong> is alone at the bottom (Slot 1), leaving the <strong>Guardian Angel (Slot 2)</strong> open!
+            ${soloP.name} earns <strong>+2 $kill</strong> (1 self + 1 Angel) and <strong>+2 $weat</strong> (1 self + 1 Angel).
+            Click <strong>5️⃣ End Results Calculation</strong> to calculate wall bounces &amp; new stars!
+          `;
+        } else {
+          const topP = sim.activeStack[0];
+          const botP = sim.activeStack[sim.N - 1];
+          banner.innerHTML = `
+            <strong>Stage 4 (Calculate Results):</strong> With <strong>${sim.N} meeples</strong> in Station 1:
+            <strong>${topP.name}</strong> on Top earns <strong>+${sim.playerResults[topP.id]?.skillMoves || 0} $kill</strong> moves (Brain).
+            Everyone underneath earns <strong>$weat</strong> moves from the bottom up (<strong>${botP.name}</strong> at the bottom earns <strong>+${sim.playerResults[botP.id]?.sweatMoves || 0} $weat</strong>).
+            Click <strong>5️⃣ End Results Calculation</strong> to compute Back-Wall Cash Bounces ($1) &amp; Audits!
+          `;
+        }
+      } else if (currentStage === 5) {
+        const bounces = players.filter(p => p.active && sim.playerResults[p.id].cashEarned > 0)
+          .map(p => `${PLAYER_COLORS[p.id].name}: <strong>+$${sim.playerResults[p.id].cashEarned}</strong>`)
+          .join(', ') || 'No back-wall bounces this shift';
+        const newStars = players.filter(p => p.active && sim.playerResults[p.id].earnedNewStar)
+          .map(p => `<strong>${PLAYER_COLORS[p.id].name}</strong> earns their Station 1 <strong>Red Star (★)</strong>!`)
+          .join(' ');
+        banner.innerHTML = `
+          <strong>Stage 5 (End Results Calculation):</strong> Back-Wall Bounces &amp; End Positions locked in!
+          💵 <strong>Calculated Cash Bounces:</strong> ${bounces}. ${newStars}
+          <br/>Click <strong>6️⃣ Move Cubes</strong> to physically advance Brian, Moe, Sarah, and Lyndon's cubes on the Shared Gray Tracks and deposit their paychecks!
+        `;
+      } else if (currentStage === 6) {
+        const bounces = players.filter(p => p.active && sim.playerResults[p.id].cashEarned > 0)
+          .map(p => `${PLAYER_COLORS[p.id].name} received <strong>$${sim.playerResults[p.id].cashEarned}</strong>`)
+          .join(', ') || 'No back-wall cash bounces';
+        banner.innerHTML = `
+          <strong>Stage 6 (Move Cubes — Complete!):</strong> All cubes have moved along the Shared Gray Tracks (faint ghost cubes show where each player started this shift) and paychecks are deposited!
+          💵 <strong>Payouts:</strong> ${bounces}.
+          Click <strong>⏭️ Carry Over to Next Shift</strong> if you want to run another shift from these new cube positions!
+        `;
+      }
+
+      renderBoardSvg(sim);
+      renderBreakdownTable(sim);
+    }
+
+    function renderBreakdownTable(sim) {
+      const tbody = document.getElementById('breakdownTableBody');
+      const sorted = [...players].sort((a, b) => a.turnOrder - b.turnOrder);
+
+      tbody.innerHTML = sorted.map(p => {
+        const c = PLAYER_COLORS[p.id];
+        const r = sim.playerResults[p.id];
+        const b = BATTERY_TYPES[p.battery];
+        const startStar = hasRedStar(p);
+        const endStar = r.endHasStar;
+
+        if (!p.active) {
+          return `<tr style="opacity:0.45;">
+            <td><strong>#${p.turnOrder} ${c.name}</strong></td>
+            <td colspan="9">Not deployed in Station 1 this shift</td>
+          </tr>`;
+        }
+
+        const slotDesc = r.stackIndexFromTop === 0
+          ? `👑 #1 Top (Circle ${r.circleNumberFromBottom})`
+          : r.circleNumberFromBottom === 1
+            ? `⚓ Bottom (Circle 1)`
+            : `#${r.stackIndexFromTop + 1} from Top (Circle ${r.circleNumberFromBottom})`;
+
+        const movesDesc = [
+          r.skillMoves > 0 ? `+${r.skillMoves} $kill` : '',
+          r.sweatMoves > 0 ? `+${r.sweatMoves} $weat` : ''
+        ].filter(Boolean).join(', ') || '0';
+
+        return `
+          <tr>
+            <td><span class="color-dot" style="background:${c.hex}; vertical-align:middle; margin-right:6px;"></span><strong>#${p.turnOrder} ${c.name}</strong></td>
+            <td>${b.label}</td>
+            <td>
+              ${currentStage >= 5
+                ? (endStar ? `<span class="star-pill has-star">★ YES${r.earnedNewStar ? ' (NEW!)' : ''}</span>` : `<span class="star-pill no-star">○ NO</span>`)
+                : (startStar ? `<span class="star-pill has-star">★ YES</span>` : `<span class="star-pill no-star">○ NO</span>`)}
+            </td>
+            <td><strong>${currentStage >= 1 ? slotDesc : '—'}</strong></td>
+            <td><strong style="color:#fde047;">${currentStage >= 4 ? movesDesc : '—'}</strong></td>
+            <td>Box ${r.startSkill} ➔ <strong>Box ${currentStage >= 5 ? r.endSkill : r.startSkill}${r.endSkill >= 3 && currentStage >= 5 ? ' ★' : ''}</strong> ${currentStage >= 5 && r.skillBounces > 0 ? `<span style="color:#34d399;">(+${r.skillBounces} bounce)</span>` : ''}</td>
+            <td>Box ${r.startSweat} ➔ <strong>Box ${currentStage >= 5 ? r.endSweat : r.startSweat}${r.endSweat >= 6 && currentStage >= 5 ? ' ★' : ''}</strong> ${currentStage >= 5 && r.sweatBounces > 0 ? `<span style="color:#34d399;">(+${r.sweatBounces} bounce)</span>` : ''}</td>
+            <td><strong style="color:#34d399; font-size:14px;">$${currentStage >= 6 ? r.totalPaycheck : (p.priorCash || 0)}</strong> ${currentStage >= 5 && r.cashEarned > 0 ? `<span style="color:#86efac;">(+$${r.cashEarned})</span>` : ''}</td>
+            <td>
+              <span class="audit-flag ${r.isBrainLopsided ? 'audit-bad' : 'audit-ok'}">
+                ${r.isBrainLopsided ? '⚠️ BRAIN-LOPSIDED' : '✅ BALANCED / SWEAT OK'}
+              </span>
+            </td>
+            <td><strong>${currentStage >= 3 ? r.heartResult : '—'}</strong><br/><span style="font-size:11px; color:#94a3b8;">${currentStage >= 3 ? r.heartReason : ''}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Initialize with Moe's Default Scenario and advance to Stage 0
+    loadPreset('moe_default');
+  </script>
+</body>
+</html>
